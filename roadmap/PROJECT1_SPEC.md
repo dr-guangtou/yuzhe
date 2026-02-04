@@ -70,7 +70,7 @@
             - 2026-02-04.md 
             - 2026-02-05.md
         ...
-    - temp (in case you need to download large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure folder is in .gitignore)
+    - temp (in case you need to download a large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure the folder is in .gitignore)
 ```
 
 ## Draft of the Prompt to Get the Summary: 

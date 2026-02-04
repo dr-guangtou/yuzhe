@@ -45,7 +45,34 @@
     1. I don't want to fully rely on a WebUI-based system. Generating the summary and putting it directly into files is more to my taste.
     2. I need the option to test more LLMs, especially domestic (Chinese) open-source models.
     3. I have a few special needs for the summary.
-   
+
+## Proposed Directory Structure:
+
+``` Markdown
+- project1
+    - README.md (Basic feature, user guide)
+    - PLANS.md (Core files to store the plans for agents)
+    - docs (other documentation)
+      - journal
+        - 2026-02-04_1.md 
+        - 2026-02-04_2.md
+        ...
+      - SUMMARY.md (summary of the status of the current development)
+    - src (for the Python scripts or code in other languages)
+    - prompts (I want to maintain the key prompts separately)
+        - match_preprint.md 
+        - summary.md
+        ...
+    - arxiv_digest (folder that stores the main results)
+        - input.yaml (keep a list of interested topics, questions, and projects to match)
+        - archive
+          - 2026
+            - 2026-02-04.md 
+            - 2026-02-05.md
+        ...
+    - temp (in case you need to download large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure folder is in .gitignore)
+```
+
 ## Draft of the Prompt to Get the Summary: 
 
 ```markdown

@@ -3,12 +3,12 @@
 ## Core Workflow and Functionality:
 
 - The user, me, will provide some basic information, such as my name, ORCID, NASA/ADS publication library, and Google Scholar account.
-- This tool will based on this information to organize my publication list. For each publication, this tool will gather the basic metadata into a database (e.g., a YAML or JSON file is probably fine).
-- For each publication, this tool will generate two versions of summaries using a LLM API, with a positive and affirmative tone, to highlight the new results and the creative aspect of the publication. These summarizes will be used to support future grant application and personal website.
+- This tool will be based on this information to organize my publication list. For each publication, this tool will gather the basic metadata into a database (e.g., a YAML or JSON file is probably fine).
+- For each publication, this tool will generate two versions of summaries using an LLM API, with a positive and affirmative tone, to highlight the new results and the creative aspect of the publication. These summaries will be used to support future grant applications and a personal website.
     1. Version 1: a really short version. The "Punch-line" style, with no more than 2 sentences.
     2. Version 2: a longer version that summarizes the motivation, basic technical details, and all the key findings of the publication.
-- For each summary, this tool will call a LLM through API to translate the summary into Chinese.
-- For each publication, this tools should try to use the public (e.g., arXiv) or open access (through the journal) version of the publication to keep a record of the key figures. The candidates of the key figures should satisfy at least one of the following criteria:
+- For each summary, this tool will call an LLM through the API to translate the summary into Chinese.
+- For each publication, these tools should try to use the public (e.g., arXiv) or open access (through the journal) version of the publication to keep a record of the key figures. The candidates for the key figures should satisfy at least one of the following criteria:
     1. The figure that has been referenced the most in the publication.
     2. The figure that has been mentioned multiple times in the "Results" or "Conclusion" section.
     3. The figure with a caption that is closely related to the main conclusion of this publication.
@@ -58,7 +58,7 @@
             - model_2
             ...
         - portfolio 
-        - paper_1.md (with figure imbedded; file should have a more informative name)
+        - paper_1.md (with figure embedded; file should have a more informative name)
         - paper_1_figures
             - paper_1_fig1.png/jpg/pdf/eps
             - paper_2_fig2.png/jpg/pdf/eps 
@@ -66,7 +66,7 @@
         - paper_2.md
         - paper_2_figures
         ...
-    - temp (in case you need to download large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure folder is in .gitignore)
+    - temp (in case you need to download a large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure the folder is in .gitignore)
 ```
 
 ## Reference:

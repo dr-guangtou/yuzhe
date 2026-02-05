@@ -1,0 +1,57 @@
+date: 2026-02-05
+category:
+  - primary: 
+    - astro-ph.CO
+    - astro-ph.GA
+    - astro-ph.IM
+  - secondary:
+    - astro-ph.SR
+# Scientific topics that I am interested in. The order does not matter.
+topics:
+  - primary:
+    - "Galaxy formation and evolution in general"
+    - "Galaxy-halo connection and its application in cosmology"
+    - "Evolution of galaxies in galaxy groups and clusters"
+    - "The star formation history and quenching history of galaxies"
+    - "Galaxy structure and morphology, including bulges, disks, bars, and stellar halos"
+    - "Feedback processes in galaxy formation, including supernova and AGN feedback"
+    - "Low surface brightness universe: stellar halos, tidal features, intra-cluster light, and low surface brightness galaxies, including the ultra-diffuse galaxies"
+    - "High-redshift galaxies and their formation, especially on the population of submillimeter galaxies (SMG), Lyman-break galaxies (LBG), Lyman-alpha emitters (LAE), and Little Red Dots (LRD)"
+    - "Dark matter distribution in galaxies and galaxy clusters"
+    - "Data analysis methods and algorithms for extragalactic and cosmological data"
+    - "The design and scientific preparation of large astronomical surveys and missions"
+    - "Method: galaxy image analysis and modeling"
+    - "Method: spectral energy distribution (SED) and spectra fitting and analysis"
+    - "Method: machine learning and artificial intelligence applications in astronomy"
+    - "Method: statistical methods and data mining in astronomy"
+  - secondary:
+    - "Interactions and mergers of galaxies"
+    - "Chemical evolution of galaxies and stellar populations"
+    - "The circumgalactic medium and intergalactic medium"
+    - "The role of environment in galaxy evolution"
+    - "Compact stellar systems: extragalactic globular clusters, ultra-compact dwarfs, and nuclear star clusters"
+    - "The nature of dark matter and its impact on galaxy evolution"
+    - "Cosmological simulations of galaxy formation and evolution"
+    - "Large-scale structure of the universe and galaxy clustering"
+    - "Observational constraint of primordial non-Gaussianity using large-scale structure"
+    - "The impact of baryonic physics on cosmological observables"
+    - "Cosmological constraints from weak gravitational lensing and galaxy-galaxy lensing"
+    - "Cosmological constraints using galaxy clusters as probes"
+    - "Development of new instruments and technologies for astronomy"
+    - "Method: photometric redshift estimation and its applications"
+    - "Stellar: physics related to the AGB and TP-AGB phases of stellar evolution"
+# Projects to follow:
+projects: 
+  - Dark Energy Survey (DES)
+  - Hyper Suprime-Cam Subaru Strategic Program (HSC-SSP)
+  - Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST)
+  - Euclid Mission
+  - Kilo-Degree Survey (KiDS)
+  - Nancy Grace Roman Space Telescope
+  - Dark Energy Spectroscopic Instrument (DESI)
+  - 4MOST
+  - SDSS-V
+  - eRosita
+  - Atacama Cosmology Telescope (ACT)
+  - Spec-S5
+  - Wide-Field Spectroscopic Telescope (WST)

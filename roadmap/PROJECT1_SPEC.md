@@ -11,6 +11,13 @@
 - After getting the results, this tool should send the user the list of the daily preprint recommendations using WhatsApp or Slack.
 - The summary files, including the detailed summary for the most relevant papers, will also be automatically generated and saved in multiple places, including the Obsidian Vault.
 
+### User Input / Configurations
+
+- User configuration is summarized in `project1/config.yaml` file. It includes:
+  1. `category`: The arXiv sub-categories to follow. When search for very relevant works, it should cover all the `primary` categories; The secondary category should be included when searching for "could be interesting" papers. 
+  2. `topic`: Scientific topics the user is interested in. The `primary` interested topics are for the "Most Relevant" category, and the `secondary` topics are for the "Somewhat Relevant" and "Could be Interesting" categories.
+  3. `project`: important projects to follow; when the names of these projects or their acronyms are mentioned in the **title** of the preprint, they should at least be listed in the "Could be Interesting" category.
+
 ### Important Features:
 
 - This tool should allow users to choose between different LLMs using their APIs.
@@ -52,6 +59,7 @@
 - project1
     - README.md (Basic feature, user guide)
     - PLANS.md (Core files to store the plans for agents)
+    - config.yaml (keep a list of interested topics, questions, and projects to match)
     - docs (other documentation)
       - journal
         - 2026-02-04_1.md 
@@ -64,7 +72,6 @@
         - summary.md
         ...
     - arxiv_digest (folder that stores the main results)
-        - input.yaml (keep a list of interested topics, questions, and projects to match)
         - archive
           - 2026
             - 2026-02-04.md 

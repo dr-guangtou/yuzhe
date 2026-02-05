@@ -1,0 +1,21 @@
+# State and cache
+.state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+temp/*
+!temp/.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp

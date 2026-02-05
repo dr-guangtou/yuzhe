@@ -1,0 +1,8 @@
+{
+  "name": "arxiv-api",
+  "description": "Query arXiv API to search and fetch academic preprints",
+  "author": {
+    "name": "Song Huang",
+    "email": "dr.guangtou@gmail.com"
+  }
+}

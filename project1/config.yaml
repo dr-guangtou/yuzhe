@@ -1,14 +1,18 @@
-date: 2026-02-05
+# Daily arXiv Summary Configuration
+# Last updated: 2026-02-05
+
+# arXiv categories to monitor
 category:
-  - primary: 
+  primary:
     - astro-ph.CO
     - astro-ph.GA
     - astro-ph.IM
-  - secondary:
+  secondary:
     - astro-ph.SR
-# Scientific topics that I am interested in. The order does not matter.
+
+# Scientific topics of interest (order does not matter)
 topics:
-  - primary:
+  primary:
     - "Galaxy formation and evolution in general"
     - "Galaxy-halo connection and its application in cosmology"
     - "Evolution of galaxies in galaxy groups and clusters"
@@ -24,7 +28,7 @@ topics:
     - "Method: spectral energy distribution (SED) and spectra fitting and analysis"
     - "Method: machine learning and artificial intelligence applications in astronomy"
     - "Method: statistical methods and data mining in astronomy"
-  - secondary:
+  secondary:
     - "Interactions and mergers of galaxies"
     - "Chemical evolution of galaxies and stellar populations"
     - "The circumgalactic medium and intergalactic medium"
@@ -40,18 +44,68 @@ topics:
     - "Development of new instruments and technologies for astronomy"
     - "Method: photometric redshift estimation and its applications"
     - "Stellar: physics related to the AGB and TP-AGB phases of stellar evolution"
-# Projects to follow:
-projects: 
-  - Dark Energy Survey (DES)
-  - Hyper Suprime-Cam Subaru Strategic Program (HSC-SSP)
-  - Vera C. Rubin Observatory Legacy Survey of Space and Time (LSST)
-  - Euclid Mission
-  - Kilo-Degree Survey (KiDS)
-  - Nancy Grace Roman Space Telescope
-  - Dark Energy Spectroscopic Instrument (DESI)
-  - 4MOST
-  - SDSS-V
-  - eRosita
-  - Atacama Cosmology Telescope (ACT)
-  - Spec-S5
-  - Wide-Field Spectroscopic Telescope (WST)
+
+# Projects to follow (papers mentioning these in title get minimum "Could Be Interesting")
+projects:
+  - name: "Dark Energy Survey"
+    acronym: "DES"
+  - name: "Hyper Suprime-Cam Subaru Strategic Program"
+    acronym: "HSC-SSP"
+  - name: "Vera C. Rubin Observatory Legacy Survey of Space and Time"
+    acronym: "LSST"
+  - name: "Euclid Mission"
+    acronym: "Euclid"
+  - name: "Kilo-Degree Survey"
+    acronym: "KiDS"
+  - name: "Nancy Grace Roman Space Telescope"
+    acronym: "Roman"
+  - name: "Dark Energy Spectroscopic Instrument"
+    acronym: "DESI"
+  - name: "4MOST"
+    acronym: "4MOST"
+  - name: "SDSS-V"
+    acronym: "SDSS"
+  - name: "eRosita"
+    acronym: "eROSITA"
+  - name: "Atacama Cosmology Telescope"
+    acronym: "ACT"
+  - name: "Spec-S5"
+    acronym: "S5"
+  - name: "Wide-Field Spectroscopic Telescope"
+    acronym: "WST"
+  - name: "James Webb Space Telescope"
+    acronym: "JWST"
+
+# LLM Configuration
+# Primary provider settings
+llm:
+  provider: "kimi"  # Primary: kimi, gemini, openai, deepseek
+  model: "kimi-k2.5"  # Model for primary provider (KIMI 2.5)
+  api_key_env: "KIMI_API_KEY"
+  temperature: 0.3
+  max_tokens: 2000
+
+# Fallback providers (tried in order if primary fails)
+# Available: kimi, gemini, openai, deepseek
+llm_fallback:
+  - kimi
+  - gemini
+
+# Scoring thresholds (0-10 scale)
+scoring:
+  most_relevant_threshold: 7.0
+  somewhat_relevant_threshold: 5.0
+  could_be_interesting_threshold: 3.0
+
+# Output paths
+output:
+  digest_dir: "arxiv_digest"
+  archive_subdir: "archive"
+  obsidian_vault: null  # Optional: path to Obsidian vault
+
+# API settings
+api:
+  arxiv_delay_seconds: 3.0
+  arxiv_max_results_per_category: 100
+  llm_retry_attempts: 3
+  llm_retry_delay_seconds: 5.0

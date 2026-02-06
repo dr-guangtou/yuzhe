@@ -8,7 +8,7 @@ from pathlib import Path
 
 from config import load_config, get_default_config_path
 from arxiv_fetcher import fetch_papers
-from llm_client import create_llm_client, create_fallback_client, MockLLMClient
+from llm_client import create_fallback_client, MockLLMClient
 from scorer import score_papers, group_by_tier, filter_by_tier, Tier
 from summarizer import generate_summaries
 from formatter import format_digest, save_digest, copy_to_obsidian
@@ -179,16 +179,11 @@ def main():
         logger.info("Using mock LLM client")
         llm_client = MockLLMClient(config.llm)
     else:
-        # Use fallback mechanism if configured
-        providers = config.llm_fallback if config.llm_fallback else [config.llm.provider]
-        logger.info(f"Initializing LLM clients: {providers}")
+        fallback_names = config.llm_fallback if config.llm_fallback else [config.llm.provider]
+        logger.info(f"Initializing LLM clients: {fallback_names}")
 
         try:
-            llm_client = create_fallback_client(
-                providers=providers,
-                temperature=config.llm.temperature,
-                max_tokens=config.llm.max_tokens
-            )
+            llm_client = create_fallback_client(config)
             logger.info("LLM client ready")
         except Exception as e:
             logger.warning(f"Could not create any LLM client: {e}")

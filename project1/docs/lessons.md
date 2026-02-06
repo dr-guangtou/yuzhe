@@ -46,13 +46,32 @@ Prompt templates containing JSON examples need escaped braces:
 ### 6. LLM Rate Limits Need Graceful Fallback
 When LLM scoring fails (rate limits, timeouts), fall back to prefilter scoring with neutral values rather than failing the entire pipeline.
 
+## Architecture
+
+### 7. Config-Driven Over Hardcoded
+**Problem**: Adding a new LLM provider required editing Python code (adding to a dict in `llm_client.py`).
+
+**Solution**: Move provider definitions to `config.yaml`. The Python code reads `(api_key_env, base_url, default_model, client_type)` from config and constructs the appropriate client. Nearly all providers use the OpenAI-compatible format, so `client_type` defaults to "openai" and only needs explicit override for Gemini.
+
+**Result**: 8 providers defined in YAML, zero hardcoded provider knowledge in Python.
+
 ## Testing
 
-### 7. Test with Real Papers from User
+### 8. Test with Real Papers from User
 Ask users to provide examples of papers they consider relevant. Use these as ground truth for scoring validation.
 
-### 8. Skip-LLM Mode is Not Just for Testing
+### 9. Skip-LLM Mode is Not Just for Testing
 The `--skip-llm` mode should produce reasonable results on its own. It's a valid production mode when:
 - LLM API is unavailable
 - Processing large batches quickly
 - Cost-sensitive scenarios
+
+### 10. OpenAI-Compatible base_url Must Include /v1
+**Problem**: Setting base_url to `https://api.moonshot.cn` (without `/v1`) results in 404 because our code appends `/chat/completions`, making the final URL `https://api.moonshot.cn/chat/completions`.
+
+**Solution**: Always include the version path in base_url: `https://api.moonshot.cn/v1`. The convention is `{base_url}/chat/completions`.
+
+### 11. Moonshot kimi-k2.5 Has Temperature Restrictions
+**Problem**: `kimi-k2.5` model only accepts `temperature=1` and returns empty responses for short prompts.
+
+**Solution**: Use `kimi-latest` instead - it supports `temperature=0.3`, handles system prompts, and produces reliable responses.

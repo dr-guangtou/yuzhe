@@ -10,7 +10,7 @@ Automated pipeline that monitors arXiv daily, scores paper relevance against you
   - **Somewhat Relevant**: 3-5 sentence summaries
   - **Could Be Interesting**: Title and link only
 - **Update Mode**: Skips weekends and avoids duplicate processing
-- **LLM-Powered**: Uses Gemini (or other providers) for intelligent scoring and summarization
+- **Multi-LLM**: Config-driven provider system (Moonshot, NVidia, Gemini, OpenAI, etc.)
 - **Obsidian Integration**: Optionally copies digests to your Obsidian vault
 
 ## Installation
@@ -25,9 +25,12 @@ Automated pipeline that monitors arXiv daily, scores paper relevance against you
    uv sync
    ```
 
-3. Set up your LLM API key:
+3. Set up at least one LLM API key (see providers in `config.yaml`):
    ```bash
-   export GEMINI_API_KEY="your-api-key"
+   export MOONSHOT_API_KEY="sk-..."   # Moonshot/KIMI
+   # or
+   export GEMINI_API_KEY="..."        # Google Gemini
+   # or any other provider listed in config.yaml
    ```
 
 ## Configuration
@@ -74,112 +77,124 @@ projects:
     acronym: "JWST"
 ```
 
-### LLM Settings
+### LLM Providers
+
+All provider definitions live in `config.yaml` under `providers`. Each entry defines `api_key_env`, `base_url`, `default_model`, and `client_type`. To add a new provider, just add an entry - no code changes needed.
+
 ```yaml
+providers:
+  moonshot:
+    api_key_env: "MOONSHOT_API_KEY"
+    base_url: "https://api.moonshot.cn/v1"
+    default_model: "kimi-latest"
+  gemini:
+    api_key_env: "GEMINI_API_KEY"
+    default_model: "gemini-2.0-flash"
+    client_type: "gemini"            # only Gemini needs this
+  # ... see config.yaml for all 8 providers ...
+
 llm:
-  provider: "gemini"
-  model: "gemini-2.0-flash"
-  api_key_env: "GEMINI_API_KEY"
+  provider: "kimi"           # must exist in providers
+  model: ""                  # empty = use provider default
   temperature: 0.3
+
+llm_fallback:                # tried in order if primary fails
+  - moonshot
+  - nvidia
+  - gemini
 ```
 
 ### Scoring Thresholds
 ```yaml
 scoring:
-  most_relevant_threshold: 7.0
+  most_relevant_threshold: 8.0
   somewhat_relevant_threshold: 5.0
   could_be_interesting_threshold: 3.0
 ```
 
 ## Usage
 
-### Daily Update Mode
-```bash
-uv run python src/main.py --mode update
-```
-Checks if arXiv has new papers since last run. Skips weekends.
+All commands run from the `project1/` directory.
 
-### Debug Mode
+### Generate Today's Digest
+
 ```bash
 uv run python src/main.py --mode debug
 ```
-Always runs full pipeline, ignoring previous state.
 
-### Common Options
+This is the primary command. It fetches all papers from your configured arXiv categories, scores each one with the LLM, generates summaries, and saves a Markdown digest to `arxiv_digest/archive/2026/YYYY-MM-DD.md`. A typical run with ~90 papers takes 10-15 minutes.
+
+### Daily Update Mode
+
 ```bash
-# Fetch from specific category only
-uv run python src/main.py --category astro-ph.GA
+uv run python src/main.py --mode update
+```
 
-# Look back multiple days
-uv run python src/main.py --days 3
+Same as above, but checks `.state.json` to avoid duplicate runs. Skips weekends (no arXiv updates on Sat/Sun). Use this for automated/scheduled runs.
 
-# Limit papers for testing
-uv run python src/main.py --limit 10
+### Key Options
 
-# Skip LLM calls (use prefilter scoring only)
-uv run python src/main.py --skip-llm
+| Option | Description |
+|--------|-------------|
+| `--mode debug` | Always run, ignore previous state (default) |
+| `--mode update` | Skip if already ran today |
+| `--limit N` | Process only the first N papers (for quick testing) |
+| `--days N` | Look back N days instead of 1 |
+| `--category CAT` | Fetch from a single category (e.g., `astro-ph.GA`) |
+| `--skip-llm` | Skip LLM calls; use category-based proxy scores |
+| `--skip-summary` | Score papers but skip summary generation |
+| `--mock-llm` | Use mock LLM for testing (no API calls) |
+| `--output PATH` | Write digest to a custom path instead of the archive |
+| `-v` | Verbose output (debug-level logging) |
+| `--no-log-file` | Don't write to the log file |
 
-# Use mock LLM for testing
-uv run python src/main.py --mock-llm
+### Quick Test Run
 
-# Verbose output
-uv run python src/main.py -v
+```bash
+# Score 5 papers with real LLM, generate summaries
+uv run python src/main.py --mode debug --limit 5
 
-# Custom output path
-uv run python src/main.py --output /path/to/digest.md
+# Score all papers but skip summaries (check tier distribution)
+uv run python src/main.py --mode debug --skip-summary
+
+# Full dry run without any API keys
+uv run python src/main.py --mode debug --mock-llm --limit 5
 ```
 
 ## Output
 
 Daily digests are saved to `arxiv_digest/archive/YYYY/YYYY-MM-DD.md`.
 
-Example structure:
-```markdown
-# arXiv Daily Digest: 2026-02-05
-
-## Summary
-- **Most Relevant:** 3 papers
-- **Somewhat Relevant:** 15 papers
-- **Could Be Interesting:** 8 papers
-
-## Most Relevant Papers
-[Detailed summaries...]
-
-## Somewhat Relevant Papers
-[Brief summaries...]
-
-## Could Be Interesting
-[Title links...]
-```
+Each digest contains:
+- **Summary** with paper counts per tier
+- **Most Relevant** (score >= 8): structured summaries with key findings, methods, datasets
+- **Somewhat Relevant** (score >= 5): 3-5 sentence paragraphs
+- **Could Be Interesting** (score >= 3): title and link only
 
 ## How Scoring Works
-
-The three configuration sections serve different purposes:
-
-| Config | Purpose | Role |
-|--------|---------|------|
-| **category** | Fetch filter | Which arXiv categories to monitor |
-| **topic** | **Core scoring** | LLM judges relevance to these research area descriptions |
-| **project** | Floor booster | Ensures tracked projects reach "Could Be Interesting" minimum |
-
-### Scoring Flow
 
 ```
 Fetch by CATEGORY → LLM scores against TOPICS → PROJECT boosts floor → Tier
 ```
 
-1. **Category Filter**: Papers are fetched from your configured arXiv categories
-2. **Topic Scoring (Core)**: LLM evaluates how relevant each paper is to your topic descriptions. Topics are semantic descriptions, not keywords - the LLM judges meaning, not exact matches
-3. **Project Boost**: Papers mentioning tracked projects get a small score boost (+0.5) and a guaranteed floor of "Could Be Interesting"
+| Config Section | Purpose | Role in Scoring |
+|----------------|---------|-----------------|
+| **category** | Fetch filter | Which arXiv categories to monitor |
+| **topics** | **Core scoring** | LLM evaluates semantic relevance to these research descriptions |
+| **projects** | Floor booster | +0.5 score boost, guaranteed "Could Be Interesting" minimum |
+
+The LLM returns a 0-10 score for each paper. Topics are semantic descriptions, not keywords - a paper about "stellar mass functions at z>3" matches "High-redshift galaxies" even without exact keyword overlap.
 
 ### Tier Thresholds
 
-| Score | Tier | Meaning |
-|-------|------|---------|
-| ≥ 7 | Most Relevant | Strong topic match - definitely read |
-| ≥ 5 | Somewhat Relevant | Moderate topic match - worth skimming |
-| ≥ 3 | Could Be Interesting | Weak match or project boost |
-| < 3 | Not Relevant | Filtered out (unless project match) |
+| Score | Tier | Action |
+|-------|------|--------|
+| >= 8 | Most Relevant | Detailed structured summary |
+| >= 5 | Somewhat Relevant | 3-5 sentence summary |
+| >= 3 | Could Be Interesting | Title and link only |
+| < 3 | Not Relevant | Excluded from digest |
+
+Thresholds are configurable in `config.yaml` under `scoring`.
 
 ### Degraded Mode (--skip-llm)
 
@@ -187,6 +202,29 @@ When LLM is unavailable, uses category as a rough proxy:
 - Primary category: score 5.0 (Somewhat Relevant)
 - Secondary category: score 3.5 (Could Be Interesting)
 - Project boost: +1.5
+
+### Score Calibration Tool
+
+Use `get_llm_score.py` to check how specific papers score against your config. Useful for tuning thresholds and refining topic descriptions.
+
+```bash
+# Score a single paper
+uv run python src/get_llm_score.py 2602.04962
+
+# Score multiple papers
+uv run python src/get_llm_score.py 2602.04962 2602.04974 2602.05396
+
+# Use a specific LLM provider
+uv run python src/get_llm_score.py 2602.04962 --provider nvidia
+
+# A/B test a modified prompt
+uv run python src/get_llm_score.py 2602.04962 --prompt prompts/match_preprint_v2.md
+
+# JSON output for scripting
+uv run python src/get_llm_score.py 2602.04962 2602.04974 --json
+```
+
+Accepts arXiv IDs (e.g., `2602.04962`) or full URLs (e.g., `https://arxiv.org/abs/2602.04962`).
 
 ## Project Structure
 
@@ -197,15 +235,16 @@ project1/
 ├── config.yaml         # Configuration
 ├── pyproject.toml      # Python dependencies
 ├── src/
-│   ├── main.py         # CLI entry point
-│   ├── config.py       # Config loader
-│   ├── arxiv_fetcher.py# arXiv API client
-│   ├── llm_client.py   # LLM abstraction
-│   ├── scorer.py       # Paper scoring
-│   ├── summarizer.py   # Summary generation
-│   ├── formatter.py    # Markdown output
-│   ├── state.py        # Run state tracking
-│   └── logger.py       # Logging setup
+│   ├── main.py          # CLI entry point
+│   ├── get_llm_score.py # Score calibration tool
+│   ├── config.py        # Config loader
+│   ├── arxiv_fetcher.py # arXiv API client
+│   ├── llm_client.py    # LLM abstraction
+│   ├── scorer.py        # Paper scoring
+│   ├── summarizer.py    # Summary generation
+│   ├── formatter.py     # Markdown output
+│   ├── state.py         # Run state tracking
+│   └── logger.py        # Logging setup
 ├── prompts/
 │   ├── match_preprint.md
 │   ├── summary_detailed.md
@@ -216,26 +255,22 @@ project1/
 └── temp/               # Temporary files
 ```
 
-## API Rate Limits
-
-- **arXiv**: Minimum 3 seconds between requests (automatic)
-- **Gemini**: Respect API quotas, retries with exponential backoff
-
 ## Troubleshooting
 
 ### "No papers found"
-- Check if arXiv is accessible
-- Verify categories in config.yaml exist
-- Try increasing `--days`
+- arXiv may be down; try again later
+- Try `--days 3` to widen the date window
+- Verify categories in `config.yaml` are valid arXiv category codes
 
-### "LLM scoring failed"
-- Verify API key is set: `echo $GEMINI_API_KEY`
-- Check API quotas
-- Use `--skip-llm` as fallback
+### LLM errors (401, 429, 400)
+- **401 Unauthorized**: Check that the API key env var is exported (e.g., `echo $MOONSHOT_API_KEY`)
+- **429 Too Many Requests**: Rate limited; wait a minute and retry, or switch provider
+- **400 Bad Request**: Model may not support your temperature setting (e.g., `kimi-k2.5` requires `temperature=1`; use `kimi-latest` instead)
+- The fallback chain will automatically try the next provider on failure
 
 ### "Already processed papers"
-- Use `--mode debug` to force re-run
-- Delete `.state.json` to reset
+- Use `--mode debug` to force re-run regardless of state
+- Or delete `.state.json` to reset
 
 ## License
 

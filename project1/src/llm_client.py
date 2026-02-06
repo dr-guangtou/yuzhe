@@ -4,10 +4,10 @@ import json
 import os
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
-from config import LLMConfig
+from config import LLMConfig, ProviderConfig, Config
 
 
 @dataclass
@@ -109,12 +109,17 @@ class OpenAICompatibleClient(LLMClient):
 class GeminiAPIClient(LLMClient):
     """Gemini client using the Google AI API."""
 
-    def __init__(self, config: LLMConfig):
-        self.config = config
-        self.model = config.model
-        self.api_key = os.environ.get(config.api_key_env)
-        if not self.api_key:
-            raise ValueError(f"API key not found in environment: {config.api_key_env}")
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        temperature: float = 0.3,
+        max_tokens: int = 2000
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.default_temperature = temperature
+        self.default_max_tokens = max_tokens
 
     def generate(
         self,
@@ -126,8 +131,8 @@ class GeminiAPIClient(LLMClient):
         """Generate using Gemini API."""
         import urllib.request
 
-        temp = temperature if temperature is not None else self.config.temperature
-        tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+        temp = temperature if temperature is not None else self.default_temperature
+        tokens = max_tokens if max_tokens is not None else self.default_max_tokens
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
 
@@ -258,136 +263,88 @@ class FallbackLLMClient(LLMClient):
         raise RuntimeError(f"All LLM clients failed: {'; '.join(errors)}")
 
 
-# Provider configurations
-PROVIDER_CONFIGS = {
-    "gemini": {
-        "api_key_env": "GEMINI_API_KEY",
-        "default_model": "gemini-2.0-flash",
-    },
-    "kimi": {
-        "api_key_env": "KIMI_API_KEY",
-        "base_url": "https://api.moonshot.ai/v1",
-        "default_model": "kimi-k2.5",
-    },
-    "openai": {
-        "api_key_env": "OPENAI_API_KEY",
-        "base_url": "https://api.openai.com/v1",
-        "default_model": "gpt-4o-mini",
-    },
-    "deepseek": {
-        "api_key_env": "DEEPSEEK_API_KEY",
-        "base_url": "https://api.deepseek.com/v1",
-        "default_model": "deepseek-chat",
-    },
-}
-
-
 def create_single_client(
-    provider: str,
-    model: str = None,
-    api_key_env: str = None,
+    provider_name: str,
+    provider_config: ProviderConfig,
+    model: str = "",
     temperature: float = 0.3,
     max_tokens: int = 2000
 ) -> LLMClient:
-    """Create a single LLM client for a provider.
+    """Create a single LLM client from a ProviderConfig.
 
     Args:
-        provider: Provider name (gemini, kimi, openai, deepseek, mock)
-        model: Model name (uses default if not specified)
-        api_key_env: Environment variable for API key
-        temperature: Default temperature
-        max_tokens: Default max tokens
+        provider_name: Display name for the provider.
+        provider_config: Provider configuration from config.yaml.
+        model: Model override (empty = use provider default).
+        temperature: Default temperature.
+        max_tokens: Default max tokens.
 
     Returns:
-        LLMClient instance
+        LLMClient instance.
 
     Raises:
-        ValueError: If provider unknown or API key missing
+        ValueError: If API key is missing from environment.
     """
-    provider = provider.lower()
-
-    if provider == "mock":
-        return MockLLMClient()
-
-    if provider not in PROVIDER_CONFIGS:
-        raise ValueError(f"Unknown provider: {provider}")
-
-    config = PROVIDER_CONFIGS[provider]
-    key_env = api_key_env or config["api_key_env"]
-    api_key = os.environ.get(key_env)
-
+    api_key = os.environ.get(provider_config.api_key_env)
     if not api_key:
-        raise ValueError(f"API key not found: {key_env}")
-
-    model_name = model or config["default_model"]
-
-    if provider == "gemini":
-        # Gemini uses different API format
-        llm_config = LLMConfig(
-            provider="gemini",
-            model=model_name,
-            api_key_env=key_env,
-            temperature=temperature,
-            max_tokens=max_tokens
+        raise ValueError(
+            f"API key not found: {provider_config.api_key_env}"
         )
-        return GeminiAPIClient(llm_config)
+
+    model_name = model or provider_config.default_model
+
+    if provider_config.client_type == "gemini":
+        return GeminiAPIClient(
+            api_key=api_key,
+            model=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
     else:
-        # OpenAI-compatible providers
         return OpenAICompatibleClient(
             api_key=api_key,
             model=model_name,
-            base_url=config["base_url"],
-            provider_name=provider,
+            base_url=provider_config.base_url,
+            provider_name=provider_name,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
         )
 
 
-def create_llm_client(config: LLMConfig) -> LLMClient:
-    """Create an LLM client based on configuration.
+def create_fallback_client(config: Config) -> LLMClient:
+    """Create a fallback client from the full Config.
+
+    Uses config.llm_fallback for provider order, falling back to
+    the single primary provider if no fallback list is defined.
 
     Args:
-        config: LLM configuration
+        config: Full application config with providers registry.
 
     Returns:
-        LLMClient instance
+        FallbackLLMClient or single client if only one succeeds.
+
+    Raises:
+        ValueError: If no clients could be initialized.
     """
-    return create_single_client(
-        provider=config.provider,
-        model=config.model,
-        api_key_env=config.api_key_env,
-        temperature=config.temperature,
-        max_tokens=config.max_tokens
-    )
+    provider_names = config.llm_fallback if config.llm_fallback else [config.llm.provider]
 
-
-def create_fallback_client(
-    providers: list[str],
-    temperature: float = 0.3,
-    max_tokens: int = 2000
-) -> LLMClient:
-    """Create a fallback client that tries multiple providers.
-
-    Args:
-        providers: List of provider names to try in order
-        temperature: Default temperature
-        max_tokens: Default max tokens
-
-    Returns:
-        FallbackLLMClient or single client if only one provider
-    """
     clients = []
-    for provider in providers:
+    for name in provider_names:
         try:
+            prov = config.get_provider(name)
+            # Use model override only for the primary provider
+            model = config.llm.model if name == config.llm.provider else ""
             client = create_single_client(
-                provider=provider,
-                temperature=temperature,
-                max_tokens=max_tokens
+                provider_name=name,
+                provider_config=prov,
+                model=model,
+                temperature=config.llm.temperature,
+                max_tokens=config.llm.max_tokens,
             )
             clients.append(client)
-            print(f"  Initialized {provider} client")
+            print(f"  Initialized {name} client")
         except ValueError as e:
-            print(f"  Skipping {provider}: {e}")
+            print(f"  Skipping {name}: {e}")
             continue
 
     if not clients:

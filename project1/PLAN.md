@@ -105,6 +105,11 @@ Fetch by CATEGORY → LLM scores against TOPICS → PROJECT boosts floor → Tie
 - [x] Phase 4: State management and logging
 - [x] Phase 4: README.md documentation
 - [ ] Phase 4: Update mode verification
+- [x] Phase 5: Provider definitions moved to config.yaml
+- [x] Phase 5: ProviderConfig dataclass and config validation
+- [x] Phase 5: llm_client.py uses config-driven providers
+- [x] Phase 5: Fallback chain resolves from config
+- [x] Phase 5: Full pipeline verified with mock LLM
 
 ## Implementation Notes
 
@@ -132,6 +137,21 @@ Fetch by CATEGORY → LLM scores against TOPICS → PROJECT boosts floor → Tie
 - Implemented `state.py` for run tracking
 - Implemented `logger.py` for file+console logging
 - Created comprehensive `README.md`
+
+### Completed (2026-02-06)
+
+**Phase 5: Config-Driven Multi-LLM Provider System**
+- Added `providers` registry to `config.yaml` with 8 providers (moonshot, kimi, nvidia, qwen, glm, deepseek, openai, gemini)
+- Added `ProviderConfig` dataclass to `config.py` with `api_key_env`, `base_url`, `default_model`, `client_type`
+- Removed `api_key_env` from `LLMConfig` (now lives on provider)
+- Added `providers` dict and `get_provider()` helper to `Config`
+- Validation: `llm.provider` and all fallback names must exist in `providers`
+- Deleted hardcoded `PROVIDER_CONFIGS` dict from `llm_client.py`
+- Rewrote `create_single_client()` to accept `ProviderConfig`
+- Rewrote `create_fallback_client()` to accept `Config` object
+- Updated `GeminiAPIClient` to accept `api_key` directly (matching `OpenAICompatibleClient` interface)
+- Simplified `main.py` call site to `create_fallback_client(config)`
+- New providers can be added by editing `config.yaml` only - zero code changes
 
 ### Known Limitations
 

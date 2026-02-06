@@ -76,24 +76,67 @@ projects:
   - name: "James Webb Space Telescope"
     acronym: "JWST"
 
+# Provider registry: each entry = (api_key_env, base_url, default_model)
+# client_type defaults to "openai"; set to "gemini" for Google AI only
+# Add/remove providers here - zero code changes needed
+providers:
+  moonshot:
+    api_key_env: "MOONSHOT_API_KEY"
+    base_url: "https://api.moonshot.cn/v1"
+    default_model: "kimi-latest"
+
+  kimi:
+    api_key_env: "KIMI_API_KEY"
+    base_url: "https://api.moonshot.cn/v1"
+    default_model: "kimi-latest"
+
+  nvidia:
+    api_key_env: "NVIDIA_API_KEY"
+    base_url: "https://integrate.api.nvidia.com/v1"
+    default_model: "moonshotai/kimi-k2.5"
+
+  qwen:
+    api_key_env: "QWEN_API_KEY"
+    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    default_model: "qwen-plus"
+
+  glm:
+    api_key_env: "GLM_API_KEY"
+    base_url: "https://open.bigmodel.cn/api/paas/v4"
+    default_model: "glm-4-flash"
+
+  deepseek:
+    api_key_env: "DEEPSEEK_API_KEY"
+    base_url: "https://api.deepseek.com/v1"
+    default_model: "deepseek-chat"
+
+  openai:
+    api_key_env: "OPENAI_API_KEY"
+    base_url: "https://api.openai.com/v1"
+    default_model: "gpt-4o-mini"
+
+  gemini:
+    api_key_env: "GEMINI_API_KEY"
+    default_model: "gemini-2.0-flash"
+    client_type: "gemini"
+
 # LLM Configuration
-# Primary provider settings
+# Primary provider (must exist in providers above)
 llm:
-  provider: "kimi"  # Primary: kimi, gemini, openai, deepseek
-  model: "kimi-k2.5"  # Model for primary provider (KIMI 2.5)
-  api_key_env: "KIMI_API_KEY"
+  provider: "kimi"
+  model: ""  # empty = use provider default_model
   temperature: 0.3
   max_tokens: 2000
 
-# Fallback providers (tried in order if primary fails)
-# Available: kimi, gemini, openai, deepseek
+# Fallback chain: tried in order if primary fails
 llm_fallback:
-  - kimi
+  - moonshot
+  - nvidia
   - gemini
 
 # Scoring thresholds (0-10 scale)
 scoring:
-  most_relevant_threshold: 7.0
+  most_relevant_threshold: 8.0
   somewhat_relevant_threshold: 5.0
   could_be_interesting_threshold: 3.0
 

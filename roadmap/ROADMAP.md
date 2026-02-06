@@ -3,7 +3,7 @@
 ## Project 1: Daily arXiv Summary
 
 - Motivation: as more and more preprints hit arXiv every day, it is getting more and more difficult to follow the arXiv. I need a personal assistant who can help me filter the daily arXiv updates, identify the papers I am interested in, and provide quick summaries of the most relevant ones. I want a tool that automatically runs daily to check for updates, sends me a list of relevant papers, and generates detailed summary files. With enough time, I hope that this tool can also help me build a database of the recent arXiv preprints.
-- Status: Just beginning
+- Status: Under Testing
 - Specification: `PROJECT1_SPEC.md`
 - Folder: `project`
 

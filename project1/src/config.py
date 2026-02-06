@@ -36,11 +36,19 @@ class Project:
 
 
 @dataclass
+class ProviderConfig:
+    """Configuration for a single LLM provider."""
+    api_key_env: str
+    base_url: str = ""
+    default_model: str = ""
+    client_type: str = "openai"  # "openai" or "gemini"
+
+
+@dataclass
 class LLMConfig:
     """LLM provider configuration."""
     provider: str = "gemini"
-    model: str = "gemini-2.0-flash"
-    api_key_env: str = "GEMINI_API_KEY"
+    model: str = ""  # empty = use provider default
     temperature: float = 0.3
     max_tokens: int = 2000
 
@@ -80,8 +88,25 @@ class Config:
     scoring: ScoringConfig
     output: OutputConfig
     api: APIConfig
+    providers: dict[str, ProviderConfig] = field(default_factory=dict)
     llm_fallback: list[str] = field(default_factory=list)
     config_path: Optional[Path] = None
+
+    def get_provider(self, name: str) -> ProviderConfig:
+        """Look up a provider by name.
+
+        Args:
+            name: Provider name (must exist in providers dict).
+
+        Raises:
+            ValueError: If provider name is not registered.
+        """
+        if name not in self.providers:
+            raise ValueError(
+                f"Unknown provider '{name}'. "
+                f"Available: {list(self.providers.keys())}"
+            )
+        return self.providers[name]
 
     def get_project_keywords(self) -> list[str]:
         """Get all project names and acronyms for title matching."""
@@ -149,12 +174,24 @@ def load_config(config_path: Path) -> Config:
             # Handle old format: "Name (ACRONYM)"
             projects.append(Project(name=p, acronym=""))
 
+    # Parse providers
+    providers_raw = raw.get("providers", {})
+    providers = {}
+    for name, prov_data in providers_raw.items():
+        if not isinstance(prov_data, dict):
+            continue
+        providers[name] = ProviderConfig(
+            api_key_env=prov_data.get("api_key_env", ""),
+            base_url=prov_data.get("base_url", ""),
+            default_model=prov_data.get("default_model", ""),
+            client_type=prov_data.get("client_type", "openai"),
+        )
+
     # Parse LLM config
     llm_raw = raw.get("llm", {})
     llm = LLMConfig(
         provider=llm_raw.get("provider", "gemini"),
-        model=llm_raw.get("model", "gemini-2.0-flash"),
-        api_key_env=llm_raw.get("api_key_env", "GEMINI_API_KEY"),
+        model=llm_raw.get("model", ""),
         temperature=llm_raw.get("temperature", 0.3),
         max_tokens=llm_raw.get("max_tokens", 2000)
     )
@@ -193,6 +230,20 @@ def load_config(config_path: Path) -> Config:
     if not topics.primary:
         raise ValueError("At least one primary topic is required")
 
+    # Validate provider references
+    if providers:
+        if llm.provider and llm.provider not in providers:
+            raise ValueError(
+                f"llm.provider '{llm.provider}' not found in providers. "
+                f"Available: {list(providers.keys())}"
+            )
+        for fb_name in llm_fallback:
+            if fb_name not in providers:
+                raise ValueError(
+                    f"Fallback provider '{fb_name}' not found in providers. "
+                    f"Available: {list(providers.keys())}"
+                )
+
     return Config(
         category=category,
         topics=topics,
@@ -201,6 +252,7 @@ def load_config(config_path: Path) -> Config:
         scoring=scoring,
         output=output,
         api=api,
+        providers=providers,
         llm_fallback=llm_fallback,
         config_path=config_path.resolve()
     )

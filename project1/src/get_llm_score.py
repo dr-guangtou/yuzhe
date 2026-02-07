@@ -286,7 +286,8 @@ def main():
     # Process each paper
     scored = []  # list of (paper, result) tuples
     for i, raw_id in enumerate(args.arxiv_ids):
-        # Rate limit arXiv requests
+        # Rate limit: arXiv API requires minimum 3 seconds between requests
+        # See: ~/.claude/skills/arxiv-public-api/references/terms_of_use.md
         if i > 0:
             time.sleep(3)
 

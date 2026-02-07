@@ -214,18 +214,18 @@ def assign_tier(
     Returns:
         Assigned Tier
     """
-    thresholds = config.scoring
+    thresholds = config.llm_scoring.tier_thresholds
 
     # Most Relevant: high topic relevance
-    if score >= thresholds.most_relevant_threshold:
+    if score >= thresholds.most_relevant:
         return Tier.MOST_RELEVANT
 
     # Somewhat Relevant: moderate topic relevance
-    if score >= thresholds.somewhat_relevant_threshold:
+    if score >= thresholds.somewhat_relevant:
         return Tier.SOMEWHAT_RELEVANT
 
     # Could Be Interesting: low topic relevance OR project boost
-    if score >= thresholds.could_be_interesting_threshold:
+    if score >= thresholds.could_be_interesting:
         return Tier.COULD_BE_INTERESTING
 
     # Project match ensures minimum floor of "Could Be Interesting"
@@ -239,7 +239,9 @@ def score_papers(
     papers: list[ArxivPaper],
     config: Config,
     llm_client: LLMClient,
-    skip_llm: bool = False
+    skip_llm: bool = False,
+    local_ranker=None,
+    local_threshold: float = 0.0,
 ) -> list[ScoredPaper]:
     """Score papers against configured topics.
 
@@ -248,17 +250,36 @@ def score_papers(
     2. Project matches provide a floor boost (secondary mechanism)
     3. Tier is assigned based on topic score, with project floor
 
+    Local filter modes (additive, existing path stays intact):
+    - skip_llm + local_ranker: Use embedding scores instead of crude category heuristic
+    - local_ranker + local_threshold > 0: Pre-filter, skip LLM for papers below threshold
+
     Args:
         papers: Papers to score
         config: Configuration
         llm_client: LLM client for topic scoring
         skip_llm: If True, use category-based proxy scores (degraded mode)
+        local_ranker: Optional local ranker for embedding-based scoring
+        local_threshold: If > 0, skip LLM for papers below this local score
 
     Returns:
         List of ScoredPaper objects, sorted by tier then score
     """
     prompt_template = load_scoring_prompt()
     scored_papers: list[ScoredPaper] = []
+
+    # Batch-compute local scores if ranker is available
+    local_scores_map: dict[str, float] = {}
+    if local_ranker is not None:
+        try:
+            from local_scorer import arxiv_paper_to_record, local_score_to_llm_scale
+            records = [arxiv_paper_to_record(p) for p in papers]
+            local_results = local_ranker.score_papers(records)
+            for paper, ls in zip(papers, local_results):
+                local_scores_map[paper.arxiv_id] = ls.score_total
+            print(f"Local scoring complete: {len(local_scores_map)} papers scored")
+        except Exception as e:
+            print(f"Warning: Local scoring failed, falling back: {e}")
 
     for i, paper in enumerate(papers):
         print(f"Scoring paper {i+1}/{len(papers)}: {paper.arxiv_id}")
@@ -276,23 +297,35 @@ def score_papers(
             ))
             continue
 
+        local_score_val = local_scores_map.get(paper.arxiv_id)
+
         # Score against TOPICS
         if skip_llm:
-            # Degraded mode: can't evaluate topics, use category as rough proxy
-            # Primary category = likely somewhat relevant to field
-            # Secondary category = might be interesting
-            # Project boost = small increase
-            if primary_match:
-                score = 5.0  # Default to "Somewhat Relevant" threshold
+            if local_score_val is not None:
+                # Local ranker available: use embedding-based score (replaces
+                # the crude category heuristic)
+                from local_scorer import local_score_to_llm_scale
+                score = local_score_to_llm_scale(local_score_val)
+                matched_topics = []
+                reasoning = f"Local embedding score: {local_score_val:.4f} -> {score:.1f}/10"
             else:
-                score = 3.5  # Default to "Could Be Interesting"
+                # Fallback: original category-based heuristic
+                if primary_match:
+                    score = 5.0
+                else:
+                    score = 3.5
 
-            # Project boost: add 1.5 to push borderline cases up
-            if project_match:
-                score += 1.5
+                if project_match:
+                    score += 1.5
 
+                matched_topics = []
+                reasoning = "LLM unavailable - category-based proxy score"
+        elif local_threshold > 0 and local_score_val is not None and local_score_val < local_threshold:
+            # Pre-filter mode: paper below local threshold, skip LLM call
+            from local_scorer import local_score_to_llm_scale
+            score = local_score_to_llm_scale(local_score_val)
             matched_topics = []
-            reasoning = "LLM unavailable - category-based proxy score"
+            reasoning = f"Below local threshold ({local_score_val:.4f} < {local_threshold}), LLM skipped"
         else:
             # Full mode: LLM evaluates topic relevance
             score, matched_topics, reasoning = score_paper_with_llm(
@@ -302,6 +335,12 @@ def score_papers(
             # Project boost: small increase (+0.5) for tracked projects
             # This is a BOOSTER, not the primary score driver
             if project_match and score < 10.0:
+                score = min(10.0, score + 0.5)
+                reasoning += f" [Project boost: {', '.join(matched_projects)}]"
+
+        # Project boost for skip_llm mode (applies to both local and category heuristic)
+        if skip_llm and project_match and local_score_val is not None:
+            if score < 10.0:
                 score = min(10.0, score + 0.5)
                 reasoning += f" [Project boost: {', '.join(matched_projects)}]"
 

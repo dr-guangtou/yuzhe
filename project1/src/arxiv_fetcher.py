@@ -176,7 +176,8 @@ def fetch_papers_by_category(
     }
     url = f"{ARXIV_API_BASE}?{urllib.parse.urlencode(params)}"
 
-    # Rate limiting
+    # Rate limiting: arXiv API requires minimum 3 seconds between requests
+    # See: ~/.claude/skills/arxiv-public-api/references/terms_of_use.md
     if delay_seconds > 0:
         time.sleep(delay_seconds)
 

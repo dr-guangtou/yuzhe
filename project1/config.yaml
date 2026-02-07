@@ -134,11 +134,39 @@ llm_fallback:
   - nvidia
   - gemini
 
-# Scoring thresholds (0-10 scale)
-scoring:
-  most_relevant_threshold: 8.0
-  somewhat_relevant_threshold: 5.0
-  could_be_interesting_threshold: 3.0
+# Pipeline Configuration
+# The pipeline runs in 3 stages:
+# 1. Local Filter (MANDATORY) - embedding-based filtering using song_db
+# 2. LLM Scoring (OPTIONAL) - re-score papers with LLM API
+# 3. Summary Generation (OPTIONAL) - generate summaries or use abstracts
+
+# Stage 1: Local Filter (MANDATORY - always runs first)
+local_filter:
+  interest_model: "song_db/artifacts/interest_model.json"
+  threshold: 0.5  # 0-1 scale (0.5 = 5.0/10) - papers scoring below this are filtered out
+  weights:
+    w_topic: 0.60
+    w_global: 0.30
+    w_category: 0.10
+
+# Stage 2: LLM Scoring (OPTIONAL - default OFF to save tokens)
+# Enable with --use-llm-scoring flag
+llm_scoring:
+  enabled: false  # Default: disabled (override with --use-llm-scoring)
+  keep_tiers:  # Papers in these tiers proceed to summary generation
+    - most_relevant
+    - somewhat_relevant
+  # Tier thresholds (0-10 scale) - used when LLM scoring is enabled
+  tier_thresholds:
+    most_relevant: 8.0
+    somewhat_relevant: 5.0
+    could_be_interesting: 3.0
+
+# Stage 3: Summary Generation (OPTIONAL - default ON)
+# Disable with --no-summary flag
+summary:
+  enabled: true  # Default: enabled (override with --no-summary)
+  fallback_to_abstract: true  # If LLM API fails, output abstract instead
 
 # Output paths
 output:
@@ -148,7 +176,7 @@ output:
 
 # API settings
 api:
-  arxiv_delay_seconds: 3.0
+  arxiv_delay_seconds: 3.0  # Minimum 3 seconds required by arXiv API terms of use
   arxiv_max_results_per_category: 100
   llm_retry_attempts: 3
   llm_retry_delay_seconds: 5.0

@@ -1,15 +1,18 @@
 # Daily arXiv Summary
 
-Automated pipeline that monitors arXiv daily, scores paper relevance against your research interests, and generates tiered Markdown summaries.
+Automated 3-stage pipeline that monitors arXiv daily, filters papers with local embeddings, optionally scores with LLM, and generates tiered Markdown summaries.
 
 ## Features
 
-- **Smart Filtering**: Papers are scored based on category match, topic relevance, and project mentions
+- **3-Stage Architecture** (see `PIPELINE_DESIGN.md` for details):
+  1. **Local Filter** (MANDATORY) - Fast embedding-based filtering (song_db), no API calls
+  2. **LLM Scoring** (OPTIONAL) - Precise topic relevance scoring (default: OFF to save tokens)
+  3. **Summary Generation** (OPTIONAL) - LLM summaries with graceful fallback to abstracts
 - **Three-Tier System**:
   - **Most Relevant**: Detailed summaries with methodology, key findings, and references
   - **Somewhat Relevant**: 3-5 sentence summaries
   - **Could Be Interesting**: Title and link only
-- **Update Mode**: Skips weekends and avoids duplicate processing
+- **Update Mode**: Only processes papers newer than latest digest
 - **Multi-LLM**: Config-driven provider system (Moonshot, NVidia, Gemini, OpenAI, etc.)
 - **Obsidian Integration**: Optionally copies digests to your Obsidian vault
 
@@ -114,51 +117,69 @@ scoring:
 
 ## Usage
 
+**📖 For complete pipeline documentation, see `PIPELINE_DESIGN.md`**
+
 All commands run from the `project1/` directory.
 
-### Generate Today's Digest
+### Default Mode: Local Filter + Summary (Most Efficient)
 
 ```bash
-uv run python src/main.py --mode debug
+uv run python src/main.py
 ```
 
-This is the primary command. It fetches all papers from your configured arXiv categories, scores each one with the LLM, generates summaries, and saves a Markdown digest to `arxiv_digest/archive/2026/YYYY-MM-DD.md`. A typical run with ~90 papers takes 10-15 minutes.
+Runs **Stage 1** (local filter) + **Stage 3** (summaries). No LLM scoring = minimal token usage. Update mode enabled (skips if no new papers).
 
-### Daily Update Mode
+### With LLM Scoring: Full 3-Stage Pipeline
 
 ```bash
-uv run python src/main.py --mode update
+uv run python src/main.py --use-llm-scoring
 ```
 
-Same as above, but checks `.state.json` to avoid duplicate runs. Skips weekends (no arXiv updates on Sat/Sun). Use this for automated/scheduled runs.
+Runs all 3 stages: local filter → LLM scoring → summaries. More precise but uses more tokens.
+
+### Debug Mode: Force Run
+
+```bash
+uv run python src/main.py --debug
+```
+
+Disable update check, run regardless of whether there are new papers. Combine with `--use-llm-scoring` for full pipeline in debug mode.
+
+### No Summary: Filter/Score Only
+
+```bash
+uv run python src/main.py --no-summary
+```
+
+Skip summary generation, output abstracts only. Useful for checking tier distribution.
 
 ### Key Options
 
 | Option | Description |
 |--------|-------------|
-| `--mode debug` | Always run, ignore previous state (default) |
-| `--mode update` | Skip if already ran today |
-| `--limit N` | Process only the first N papers (for quick testing) |
+| `--debug` | Force run without update check |
+| `--use-llm-scoring` | Enable Stage 2 (LLM scoring, default: OFF) |
+| `--no-summary` | Disable Stage 3 (summaries, default: ON) |
+| `--limit N` | Process only the first N papers (testing) |
 | `--days N` | Look back N days instead of 1 |
 | `--category CAT` | Fetch from a single category (e.g., `astro-ph.GA`) |
-| `--skip-llm` | Skip LLM calls; use category-based proxy scores |
-| `--skip-summary` | Score papers but skip summary generation |
+| `--local-filter-threshold T` | Override local filter threshold (0-1, default: 0.5) |
 | `--mock-llm` | Use mock LLM for testing (no API calls) |
-| `--output PATH` | Write digest to a custom path instead of the archive |
+| `--output PATH` | Write digest to a custom path |
 | `-v` | Verbose output (debug-level logging) |
 | `--no-log-file` | Don't write to the log file |
 
-### Quick Test Run
+### Quick Test Runs
 
 ```bash
-# Score 5 papers with real LLM, generate summaries
-uv run python src/main.py --mode debug --limit 5
+# Test local filter only (5 papers, no API calls)
+uv run python src/main.py --no-summary --limit 5 --debug
 
-# Score all papers but skip summaries (check tier distribution)
-uv run python src/main.py --mode debug --skip-summary
+# Test with LLM scoring (5 papers, mock LLM)
+uv run python src/main.py --use-llm-scoring --limit 5 --mock-llm --debug
 
-# Full dry run without any API keys
-uv run python src/main.py --mode debug --mock-llm --limit 5
+# Test individual paper scoring
+uv run python test_local_filter.py --id 2301.07136
 ```
 
 ## Output
@@ -171,11 +192,19 @@ Each digest contains:
 - **Somewhat Relevant** (score >= 5): 3-5 sentence paragraphs
 - **Could Be Interesting** (score >= 3): title and link only
 
-## How Scoring Works
+## How the Pipeline Works
 
 ```
-Fetch by CATEGORY → LLM scores against TOPICS → PROJECT boosts floor → Tier
+Fetch by CATEGORY → Stage 1: Local Filter (embeddings) →
+    [Optional] Stage 2: LLM Scoring →
+    [Optional] Stage 3: Summary Generation → Digest
 ```
+
+**Stage 1** filters papers using pre-computed interest model (song_db), no API calls.
+**Stage 2** (optional) re-scores with LLM for precise topic relevance.
+**Stage 3** (optional) generates summaries or uses abstracts as fallback.
+
+See `PIPELINE_DESIGN.md` for full architecture details and `song_db/README.md` for local filter details.
 
 | Config Section | Purpose | Role in Scoring |
 |----------------|---------|-----------------|

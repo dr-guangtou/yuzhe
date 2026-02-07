@@ -15,6 +15,9 @@ logs/
 temp/*
 !temp/.gitignore
 
+# Song DB artifacts (embeddings, models)
+song_db/artifacts/
+
 # IDE
 .idea/
 .vscode/

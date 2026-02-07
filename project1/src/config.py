@@ -54,11 +54,11 @@ class LLMConfig:
 
 
 @dataclass
-class ScoringConfig:
-    """Scoring thresholds for tier assignment."""
-    most_relevant_threshold: float = 7.0
-    somewhat_relevant_threshold: float = 5.0
-    could_be_interesting_threshold: float = 3.0
+class TierThresholdsConfig:
+    """Thresholds for tier assignment (0-10 scale)."""
+    most_relevant: float = 8.0
+    somewhat_relevant: float = 5.0
+    could_be_interesting: float = 3.0
 
 
 @dataclass
@@ -79,15 +79,44 @@ class APIConfig:
 
 
 @dataclass
+class LocalFilterConfig:
+    """Stage 1: Local embedding-based filter (MANDATORY)."""
+    interest_model: str = "song_db/artifacts/interest_model.json"
+    threshold: float = 0.5  # 0-1 scale (0.5 = 5.0/10)
+    weights: dict[str, float] = field(default_factory=lambda: {
+        "w_topic": 0.60,
+        "w_global": 0.30,
+        "w_category": 0.10,
+    })
+
+
+@dataclass
+class LLMScoringConfig:
+    """Stage 2: LLM-based scoring (OPTIONAL)."""
+    enabled: bool = False  # Enable via --use-llm-scoring
+    keep_tiers: list[str] = field(default_factory=lambda: ["most_relevant", "somewhat_relevant"])
+    tier_thresholds: TierThresholdsConfig = field(default_factory=TierThresholdsConfig)
+
+
+@dataclass
+class SummaryConfig:
+    """Stage 3: Summary generation (OPTIONAL)."""
+    enabled: bool = True  # Disable via --no-summary
+    fallback_to_abstract: bool = True
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     category: CategoryConfig
     topics: TopicConfig
     projects: list[Project]
     llm: LLMConfig
-    scoring: ScoringConfig
     output: OutputConfig
     api: APIConfig
+    local_filter: LocalFilterConfig
+    llm_scoring: LLMScoringConfig
+    summary: SummaryConfig
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     llm_fallback: list[str] = field(default_factory=list)
     config_path: Optional[Path] = None
@@ -196,12 +225,12 @@ def load_config(config_path: Path) -> Config:
         max_tokens=llm_raw.get("max_tokens", 2000)
     )
 
-    # Parse scoring config
-    scoring_raw = raw.get("scoring", {})
-    scoring = ScoringConfig(
-        most_relevant_threshold=scoring_raw.get("most_relevant_threshold", 7.0),
-        somewhat_relevant_threshold=scoring_raw.get("somewhat_relevant_threshold", 5.0),
-        could_be_interesting_threshold=scoring_raw.get("could_be_interesting_threshold", 3.0)
+    # Parse tier thresholds (used in LLM scoring)
+    tier_raw = raw.get("llm_scoring", {}).get("tier_thresholds", {})
+    tier_thresholds = TierThresholdsConfig(
+        most_relevant=tier_raw.get("most_relevant", 8.0),
+        somewhat_relevant=tier_raw.get("somewhat_relevant", 5.0),
+        could_be_interesting=tier_raw.get("could_be_interesting", 3.0)
     )
 
     # Parse output config
@@ -219,6 +248,29 @@ def load_config(config_path: Path) -> Config:
         arxiv_max_results_per_category=api_raw.get("arxiv_max_results_per_category", 100),
         llm_retry_attempts=api_raw.get("llm_retry_attempts", 3),
         llm_retry_delay_seconds=api_raw.get("llm_retry_delay_seconds", 5.0)
+    )
+
+    # Parse local filter config (Stage 1 - MANDATORY)
+    lf_raw = raw.get("local_filter", {})
+    local_filter = LocalFilterConfig(
+        interest_model=lf_raw.get("interest_model", "song_db/artifacts/interest_model.json"),
+        threshold=lf_raw.get("threshold", 0.5),
+        weights=lf_raw.get("weights", {"w_topic": 0.60, "w_global": 0.30, "w_category": 0.10}),
+    )
+
+    # Parse LLM scoring config (Stage 2 - OPTIONAL)
+    llm_scoring_raw = raw.get("llm_scoring", {})
+    llm_scoring = LLMScoringConfig(
+        enabled=llm_scoring_raw.get("enabled", False),
+        keep_tiers=llm_scoring_raw.get("keep_tiers", ["most_relevant", "somewhat_relevant"]),
+        tier_thresholds=tier_thresholds,
+    )
+
+    # Parse summary config (Stage 3 - OPTIONAL)
+    summary_raw = raw.get("summary", {})
+    summary = SummaryConfig(
+        enabled=summary_raw.get("enabled", True),
+        fallback_to_abstract=summary_raw.get("fallback_to_abstract", True),
     )
 
     # Parse LLM fallback list
@@ -249,9 +301,11 @@ def load_config(config_path: Path) -> Config:
         topics=topics,
         projects=projects,
         llm=llm,
-        scoring=scoring,
         output=output,
         api=api,
+        local_filter=local_filter,
+        llm_scoring=llm_scoring,
+        summary=summary,
         providers=providers,
         llm_fallback=llm_fallback,
         config_path=config_path.resolve()

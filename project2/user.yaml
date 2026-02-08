@@ -1,0 +1,22 @@
+user:
+    last_name: Huang
+    first_name: Song
+    chinese_name: 黄崧
+    email: shuang@tsinghua.edu.cn
+    affiliation: Tsinghua University
+    past_affiliations:
+        - affiliation: Nanjing University
+          start_year: 2008
+          end_year: 2014
+        - affiliation: University of Tokyo, IPMU
+          start_year: 2014
+          end_year: 2017
+        - affiliation: University of California, Santa Cruz
+          start_year: 2017
+          end_year: 2019
+        - affiliation: Princeton University
+          start_year: 2019
+          end_year: 2021
+    orcid: 0000-0003-1385-7591
+    google_scholar_id: R0RhE9YAAAAJ
+    

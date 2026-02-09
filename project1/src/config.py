@@ -22,9 +22,10 @@ class TopicConfig:
     """Scientific topics of interest."""
     primary: list[str] = field(default_factory=list)
     secondary: list[str] = field(default_factory=list)
+    negative: list[str] = field(default_factory=list)
 
     def all_topics(self) -> list[str]:
-        """Return all topics (primary + secondary)."""
+        """Return all topics (primary + secondary, excludes negative)."""
         return self.primary + self.secondary
 
 
@@ -91,6 +92,20 @@ class LocalFilterConfig:
 
 
 @dataclass
+class TopicScorerConfig:
+    """Stage 2 (no-LLM): Topic-embedding scorer breakpoints and thresholds."""
+    primary_breakpoints: dict[float, float] = field(default_factory=lambda: {
+        0.20: 0.0, 0.35: 3.0, 0.45: 5.0, 0.55: 8.0, 0.70: 10.0,
+    })
+    secondary_breakpoints: dict[float, float] = field(default_factory=lambda: {
+        0.20: 0.0, 0.30: 2.0, 0.40: 4.0, 0.50: 6.0, 0.65: 8.0,
+    })
+    match_threshold: float = 0.35
+    multi_match_bonus: float = 0.5
+    negative_penalty: float = 3.0
+
+
+@dataclass
 class LLMScoringConfig:
     """Stage 2: LLM-based scoring (OPTIONAL)."""
     enabled: bool = False  # Enable via --use-llm-scoring
@@ -115,6 +130,7 @@ class Config:
     output: OutputConfig
     api: APIConfig
     local_filter: LocalFilterConfig
+    topic_scorer: TopicScorerConfig
     llm_scoring: LLMScoringConfig
     summary: SummaryConfig
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
@@ -187,7 +203,8 @@ def load_config(config_path: Path) -> Config:
     topics_raw = raw.get("topics", {})
     topics = TopicConfig(
         primary=topics_raw.get("primary", []),
-        secondary=topics_raw.get("secondary", [])
+        secondary=topics_raw.get("secondary", []),
+        negative=topics_raw.get("negative", []),
     )
 
     # Parse projects
@@ -258,6 +275,16 @@ def load_config(config_path: Path) -> Config:
         weights=lf_raw.get("weights", {"w_topic": 0.60, "w_global": 0.30, "w_category": 0.10}),
     )
 
+    # Parse topic scorer config (Stage 2 no-LLM path)
+    ts_raw = raw.get("topic_scorer", {})
+    topic_scorer = TopicScorerConfig(
+        primary_breakpoints={float(k): float(v) for k, v in ts_raw.get("primary_breakpoints", {0.20: 0.0, 0.35: 3.0, 0.45: 5.0, 0.55: 8.0, 0.70: 10.0}).items()},
+        secondary_breakpoints={float(k): float(v) for k, v in ts_raw.get("secondary_breakpoints", {0.20: 0.0, 0.30: 2.0, 0.40: 4.0, 0.50: 6.0, 0.65: 8.0}).items()},
+        match_threshold=ts_raw.get("match_threshold", 0.35),
+        multi_match_bonus=ts_raw.get("multi_match_bonus", 0.5),
+        negative_penalty=ts_raw.get("negative_penalty", 3.0),
+    )
+
     # Parse LLM scoring config (Stage 2 - OPTIONAL)
     llm_scoring_raw = raw.get("llm_scoring", {})
     llm_scoring = LLMScoringConfig(
@@ -304,6 +331,7 @@ def load_config(config_path: Path) -> Config:
         output=output,
         api=api,
         local_filter=local_filter,
+        topic_scorer=topic_scorer,
         llm_scoring=llm_scoring,
         summary=summary,
         providers=providers,

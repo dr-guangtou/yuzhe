@@ -472,41 +472,28 @@ Modes:
 
         scored_papers = papers_stage2  # Continue with filtered papers
     else:
-        # No LLM scoring - create ScoredPaper objects with local scores
-        logger.info("STAGE 2: SKIPPED (LLM scoring disabled)")
-        from scorer import ScoredPaper
-        from local_scorer import local_score_to_llm_scale, arxiv_paper_to_record
+        # Stage 2: Topic-Embedding Scoring (replaces linear mapping)
+        logger.info("=" * 60)
+        logger.info("STAGE 2: Topic-Embedding Scoring (no-LLM path)")
+        logger.info("=" * 60)
 
-        scored_papers = []
-        for paper in papers:
-            record = arxiv_paper_to_record(paper)
-            local_score_obj = local_ranker.score_papers([record])[0]
-            llm_scale_score = local_score_to_llm_scale(local_score_obj.score_total)
+        from topic_scorer import TopicScorer
 
-            # Assign tier based on local score
-            tier = Tier.NOT_RELEVANT
-            if llm_scale_score >= config.llm_scoring.tier_thresholds.most_relevant:
-                tier = Tier.MOST_RELEVANT
-            elif llm_scale_score >= config.llm_scoring.tier_thresholds.somewhat_relevant:
-                tier = Tier.SOMEWHAT_RELEVANT
-            elif llm_scale_score >= config.llm_scoring.tier_thresholds.could_be_interesting:
-                tier = Tier.COULD_BE_INTERESTING
+        topic_scorer = TopicScorer(config, local_ranker.embedder)
+        logger.info(
+            f"Topic scorer: {len(config.topics.primary)} primary + "
+            f"{len(config.topics.secondary)} secondary topics embedded"
+        )
 
-            # Check project match
-            project_keywords = config.get_project_keywords()
-            project_match = any(kw in paper.title.lower() for kw in project_keywords)
-            matched_projects = [p.acronym for p in config.projects if p.acronym.lower() in paper.title.lower()]
+        scored_papers = topic_scorer.score_papers(papers, config)
+        logger.info(f"Topic scoring complete: {len(scored_papers)} papers scored")
 
-            scored_papers.append(ScoredPaper(
-                paper=paper,
-                score=llm_scale_score,
-                tier=tier,
-                reasoning=f"Local embedding score: {local_score_obj.score_total:.4f} -> {llm_scale_score:.1f}/10",
-                matched_projects=matched_projects,
-                prefilter_passed=True,
-            ))
-
-        logger.info(f"Using local scores for {len(scored_papers)} papers")
+        # Log tier distribution
+        groups = group_by_tier(scored_papers)
+        logger.info(f"  Most Relevant: {len(groups[Tier.MOST_RELEVANT])}")
+        logger.info(f"  Somewhat Relevant: {len(groups[Tier.SOMEWHAT_RELEVANT])}")
+        logger.info(f"  Could Be Interesting: {len(groups[Tier.COULD_BE_INTERESTING])}")
+        logger.info(f"  Not Relevant: {len(groups[Tier.NOT_RELEVANT])}")
 
     # ========================================================================
     # STAGE 3: Summary Generation (OPTIONAL)

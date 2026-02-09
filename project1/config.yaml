@@ -4,11 +4,10 @@
 # arXiv categories to monitor
 category:
   primary:
-    - astro-ph.CO
     - astro-ph.GA
-    - astro-ph.IM
+    - astro-ph.CO
   secondary:
-    - astro-ph.SR
+    - astro-ph.IM
 
 # Scientific topics of interest (order does not matter)
 topics:

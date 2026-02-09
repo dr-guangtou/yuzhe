@@ -44,7 +44,7 @@ topics:
     - "Method: statistical methods and data mining in astronomy"
     - "Stellar: physics related to the AGB and TP-AGB phases of stellar evolution"
   negative:
-    - "Exoplanet; protoplanetary disks"
+    - "Exoplanet; protoplanetary disks; planet formation; prestellar cores"
     - "Solar physics; solar corona related physics; solar MHD; solar flares; solar wind"
     - "Star formation and molecular gas clouds in the Milky Way (Galactic)"
     - "Stellar physics (except for AGB and TP-AGB phases); stellar evolution (except for AGB and TP-AGB phases); stellar populations in the Milky Way (Galactic)" 

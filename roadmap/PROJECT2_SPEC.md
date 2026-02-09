@@ -32,6 +32,7 @@
 
 ``` Markdown
 - project2
+    - user.yaml
     - README.md (Basic feature, user guide)
     - PLANS.md (Core files to store the plans for agents)
     - docs (other documentation)
@@ -46,7 +47,6 @@
         - summary_long.md
         ...
     - publication_record (folder that stores the main results)
-        - user_info.yaml
         - publication_list.md
         - publication_list.yaml (or any other format)
         - summary

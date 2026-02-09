@@ -1,0 +1,1799 @@
+- title: A MaNGA about the Legacy. I. Connecting the Assembly of Stellar Halo with
+    the Average Star Formation History in Low-redshift Massive Galaxies
+  year: 2026
+  journal: The Astronomical Journal
+  doi: 10.3847/1538-3881/ae2fe1
+  arxiv_id: ''
+  abstract: ''
+  authors: []
+  bibcode: ''
+  citation_count: 0
+  ads_url: ''
+  pdf_url: ''
+- title: Can AI Dream of Unseen Galaxies? Conditional Diffusion Model for Galaxy Morphology
+    Augmentation
+  year: 2026
+  journal: The Astrophysical Journal Supplement Series
+  doi: 10.3847/1538-4365/ae1f10
+  arxiv_id: ''
+  abstract: Observational astronomy relies on visual feature identification to detect
+    critical astrophysical phenomena. While machine learning (ML) increasingly automates
+    this process, models often struggle with generalization in large-scale surveys
+    due to the limited representativeness of labeled datasets—whether from simulations
+    or human annotation—a challenge pronounced for rare yet scientifically valuable
+    objects. To address this, we propose a conditional diffusion model to synthesize
+    realistic galaxy images for augmenting ML training data (hereafter GalaxySD).
+    Leveraging the Galaxy Zoo 2 (GZ2) dataset, which contains visual feature─galaxy
+    image pairs from volunteer annotation, we demonstrate that GalaxySD generates
+    diverse, high-fidelity galaxy images that closely adhere to the specified morphological
+    feature conditions. Moreover, this model enables generative extrapolation to project
+    well-annotated data into unseen domains and advance rare object detection. Integrating
+    synthesized images into ML pipelines improves performance in standard morphology
+    classification, boosting completeness and purity by up to 30% across key metrics.
+    For rare object detection, using early-type galaxies with prominent dust lane
+    features (∼0.1% in the GZ2 dataset) as a test case, our approach doubled the number
+    of detected instances—from 352 to 872—compared to previous studies based on visual
+    inspection. This study highlights the power of generative models to bridge gaps
+    between scarce labeled data and the vast, uncharted parameter space of observational
+    astronomy and sheds insight for future astrophysical foundation model developments.
+    Our project homepage is available at https://galaxysd-webpage.streamlit.app/.
+  authors:
+  - Ma, Chenrui
+  - Sun, Zechang
+  - Jing, Tao
+  - Cai, Zheng
+  - Ting, Yuan-Sen
+  - Huang, Song
+  - Li, Mingyu
+  bibcode: 2026ApJS..282...25M
+  citation_count: 0
+  ads_url: https://ui.adsabs.harvard.edu/abs/2026ApJS..282...25M/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2026ApJS..282...25M/EPRINT_PDF
+- title: 'Zangetsu: A Candidate Isolated, Quiescent, and Backsplash Ultra-diffuse
+    Galaxy in the COSMOS Field'
+  year: 2026
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ae20f5
+  arxiv_id: ''
+  abstract: Deep imaging surveys have changed our view of the low surface brightness
+    (LSB) Universe. The "renaissance" of the LSB galaxy population, as a prime example
+    of this recent development, continues to challenge our understanding of galaxy
+    formation. Here, we report the serendipitous discovery of Zangetsu, an isolated,
+    quiescent, and distorted ultra-diffuse galaxy (UDG) candidate in the COSMOS field,
+    using images from the Hyper Suprime-Cam Subaru Strategic Program (HSC-SSP). Zangetsu
+    exhibits an extremely low central surface brightness (μ<SUB>0,g</SUB> = 26.60
+    ± 0.01 mag arcsec<SUP>−2</SUP>), a very shallow inner surface brightness profile
+    (n<SUB>Sersic</SUB> = 0.40 ± 0.01), and a large angular size (R<SUB>e</SUB> ≍
+    10<inline-formula> <mml:math><mml:mover><mml:mrow><mml:mo>.</mml:mo></mml:mrow><mml:mrow><mml:mtext>″</mml:mtext></mml:mrow></mml:mover></mml:math>
+    </inline-formula>44). Surprisingly, Zangetsu also has a quiescent stellar population
+    (g − i = 0.96), an unusually elongated shape (b/a ∼ 0.25), and mild morphological
+    asymmetry, making it a rare case among known UDGs. Surface brightness fluctuation
+    analysis of HSC and Hubble Space Telescope images only provides a distance lower
+    limit of D &gt; 25.4 Mpc (thus, R<SUB>e</SUB> &gt; 1.38 kpc). However, Zangetsu
+    remains an extreme outlier in the luminosity─size relation of known LSB galaxies,
+    suggesting that it could be an exceptionally large and/or diffuse system. Classic
+    internal or external UDG formation mechanisms alone struggle to explain such a
+    system. A backsplash origin may account for its isolation and quiescent nature.
+    This finding also raises the possibility that current works may overlook similarly
+    extreme, elongated systems that could further our understanding of the LSB Universe.
+  authors:
+  - Wei, Leyao
+  - Huang, Song
+  - Li, Jiaxuan
+  - Sun, Zechang
+  - Li, Mingyu
+  - Tang, Jiaxin
+  bibcode: 2026ApJ...997...32W
+  citation_count: 5
+  ads_url: https://ui.adsabs.harvard.edu/abs/2026ApJ...997...32W/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2026ApJ...997...32W/EPRINT_PDF
+- title: 'First Data Release of the Merian Survey: A Wide-field Imaging Survey of
+    Dwarf Galaxies at z ∼ 0.06–0.10'
+  year: 2025
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ae003e
+  arxiv_id: ''
+  abstract: We present an overview of the Merian Survey and its forthcoming first
+    data release (DR1), an optical imaging survey optimized for studying bright-star-forming
+    dwarf galaxies. Merian uses two medium-band filters (N708 and N540, centered at
+    708 and 540 nm), custom-built for the Dark Energy Camera (DECam) on the Blanco
+    telescope. Merian covers ∼750 deg<SUP>2</SUP> of equatorial fields, overlapping
+    with the Hyper Suprime-Cam Subaru Strategic Program (HSC-SSP) wide, deep, and
+    ultra-deep fields. Combined with the HSC-SSP imaging data (grizy), Merian DECam
+    medium-band imaging allows for photometric redshift measurements via detection
+    of Hα and [O III] line emission flux excess in the N708 and N540 filters, respectively,
+    at 0.06 &lt; z &lt; 0.10. We present the survey design, observations taken to
+    date, data reduction using the Legacy Survey of Space and Time Science Pipelines,
+    aperture-matched photometry for accurate galaxy colors, and the contents of DR1.
+    The key science goals of Merian include probing the dark matter halos of dwarf
+    galaxies out to their virial radii using high signal-to-noise weak lensing profile
+    measurements, decoupling the effects of baryonic processes from dark matter, and
+    understanding the role of black holes in dwarf galaxy evolution. This rich data
+    set will also offer unique opportunities for studying extremely metal-poor galaxies
+    via their strong [O III] emission and Hα lines, as well as [O II] emitters at
+    z ∼ 0.4, and Lyα emitters at z ∼ 3.3 and z ∼ 4.8. Merian showcases the power of
+    utilizing narrow and medium-band filters alongside broad-band filters for sky
+    imaging, demonstrating their synergistic capacity to unveil astrophysical insights
+    across diverse astrophysical phenomena.
+  authors:
+  - Danieli, Shany
+  - Kado-Fong, Erin
+  - Huang, Song
+  - Luo, Yifei
+  - Li, Ting S.
+  - Kelvin, Lee S.
+  - Leauthaud, Alexie
+  - Greene, Jenny E.
+  - Mintz, Abby
+  - Lin, Xiaojing
+  - Li, Jiaxuan
+  - Baldassare, Vivienne
+  - Banerjee, Arka
+  - Bhattacharyya, Joy
+  - Blanco, Diana
+  - Brooks, Alyson
+  - Cai, Zheng
+  - Chen, Xinjun
+  - Cruz, Akaxia
+  - Geda, Robel
+  - Guan, Runquan
+  - Johnson, Sean
+  - Kannawadi, Arun
+  - Kim, Stacy Y.
+  - Li, Mingyu
+  - Lupton, Robert
+  - Mace, Charlie
+  - Medina, Gustavo E.
+  - Pan, Yue
+  - Peter, Annika H. G.
+  - Read, Justin I.
+  - Córdova Rosado, Rodrigo
+  - Seifert, Allen
+  - Wasleske, Erik J.
+  - Wick, Joseph
+  bibcode: 2025ApJ...993..110D
+  citation_count: 9
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025ApJ...993..110D/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025ApJ...993..110D/EPRINT_PDF
+- title: Relationship between 2D and 3D galaxy stellar mass and correlations with
+    halo mass
+  year: 2025
+  journal: Journal of Cosmology and Astroparticle Physics
+  doi: 10.1088/1475-7516/2025/10/014
+  arxiv_id: ''
+  abstract: Recent studies suggest that the stars in the outer regions of massive
+    galaxies trace halo mass better than the inner regions and that an annular stellar
+    mass provides a low scatter method of selecting galaxy clusters. However, we can
+    only observe galaxies as projected two-dimensional objects on the sky. In this
+    paper, we use a sample of simulated galaxies with stellar mass M* &gt; 10<SUP>11.2</SUP>
+    M <SUB>⊙</SUB> and z = 0.4 from TNG300 of the IllustrisTNG project to study how
+    well galaxy stellar mass profiles in three dimensions correlate with halo mass,
+    and what effects arise when observationally projecting stellar profiles into two
+    dimensions. We compare 2D and 3D outer stellar mass selections and find that they
+    have similar performance as halo mass proxies and that, surprisingly, a 2D selection
+    sometimes has marginally better performance with a 0.2 dex scatter of halo mass
+    at given stellar mass in the best case. We also investigate whether the weak lensing
+    profiles around galaxies selected by 2D outer stellar mass suffer from projection
+    effects. We find that the lensing profiles of samples selected by 2D and 3D definitions
+    are nearly identical, suggesting that the 2D selection does not create a bias.
+    These findings underscore the promise of using outer stellar mass as a tool for
+    identifying galaxy clusters.
+  authors:
+  - Zhou, Conghao
+  - Leauthaud, Alexie
+  - Xu, Shuo
+  - Diemer, Benedikt
+  - Huang, Song
+  - Leidig, Katya
+  - Jeltema, Tesla
+  - Gatti, Marco
+  - Luo, Yifei
+  - Cannarozzo, Carlo
+  - Heydenreich, Sven
+  bibcode: 2025JCAP...10..014Z
+  citation_count: 1
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025JCAP...10..014Z/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025JCAP...10..014Z/EPRINT_PDF
+- title: 'Oxyster: A Circumgalactic Low-ionization Oxygen Nebula next to a Starburst
+    Galaxy at z ∼ 1'
+  year: 2025
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/adf43a
+  arxiv_id: ''
+  abstract: Extended emission line nebulae around galaxies or active galactic nuclei
+    (AGNs) provide a unique window to investigate the galactic ecosystem through the
+    circumgalactic medium (CGM). Using Subaru Hyper Suprime-Cam narrowband imaging
+    and spectroscopic follow-up, we serendipitously discover "Oxyster"—a large ionized
+    nebula next to an interacting starburst galaxy at z = 0.924. The nebula is traced
+    by extended [O II] λλ3726, 3729 (∼30 kpc) and [O III] λ5007 (∼20 kpc) emission
+    lines. On the nebula luminosity─size plane, Oxyster surpasses the extended narrow-line
+    regions around low-z AGNs, resembling a higher-z analog of "Hanny's Voorwerp."
+    However, its uniformly low [O III]/[O II] ratio (O32) sets it apart from typical
+    AGN light echoes. For the host galaxy, Hubble Space Telescope and JWST images
+    reveal a disturbed red disk galaxy with a single blue spiral "arm." Spectral energy
+    distribution fitting suggests the (2─6) × 10<SUP>10</SUP> M<SUB>⊙</SUB> host galaxy
+    sits above the star-forming main sequence with an ongoing starburst, especially
+    in the "arm," and has &lt;5% luminosity contribution from AGNs, consistent with
+    X-ray nondetection and the radio continuum. Standard photoionization and shock
+    models struggle to explain simultaneously Oxyster's emission line luminosities,
+    low O32 ratio, and the nondetection of the Hβ line. A plausible explanation could
+    involve the combination of a recent (&lt;10<SUP>8</SUP> yr) starburst and a low-luminosity
+    AGN (L<SUB>bol</SUB> ∼ 1 × 10<SUP>42</SUP> erg s<SUP>−1</SUP>). While Oxyster's
+    nature awaits future investigation, its discovery highlights the potential of
+    ground-based narrowband imaging to uncover extended emission line nebulae around
+    non-AGN systems, opening new avenues for studying the CGM of normal galaxies in
+    the early Universe.
+  authors:
+  - Lu, Pengjun
+  - Li, Mingyu
+  - Baron, Dalya
+  - Yue, Minghao
+  - Huang, Song
+  - Cai, Zheng
+  bibcode: 2025ApJ...990..168L
+  citation_count: 0
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025ApJ...990..168L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025ApJ...990..168L/EPRINT_PDF
+- title: The Outskirt Stellar Mass of Low-redshift Massive Galaxies Is an Excellent
+    Halo Mass Proxy in Illustris/IllustrisTNG Simulations
+  year: 2025
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/adeca0
+  arxiv_id: ''
+  abstract: Recent observations suggest that the extended stellar halos of low-redshift
+    massive galaxies are tightly connected to the assembly of their dark matter halos.
+    In this paper, we use the Illustris, IllustrisTNG100, and IllustrisTNG300 simulations
+    to compare how different stellar aperture masses trace halo mass. For massive
+    central galaxies (M<SUB>⋆</SUB> ≥ 10<SUP>11.2</SUP> M<SUB>⊙</SUB>), we find that
+    a 2D outskirt stellar mass measured between 50 and 100 kpc (M<SUB>⋆,[50,100]</SUB>)
+    consistently outperforms other aperture-based stellar masses. We further show
+    that M<SUB>⋆,[50,100]</SUB> correlates better with halo mass than the total mass
+    of accreted stars (the ex situ mass), which suggests that not all accreted stars
+    connect to halo assembly equally. While the galaxy formation recipes differ between
+    Illustris and IllustrisTNG100, the two simulations yield consistent ex situ outskirt
+    fractions for massive galaxies (∼70% in M<SUB>⋆,[50,100]</SUB>). These results
+    demonstrate the potential of using the outskirt stellar mass to deepen our understanding
+    of the galaxy–halo connection in massive dark matter halos and to trace dark matter
+    halos better.
+  authors:
+  - Xu, Shuo
+  - Huang, Song
+  - Leauthaud, Alexie
+  - Diemer, Benedikt
+  - Leidig, Katya
+  - Cannarozzo, Carlo
+  - Zhou, Conghao
+  bibcode: 2025ApJ...990..127X
+  citation_count: 5
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025ApJ...990..127X/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025ApJ...990..127X/EPRINT_PDF
+- title: Improving galaxy cluster selection with the outskirt stellar mass of galaxies
+  year: 2025
+  journal: Physical Review D
+  doi: 10.1103/1j5f-cmkg
+  arxiv_id: ''
+  abstract: The number density and redshift evolution of optically selected galaxy
+    clusters offer an independent measurement of the amplitude of matter fluctuations,
+    <inline-formula><mml:math><mml:mrow><mml:msub><mml:mrow><mml:mi>S</mml:mi></mml:mrow><mml:mrow><mml:mn>8</mml:mn></mml:mrow></mml:msub></mml:mrow></mml:math></inline-formula>.
+    However, recent results have shown that clusters chosen by the redMaPPer algorithm
+    show richness-dependent biases that affect the weak lensing signals and number
+    densities of clusters, increasing uncertainty in the cluster mass calibration
+    and reducing their constraining power. In this work, we evaluate an alternative
+    cluster proxy, outskirt stellar mass, <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>,
+    defined as the total stellar mass within a [50, 100] kpc envelope centered on
+    a massive galaxy. This proxy exhibits scatter comparable to redMaPPer richness,
+    <inline-formula><mml:math><mml:mi>λ</mml:mi></mml:math></inline-formula>, but
+    is less likely to be subject to projection effects. We compare the Dark Energy
+    Survey Year 3 redMaPPer cluster catalog with a <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    selected cluster sample from the Hyper-Suprime Camera survey. We use weak lensing
+    measurements to quantify and compare the scatter of <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    and <inline-formula><mml:math><mml:mi>λ</mml:mi></mml:math></inline-formula> with
+    halo mass. Our results show <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    has a scatter consistent with <inline-formula><mml:math><mml:mi>λ</mml:mi></mml:math></inline-formula>,
+    with a similar halo mass dependence, and that both proxies contain unique information
+    about the underlying halo mass. We find <inline-formula><mml:math><mml:mi>λ</mml:mi></mml:math></inline-formula>-selected
+    samples introduce features into the measured <inline-formula><mml:math><mml:mi>Δ</mml:mi><mml:mi>Σ</mml:mi></mml:math></inline-formula>
+    signal that are not well fit by a log-normal scatter only model, absent in <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    selected samples. Our findings suggest that <inline-formula><mml:math><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    offers an alternative for cluster selection with more easily calibrated selection
+    biases, at least at the generally lower richnesses probed here. Combining both
+    proxies may yield a mass proxy with a lower scatter and more tractable selection
+    biases, enabling the use of lower mass clusters in cosmology. Finally, we find
+    the scatter and slope in the <inline-formula><mml:math><mml:mi>λ</mml:mi><mml:mo>-</mml:mo><mml:msub><mml:mi>M</mml:mi><mml:mi>out</mml:mi></mml:msub></mml:math></inline-formula>
+    scaling relation to be <inline-formula><mml:math><mml:mn>0.49</mml:mn><mml:mo>±</mml:mo><mml:mn>0.02</mml:mn></mml:math></inline-formula>
+    and <inline-formula><mml:math><mml:mn>0.38</mml:mn><mml:mo>±</mml:mo><mml:mn>0.09</mml:mn></mml:math></inline-formula>.
+  authors:
+  - Kwiecien, Matthew
+  - Jeltema, Tesla
+  - Leauthaud, Alexie
+  - Huang, Song
+  - Rykoff, Eli
+  - Heydenreich, Sven
+  - Lange, Johannes
+  - Everett, Spencer
+  - Zhou, Conghao
+  - Kelly, Paige
+  - Zhang, Yuanyuan
+  - Shin, Tae-Hyeon
+  - Golden-Marx, Jesse
+  - Marshall, J. L.
+  - Aguena, M.
+  - Allam, S. S.
+  - Bocquet, S.
+  - Brooks, D.
+  - Rosell, A. Carnero
+  - Carretero, J.
+  - da Costa, L. N.
+  - Pereira, M. E. S.
+  - Davis, T. M.
+  - De Vicente, J.
+  - Doel, P.
+  - Ferrero, I.
+  - Flaugher, B.
+  - Frieman, J.
+  - García-Bellido, J.
+  - Gatti, M.
+  - Gaztanaga, E.
+  - Giannini, G.
+  - Gruen, D.
+  - Gruendl, R. A.
+  - Gutierrez, G.
+  - Hinton, S. R.
+  - Hollowood, D. L.
+  - Honscheid, K.
+  - James, D. J.
+  - Lee, S.
+  - Miquel, R.
+  - Pieres, A.
+  - Malagón, A. A. Plazas
+  - Romer, A. K.
+  - Samuroff, S.
+  - Sanchez, E.
+  - Santiago, B.
+  - Sevilla-Noarbe, I.
+  - Smith, M.
+  - Suchyta, E.
+  - Swanson, M. E. C.
+  - Tarle, G.
+  - Tucker, D. L.
+  - Vikram, V.
+  - Weaverdyck, N.
+  - Wiseman, P.
+  bibcode: 2025PhRvD.111l3524K
+  citation_count: 5
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025PhRvD.111l3524K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025PhRvD.111l3524K/EPRINT_PDF
+- title: A Nonparametric Morphological Analysis of Hα Emission in Bright Dwarfs Using
+    the Merian Survey
+  year: 2024
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ad6861
+  arxiv_id: ''
+  abstract: Using medium-band imaging from the newly released Merian Survey, we conduct
+    a nonparametric morphological analysis of Hα emission maps and stellar continua
+    for a sample of galaxies with <inline-formula> <mml:math overflow="scroll"><mml:mn>8</mml:mn><mml:mo>≲</mml:mo><mml:mi>log</mml:mi><mml:mo
+    stretchy="false">(</mml:mo><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mo>⋆</mml:mo></mml:mrow></mml:msub><mml:mrow><mml:mo
+    stretchy="true">/</mml:mo></mml:mrow><mml:msub><mml:mrow><mml:mi>M</mml:mi></mml:mrow><mml:mrow><mml:mo>⊙</mml:mo></mml:mrow></mml:msub><mml:mo
+    stretchy="false">)</mml:mo><mml:mo>&lt;</mml:mo><mml:mn>10.3</mml:mn></mml:math>
+    </inline-formula> at 0.064 &lt; z &lt; 0.1. We present a novel method for estimating
+    the stellar continuum emission through the Merian Survey's N708 medium-band filter,
+    which we use to measure Hα emission and produce Hα maps for our sample of galaxies
+    with seven-band Merian photometry and available spectroscopy. We measure nonparametric
+    morphological statistics for the Hα and stellar continuum images, explore how
+    the morphology of the Hα differs from the continuum, and investigate how the parameters
+    evolve with the galaxies' physical properties. In agreement with previous results
+    for more massive galaxies, we find that the asymmetry of the stellar continuum
+    increases with specific star formation rate (sSFR), and we extend the trend to
+    lower masses, also showing that it holds for the asymmetry of the Hα emission.
+    We find that the lowest-mass galaxies with the highest sSFR have Hα emission that
+    is consistently heterogeneous and compact, while the less active galaxies in this
+    mass range have Hα emission that appears diffuse. At higher masses, our data do
+    not span a sufficient range in sSFR to evaluate whether similar trends apply.
+    We conclude that high sSFRs in low-mass galaxies likely result from dynamical
+    instabilities that compress a galaxy's molecular gas to a dense region near the
+    center.
+  authors:
+  - Mintz, Abby
+  - Greene, Jenny E.
+  - Kado-Fong, Erin
+  - Danieli, Shany
+  - Li, Jiaxuan
+  - Luo, Yifei
+  - Leauthaud, Alexie
+  - Baldassare, Vivienne
+  - Huang, Song
+  - Peter, Annika H. G.
+  - Bhattacharyya, Joy
+  - Li, Mingyu
+  - Pan, Yue
+  bibcode: 2024ApJ...974..273M
+  citation_count: 4
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024ApJ...974..273M/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024ApJ...974..273M/EPRINT_PDF
+- title: 'Merian: A Wide-Field Imaging Survey of Dwarf Galaxies at z~0.06-0.10'
+  year: 2024
+  journal: arXiv e-prints
+  doi: 10.48550/arXiv.2410.01884
+  arxiv_id: '2410.01884'
+  abstract: We present an overview of the Merian Survey and its forthcoming first
+    data release (DR1), an optical imaging survey optimized for studying bright-star-forming
+    dwarf galaxies. Merian uses two medium-band filters (N708 and N540, centered at
+    708 and 540 nm), custom-built for the Dark Energy Camera (DECam) on the Blanco
+    telescope. Merian covers ∼750 deg<SUP>2</SUP> of equatorial fields, overlapping
+    with the Hyper Suprime-Cam Subaru Strategic Program (HSC-SSP) wide, deep, and
+    ultra-deep fields. Combined with the HSC-SSP imaging data (grizy), Merian DECam
+    medium-band imaging allows for photometric redshift measurements via detection
+    of Hα and [O III] line emission flux excess in the N708 and N540 filters, respectively,
+    at 0.06 &lt; z &lt; 0.10. We present the survey design, observations taken to
+    date, data reduction using the Legacy Survey of Space and Time Science Pipelines,
+    aperture-matched photometry for accurate galaxy colors, and the contents of DR1.
+    The key science goals of Merian include probing the dark matter halos of dwarf
+    galaxies out to their virial radii using high signal-to-noise weak lensing profile
+    measurements, decoupling the effects of baryonic processes from dark matter, and
+    understanding the role of black holes in dwarf galaxy evolution. This rich data
+    set will also offer unique opportunities for studying extremely metal-poor galaxies
+    via their strong [O III] emission and Hα lines, as well as [O II] emitters at
+    z ∼ 0.4, and Lyα emitters at z ∼ 3.3 and z ∼ 4.8. Merian showcases the power of
+    utilizing narrow and medium-band filters alongside broad-band filters for sky
+    imaging, demonstrating their synergistic capacity to unveil astrophysical insights
+    across diverse astrophysical phenomena.
+  authors:
+  - Danieli, Shany
+  - Kado-Fong, Erin
+  - Huang, Song
+  - Luo, Yifei
+  - Li, Ting S.
+  - Kelvin, Lee S.
+  - Leauthaud, Alexie
+  - Greene, Jenny E.
+  - Mintz, Abby
+  - Lin, Xiaojing
+  - Li, Jiaxuan
+  - Baldassare, Vivienne
+  - Banerjee, Arka
+  - Bhattacharyya, Joy
+  - Blanco, Diana
+  - Brooks, Alyson
+  - Cai, Zheng
+  - Chen, Xinjun
+  - Cruz, Akaxia
+  - Geda, Robel
+  - Guan, Runquan
+  - Johnson, Sean
+  - Kannawadi, Arun
+  - Kim, Stacy Y.
+  - Li, Mingyu
+  - Lupton, Robert
+  - Mace, Charlie
+  - Medina, Gustavo E.
+  - Pan, Yue
+  - Peter, Annika H. G.
+  - Read, Justin I.
+  - Córdova Rosado, Rodrigo
+  - Seifert, Allen
+  - Wasleske, Erik J.
+  - Wick, Joseph
+  bibcode: 2025ApJ...993..110D
+  citation_count: 9
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025ApJ...993..110D/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025ApJ...993..110D/EPRINT_PDF
+- title: Gravitational Wave Astronomy With TianQin
+  year: 2024
+  journal: arXiv e-prints
+  doi: 10.48550/arXiv.2409.19665
+  arxiv_id: '2409.19665'
+  abstract: The opening of the gravitational wave window has significantly enhanced
+    our capacity to explore the Universe's most extreme and dynamic sector. In the
+    mHz frequency range, a diverse range of compact objects, from the most massive
+    black holes at the farthest reaches of the Universe to the lightest white dwarfs
+    in our cosmic backyard, generate a complex and dynamic symphony of gravitational
+    wave signals. Once recorded by gravitational wave detectors, these unique fingerprints
+    have the potential to decipher the birth and growth of cosmic structures over
+    a wide range of scales, from stellar binaries and stellar clusters to galaxies
+    and large-scale structures. The TianQin space-borne gravitational wave mission
+    is scheduled for launch in the 2030s, with an operational lifespan of five years.
+    It will facilitate pivotal insights into the history of our Universe. This document
+    presents a concise overview of the detectable sources of TianQin, outlining their
+    characteristics, the challenges they present, and the expected impact of the TianQin
+    observatory on our understanding of them.
+  authors:
+  - Li, En-Kun
+  - Liu, Shuai
+  - Torres-Orjuela, Alejandro
+  - Chen, Xian
+  - Inayoshi, Kohei
+  - Wang, Long
+  - Hu, Yi-Ming
+  - Amaro-Seoane, Pau
+  - Askar, Abbas
+  - Bambi, Cosimo
+  - Capelo, Pedro R.
+  - Chen, Hong-Yu
+  - Chua, Alvin J. K.
+  - Condés-Breña, Enrique
+  - Dai, Lixin
+  - Das, Debtroy
+  - Derdzinski, Andrea
+  - Fan, Hui-Min
+  - Fujii, Michiko
+  - Gao, Jie
+  - Garg, Mudit
+  - Ge, Hongwei
+  - Giersz, Mirek
+  - Huang, Shun-Jia
+  - Hypki, Arkadiusz
+  - Liang, Zheng-Cheng
+  - Liu, Bin
+  - Liu, Dongdong
+  - Liu, Miaoxin
+  - Liu, Yunqi
+  - Mayer, Lucio
+  - Napolitano, Nicola R.
+  - Peng, Peng
+  - Shao, Yong
+  - Shashank, Swarnim
+  - Shen, Rongfeng
+  - Tagawa, Hiromichi
+  - Tanikawa, Ataru
+  - Toscani, Martina
+  - Vázquez-Aceves, Verónica
+  - Wang, Hai-Tian
+  - Wang, Han
+  - Yi, Shu-Xu
+  - Zhang, Jian-dong
+  - Zhang, Xue-Ting
+  - Zhu, Lianggui
+  - Zwick, Lorenz
+  - Huang, Song
+  - Mei, Jianwei
+  - Wang, Yan
+  - Xie, Yi
+  - Zhang, Jiajun
+  - Luo, Jun
+  bibcode: 2025RPPh...88e6901L
+  citation_count: 53
+  ads_url: https://ui.adsabs.harvard.edu/abs/2025RPPh...88e6901L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2025RPPh...88e6901L/EPRINT_PDF
+- title: Interpreting Multi-band Galaxy Observations with Large Language Model-Based
+    Agents
+  year: 2024
+  journal: arXiv e-prints
+  doi: 10.48550/arXiv.2409.14807
+  arxiv_id: '2409.14807'
+  abstract: Astronomical research traditionally relies on extensive domain knowledge
+    to interpret observations and narrow down hypotheses. We demonstrate that this
+    process can be emulated using large language model-based agents to accelerate
+    research workflows. We propose mephisto, a multi-agent collaboration framework
+    that mimics human reasoning to interpret multi-band galaxy observations. mephisto
+    interacts with the CIGALE codebase, which includes spectral energy distribution
+    (SED) models to explain observations. In this open-world setting, mephisto learns
+    from its self-play experience, performs tree search, and accumulates knowledge
+    in a dynamically updated base. As a proof of concept, we apply mephisto to the
+    latest data from the James Webb Space Telescope. mephisto attains near-human proficiency
+    in reasoning about galaxies' physical scenarios, even when dealing with a recently
+    discovered population of "Little Red Dot" galaxies. This represents the first
+    demonstration of agentic research in astronomy, advancing towards end-to-end research
+    via LLM agents and potentially expediting astronomical discoveries.
+  authors:
+  - Sun, Zechang
+  - Ting, Yuan-Sen
+  - Liang, Yaobo
+  - Duan, Nan
+  - Huang, Song
+  - Cai, Zheng
+  bibcode: 2024arXiv240914807S
+  citation_count: 14
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024arXiv240914807S/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024arXiv240914807S/EPRINT_PDF
+- title: Size-mass relation of the brightest cluster galaxies at z   1
+  year: 2024
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stae1374
+  arxiv_id: ''
+  abstract: We present the size-mass relation of the brightest cluster galaxies (BCGs)
+    at 0.1 &lt; z &lt; 1.4 using the imaging data obtained by the Hyper Suprime-Cam
+    Subaru Strategic Program. Our sample consists of 471 photometrically selected
+    BCGs with stellar mass logM<SUB>*</SUB>/M<SUB>⊙</SUB> = 11-12. We measure the
+    size of the BCGs using i-band imaging and model fits based on a single Sérsic
+    light profile. Stellar masses are determined through spectral energy distribution
+    fitting using Sérsic-modelled photometry data across five optical bands (grizy).
+    The size-mass scaling relation of BCGs is $r_\mathrm{ e}\propto M_*^{0.73-1.00}$
+    at z &lt; 1, with a slope that does not evolve significantly. The slope of the
+    size-mass relation for BCGs is steeper than other non-BCG galaxies, which implies
+    that BCGs are a special galaxy population. The size of BCGs at a given stellar
+    mass evolves rapidly as ∝ (1 + z)<SUP>-1.58 ± 0.13</SUP> and increases with redshift
+    by a factor of 2.5 from z ~ 1.2 to z ~ 0.2. The rapid size growth is in agreement
+    with semi-analytical model results, indicating that the BCG growth is dominated
+    by frequent minor mergers. Furthermore, we explore the size-mass relationship
+    of BCGs with respect to the halo mass of the cluster and find there is no significant
+    correlation, which might imply that a dependence on the environment predominantly
+    affects the outer envelope of the BCGs.
+  authors:
+  - Yang, Lilan
+  - Silverman, John
+  - Oguri, Masamune
+  - Ding, Xuheng
+  - Toba, Yoshiki
+  - Huang, Song
+  - Kawinwanichakij, Lalitwadee
+  bibcode: 2024MNRAS.531.4006Y
+  citation_count: 4
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024MNRAS.531.4006Y/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024MNRAS.531.4006Y/PUB_PDF
+- title: 'Knowledge Graph in Astronomical Research with Large Language Models: Quantifying
+    Driving Forces in Interdisciplinary Scientific Discovery'
+  year: 2024
+  journal: arXiv e-prints
+  doi: 10.48550/arXiv.2406.01391
+  arxiv_id: '2406.01391'
+  abstract: 'Identifying and predicting the factors that contribute to the success
+    of interdisciplinary research is crucial for advancing scientific discovery. However,
+    there is a lack of methods to quantify the integration of new ideas and technological
+    advancements in astronomical research and how these new technologies drive further
+    scientific breakthroughs. Large language models, with their ability to extract
+    key concepts from vast literature beyond keyword searches, provide a new tool
+    to quantify such processes. In this study, we extracted concepts in astronomical
+    research from 297,807 publications between 1993 and 2024 using large language
+    models, resulting in a set of 24,939 concepts. These concepts were then used to
+    form a knowledge graph, where the link strength between any two concepts was determined
+    by their relevance through the citation-reference relationships. By calculating
+    this relevance across different time periods, we quantified the impact of numerical
+    simulations and machine learning on astronomical research. The knowledge graph
+    demonstrates two phases of development: a phase where the technology was integrated
+    and another where the technology was explored in scientific discovery. The knowledge
+    graph reveals that despite machine learning has made much inroad in astronomy,
+    there is currently a lack of new concept development at the intersection of AI
+    and Astronomy, which may be the current bottleneck preventing machine learning
+    from further transforming the field of astronomy.'
+  authors:
+  - Sun, Zechang
+  - Ting, Yuan-Sen
+  - Liang, Yaobo
+  - Duan, Nan
+  - Huang, Song
+  - Cai, Zheng
+  bibcode: 2024arXiv240601391S
+  citation_count: 11
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024arXiv240601391S/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024arXiv240601391S/EPRINT_PDF
+- title: Cluster cosmology without cluster finding
+  year: 2024
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stae882
+  arxiv_id: ''
+  abstract: We propose that observations of supermassive galaxies contain cosmological
+    statistical constraining power similar to conventional cluster cosmology, and
+    we provide promising indications that the associated systematic errors are comparably
+    easier to control. We consider a fiducial spectroscopic and stellar mass complete
+    sample of galaxies drawn from the Dark Energy Spectroscopic Instrument (DESI)
+    and forecast how constraints on Ω<SUB>m</SUB>-σ<SUB>8</SUB> from this sample will
+    compare with those from number counts of clusters based on richness λ. At fixed
+    number density, we find that massive galaxies offer similar constraints to galaxy
+    clusters. However, a mass-complete galaxy sample from DESI has the potential to
+    probe lower halo masses than standard optical cluster samples (which are typically
+    limited to λ ≳ 20 and M<SUB>halo</SUB> ≳ 10<SUP>13.5</SUP> M<SUB>⊙</SUB> h<SUP>-1</SUP>);
+    additionally, it is straightforward to cleanly measure projected galaxy clustering
+    w<SUB>p</SUB> for such a DESI sample, which we show can substantially improve
+    the constraining power on Ω<SUB>m</SUB>. We also compare the constraining power
+    of M<SUB>*</SUB>-limited samples to those from larger but mass-incomplete samples
+    [e.g. the DESI Bright Galaxy Survey (BGS) sample]; relative to a lower number
+    density M<SUB>*</SUB>-limited samples, we find that a BGS-like sample improves
+    statistical constraints by 60 per cent for Ω<SUB>m</SUB> and 40 per cent for σ<SUB>8</SUB>,
+    but this uses small-scale information that will be harder to model for BGS. Our
+    initial assessment of the systematics associated with supermassive galaxy cosmology
+    yields promising results. The proposed samples have a ~10 per cent satellite fraction,
+    but we show that cosmological constraints may be robust to the impact of satellites.
+    These findings motivate future work to realize the potential of supermassive galaxies
+    to probe lower halo masses than richness-based clusters and to potentially avoid
+    persistent systematics associated with optical cluster finding.
+  authors:
+  - Xhakaj, Enia
+  - Leauthaud, Alexie
+  - Lange, Johannes
+  - Krause, Elisabeth
+  - Hearin, Andrew
+  - Huang, Song
+  - Wechsler, Risa H.
+  - Heydenreich, Sven
+  bibcode: 2024MNRAS.530.4203X
+  citation_count: 8
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024MNRAS.530.4203X/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024MNRAS.530.4203X/EPRINT_PDF
+- title: 'The Merian survey: design, construction, and characterization of a filter
+    set optimized to find dwarf galaxies and measure their dark matter halo properties
+    with weak lensing'
+  year: 2024
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stae925
+  arxiv_id: ''
+  abstract: 'The Merian survey is mapping ~ 850 deg<SUP>2</SUP> of the Hyper Suprime-Cam
+    Strategic Survey Program (HSC-SSP) wide layer with two medium-band filters on
+    the 4-m Victor M. Blanco telescope at the Cerro Tololo Inter-American Observatory,
+    with the goal of carrying the first high signal-to-noise (S/N) measurements of
+    weak gravitational lensing around dwarf galaxies. This paper presents the design
+    of the Merian filter set: N708 (λ<SUB>c</SUB> = 7080 Å, Δλ = 275 Å) and N540 (λ<SUB>c</SUB>
+    = 5400 Å, Δλ = 210 Å). The central wavelengths and filter widths of N708 and N540
+    were designed to detect the $\rm H\alpha$ and $\rm [OIII]$ emission lines of galaxies
+    in the mass range $8\lt \rm \log M_*/M_\odot \lt 9$ by comparing Merian fluxes
+    with HSC broad-band fluxes. Our filter design takes into account the weak lensing
+    S/N and photometric redshift performance. Our simulations predict that Merian
+    will yield a sample of ~ 85 000 star-forming dwarf galaxies with a photometric
+    redshift accuracy of σ<SUB>Δz/(1 + z)</SUB> ~ 0.01 and an outlier fraction of
+    $\eta =2.8~{{\ \rm per\ cent}}$ over the redshift range 0.058 &lt; z &lt; 0.10.
+    With 60 full nights on the Blanco/Dark Energy Camera (DECam), the Merian survey
+    is predicted to measure the average weak lensing profile around dwarf galaxies
+    with lensing S/N ~32 within r &lt; 0.5 Mpc and lensing S/N ~90 within r &lt; 1.0
+    Mpc. This unprecedented sample of star-forming dwarf galaxies will allow for studies
+    of the interplay between dark matter and stellar feedback and their roles in the
+    evolution of dwarf galaxies.'
+  authors:
+  - Luo, Yifei
+  - Leauthaud, Alexie
+  - Greene, Jenny
+  - Huang, Song
+  - Kado-Fong, Erin
+  - Danieli, Shany
+  - Li, Ting S.
+  - Li, Jiaxuan
+  - Blanco, Diana
+  - Wasleske, Erik J.
+  - Wick, Joseph
+  - Mintz, Abby
+  - Guan, Runquan
+  - Peter, Annika H. G.
+  - Baldassare, Vivienne
+  - Brooks, Alyson
+  - Banerjee, Arka
+  - Bhattacharyya, Joy
+  - Cai, Zheng
+  - Chen, Xinjun
+  - Gunn, Jim
+  - Johnson, Sean D.
+  - Kelvin, Lee S.
+  - Li, Mingyu
+  - Lin, Xiaojing
+  - Lupton, Robert
+  - Mace, Charlie
+  - Medina, Gustavo E.
+  - Read, Justin
+  - Rosado, Rodrigo Córdova
+  - Seifert, Allen
+  bibcode: 2024MNRAS.530.4988L
+  citation_count: 25
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024MNRAS.530.4988L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024MNRAS.530.4988L/EPRINT_PDF
+- title: 'PROVABGS: The Probabilistic Stellar Mass Function of the BGS One-percent
+    Survey'
+  year: 2024
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ad19c8
+  arxiv_id: ''
+  abstract: We present the probabilistic stellar mass function (pSMF) of galaxies
+    in the DESI Bright Galaxy Survey (BGS), observed during the One-percent Survey.
+    The One-percent Survey was one of DESI's survey validation programs conducted
+    from 2021 April to May, before the start of the main survey. It used the same
+    target selection and similar observing strategy as the main survey and successfully
+    observed the spectra and redshifts of 143,017 galaxies in the r &lt; 19.5 magnitude-limited
+    BGS Bright sample and 95,499 galaxies in the fainter surface-brightness- and color-selected
+    BGS Faint sample over z &lt; 0.6. We derive pSMFs from posteriors of stellar mass,
+    M <SUB>*</SUB>, inferred from DESI photometry and spectroscopy using the Hahn
+    et al. PRObabilistic Value-Added BGS (PROVABGS) Bayesian spectral energy distribution
+    modeling framework. We use a hierarchical population inference framework that
+    statistically and rigorously propagates the M <SUB>*</SUB> uncertainties. Furthermore,
+    we include correction weights that account for the selection effects and incompleteness
+    of the BGS observations. We present the redshift evolution of the pSMF in BGS,
+    as well as the pSMFs of star-forming and quiescent galaxies classified using average
+    specific star formation rates from PROVABGS. Overall, the pSMFs show good agreement
+    with previous stellar mass function measurements in the literature. Our pSMFs
+    showcase the potential and statistical power of BGS, which in its main survey
+    will observe &gt;100 × more galaxies. Moreover, we present the statistical framework
+    for subsequent population statistics measurements using BGS, which will characterize
+    the global galaxy population and scaling relations at low redshifts with unprecedented
+    precision.
+  authors:
+  - Hahn, ChangHoon
+  - Aguilar, Jessica Nicole
+  - Alam, Shadab
+  - Ahlen, Steven
+  - Brooks, David
+  - Cole, Shaun
+  - de la Macorra, Axel
+  - Doel, Peter
+  - Font-Ribera, Andreu A.
+  - Forero-Romero, Jaime E.
+  - Gontcho A Gontcho, Satya
+  - Honscheid, Klaus
+  - Huang, Song
+  - Kisner, Theodore
+  - Kremin, Anthony
+  - Landriau, Martin
+  - Manera, Marc
+  - Meisner, Aaron
+  - Miquel, Ramon
+  - Moustakas, John
+  - Nie, Jundan
+  - Poppett, Claire
+  - Rossi, Graziano
+  - Saintonge, Amélie
+  - Sanchez, Eusebio
+  - Saulder, Christoph
+  - Schubnell, Michael
+  - Seo, Hee-Jong
+  - Siudek, Małgorzata
+  - Speranza, Federico
+  - Tarlé, Gregory
+  - Weaver, Benjamin A.
+  - Wechsler, Risa H.
+  - Yuan, Sihan
+  - Zhou, Zhimin
+  - Zou, Hu
+  bibcode: 2024ApJ...963...56H
+  citation_count: 9
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024ApJ...963...56H/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024ApJ...963...56H/PUB_PDF
+- title: 'PopSED: Population-level Inference for Galaxy Properties from Broadband
+    Photometry with Neural Density Estimation'
+  year: 2024
+  journal: The Astronomical Journal
+  doi: 10.3847/1538-3881/ad0be4
+  arxiv_id: '2309.16958'
+  abstract: We present POPSED , a framework for the population-level inference of
+    galaxy properties from photometric data. Unlike the traditional approach of first
+    analyzing individual galaxies and then combining the results to determine the
+    physical properties of the entire galaxy population, we directly make the population
+    distribution the inference objective. We train normalizing flows to approximate
+    the population distribution by minimizing the Wasserstein distance between the
+    synthetic photometry of the galaxy population and the observed data. We validate
+    our method using mock observations and apply it to galaxies from the GAMA survey.
+    POPSED reliably recovers the redshift and stellar mass distribution of 10<SUP>5</SUP>
+    galaxies using broadband photometry within &lt;1 GPU hr, being 10<SUP>5-6</SUP>
+    times faster than the traditional spectral energy distribution modeling method.
+    From the population posterior, we also recover the star-forming main sequence
+    for GAMA galaxies at z &lt; 0.1. With the unprecedented number of galaxies in
+    upcoming surveys, our method offers an efficient tool for studying galaxy evolution
+    and deriving redshift distributions for cosmological analyses.
+  authors:
+  - Li, Jiaxuan
+  - Melchior, Peter
+  - Hahn, ChangHoon
+  - Huang, Song
+  bibcode: 2024AJ....167...16L
+  citation_count: 21
+  ads_url: https://ui.adsabs.harvard.edu/abs/2024AJ....167...16L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2024AJ....167...16L/EPRINT_PDF
+- title: 'Zephyr : Stitching Heterogeneous Training Data with Normalizing Flows for
+    Photometric Redshift Inference'
+  year: 2023
+  journal: arXiv e-prints
+  doi: 10.48550/arXiv.2310.20125
+  arxiv_id: '2310.20125'
+  abstract: We present zephyr, a novel method that integrates cutting-edge normalizing
+    flow techniques into a mixture density estimation framework, enabling the effective
+    use of heterogeneous training data for photometric redshift inference. Compared
+    to previous methods, zephyr demonstrates enhanced robustness for both point estimation
+    and distribution reconstruction by leveraging normalizing flows for density estimation
+    and incorporating careful uncertainty quantification. Moreover, zephyr offers
+    unique interpretability by explicitly disentangling contributions from multi-source
+    training data, which can facilitate future weak lensing analysis by providing
+    an additional quality assessment. As probabilistic generative deep learning techniques
+    gain increasing prominence in astronomy, zephyr should become an inspiration for
+    handling heterogeneous training data while remaining interpretable and robustly
+    accounting for observational uncertainties.
+  authors:
+  - Sun, Zechang
+  - Speagle, Joshua S.
+  - Huang, Song
+  - Ting, Yuan-Sen
+  - Cai, Zheng
+  bibcode: 2023arXiv231020125S
+  citation_count: 8
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023arXiv231020125S/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023arXiv231020125S/EPRINT_PDF
+- title: Beyond Ultra-diffuse Galaxies. I. Mass-Size Outliers among the Satellites
+    of Milky Way Analogs
+  year: 2023
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ace829
+  arxiv_id: '2210.14994'
+  abstract: Large diffuse galaxies are hard to find, but understanding the environments
+    where they live, their numbers, and ultimately their origins, is of intense interest
+    and importance for galaxy formation and evolution. Using Subaru's Hyper Suprime-Cam
+    Strategic Survey Program, we perform a systematic search for low surface brightness
+    galaxies and present novel and effective methods for detecting and modeling them.
+    As a case study, we surveyed 922 Milky Way analogs in the nearby Universe (0.01
+    &lt; z &lt; 0.04) and built a large sample of satellite galaxies that are outliers
+    in the mass-size relation. These "ultra-puffy" galaxies (UPGs), defined to be
+    1.5σ above the average mass-size relation, represent the tail of the satellite
+    size distribution. We find that each MW analog hosts N <SUB>UPG</SUB> = 0.31 ±
+    0.05 UPGs on average, which is consistent with but slightly lower than the observed
+    abundance at this halo mass in the Local Volume. We also construct a sample of
+    ultra-diffuse galaxies (UDGs) in MW analogs and find an abundance of N <SUB>UDG</SUB>
+    = 0.44 ± 0.05 per host. With literature results, we confirm that the UDG abundance
+    scales with the host halo mass following a sublinear power law. We argue that
+    our definition of UPGs, which is based on the mass-size relation, is more physically
+    motivated than the common definition of UDGs, which depends on the surface brightness
+    and size cuts and thus yields different surface mass density cuts for quenched
+    and star-forming galaxies.
+  authors:
+  - Li, Jiaxuan
+  - Greene, Jenny E.
+  - Greco, Johnny P.
+  - Huang, Song
+  - Melchior, Peter
+  - Beaton, Rachael
+  - Casey, Kirsten
+  - Danieli, Shany
+  - Goulding, Andy
+  - Joseph, Remy
+  - Kado-Fong, Erin
+  - Kim, Ji Hoon
+  - MacArthur, Lauren A.
+  bibcode: 2023ApJ...955....1L
+  citation_count: 30
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023ApJ...955....1L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023ApJ...955....1L/EPRINT_PDF
+- title: Beyond Ultra-diffuse Galaxies. II. Environmental Quenching of Mass-Size Outliers
+    among the Satellites of Milky Way Analogs
+  year: 2023
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ace4c5
+  arxiv_id: '2302.14108'
+  abstract: Recent observations have reignited interest in a population of dwarf galaxies
+    that are large and diffuse for their mass, often called ultra-diffuse galaxies
+    (UDGs). However, the origin and evolution of these mass-size outliers and the
+    role of the environment are still unclear. Using the exquisitely deep and wide
+    Hyper Suprime-Cam Strategic Survey images, we search for ultra-puffy galaxies
+    (UPGs), defined as being 1.5σ larger than the average size for their mass, around
+    Milky Way-like galaxies. We present the sizes and radial distributions of mass-size
+    outliers and derive their quenched fraction to explore the impact of the environment.
+    Surprisingly, despite being outliers in size, the UPGs have a similar quenched
+    fraction as normal-sized satellites of Milky Way analogs in both observations
+    and simulations, suggesting that quenching is not tied to being a mass-size outlier.
+    The quenched fraction is higher for the UPGs associated with redder hosts, as
+    well as those that are closer to the host in projection. In contrast, the UDGs
+    are overall redder and more quiescent compared with normal satellites. We show
+    that the classic definition of UDGs is heavily weighted toward quenched galaxies
+    and thus cannot be used for a study of quenching of mass-size outliers.
+  authors:
+  - Li, Jiaxuan
+  - Greene, Jenny E.
+  - Greco, Johnny
+  - Beaton, Rachael
+  - Danieli, Shany
+  - Goulding, Andy
+  - Huang, Song
+  - Kado-Fong, Erin
+  bibcode: 2023ApJ...955....2L
+  citation_count: 9
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023ApJ...955....2L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023ApJ...955....2L/EPRINT_PDF
+- title: Galaxy Clustering in the Mira-Titan Universe. I. Emulators for the Redshift
+    Space Galaxy Correlation Function and Galaxy-Galaxy Lensing
+  year: 2023
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/acd92f
+  arxiv_id: '2302.12379'
+  abstract: We construct accurate emulators for the projected and redshift space galaxy
+    correlation functions and excess surface density as measured by galaxy-galaxy
+    lensing, based on halo occupation distribution modeling. Using the complete Mira-Titan
+    suite of 111 N-body simulations, our emulators vary over eight cosmological parameters
+    and include the effects of neutrino mass and dynamical dark energy. We demonstrate
+    that our emulators are sufficiently accurate for the analysis of the Baryon Oscillation
+    Spectroscopic Survey DR12 CMASS galaxy sample over the range 0.5 ≤ r ≤ 50 h <SUP>-1</SUP>
+    Mpc. Furthermore, we show that our emulators are capable of recovering unbiased
+    cosmological constraints from realistic mock catalogs over the same range. Our
+    mock catalog tests show the efficacy of combining small-scale galaxy-galaxy lensing
+    with redshift space clustering and that we can constrain the growth rate and σ
+    <SUB>8</SUB> to 7% and 4.5%, respectively, for a CMASS-like sample using only
+    the measurements covered by our emulator. With the inclusion of a cosmic microwave
+    background prior on H <SUB>0</SUB>, this reduces to a 2% measurement of the growth
+    rate.
+  authors:
+  - Kwan, Juliana
+  - Saito, Shun
+  - Leauthaud, Alexie
+  - Heitmann, Katrin
+  - Habib, Salman
+  - Frontiere, Nicholas
+  - Guo, Hong
+  - Huang, Song
+  - Pope, Adrian
+  - Rodriguéz-Torres, Sergio
+  bibcode: 2023ApJ...952...80K
+  citation_count: 16
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023ApJ...952...80K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023ApJ...952...80K/EPRINT_PDF
+- title: 'The contribution of in situ and ex situ star formation in early-type galaxies:
+    MaNGA versus IllustrisTNG'
+  year: 2023
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stac3023
+  arxiv_id: '2210.08109'
+  abstract: We compare stellar mass surface density, metallicity, age, and line-of-sight
+    velocity dispersion profiles in massive ($M_*\ge 10^{10.5}\, \mathrm{M_\odot }$)
+    present-day early-type galaxies (ETGs) from the MaNGA survey with simulated galaxies
+    from the TNG100 simulation of the IllustrisTNG suite. We find an excellent agreement
+    between the stellar mass surface density profiles of MaNGA and TNG100 ETGs, both
+    in shape and normalization. Moreover, TNG100 reproduces the shapes of the profiles
+    of stellar metallicity and age, as well as the normalization of velocity dispersion
+    distributions of MaNGA ETGs. We generally also find good agreement when comparing
+    the stellar profiles of central and satellite galaxies between MaNGA and TNG100.
+    An exception is the velocity dispersion profiles of very massive ($M_*\gtrsim
+    10^{11.5}\, \mathrm{M_\odot }$) central galaxies, which, on average, are significantly
+    higher in TNG100 than in MaNGA ($\approx 50\, \mathrm{km\, s^{-1}}$). We study
+    the radial profiles of in situ and ex situ stars in TNG100 and discuss the extent
+    to which each population contributes to the observed MaNGA profiles. Our analysis
+    lends significant support to the idea that high-mass ($M_*\gtrsim 10^{11}\, \mathrm{M_\odot
+    }$) ETGs in the present-day Universe are the result of a merger-driven evolution
+    marked by major mergers that tend to homogenize the stellar populations of the
+    progenitors in the merger remnant.
+  authors:
+  - Cannarozzo, Carlo
+  - Leauthaud, Alexie
+  - Oyarzún, Grecco A.
+  - Nipoti, Carlo
+  - Diemer, Benedikt
+  - Huang, Song
+  - Rodriguez-Gomez, Vicente
+  - Sonnenfeld, Alessandro
+  - Bundy, Kevin
+  bibcode: 2023MNRAS.520.5651C
+  citation_count: 33
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023MNRAS.520.5651C/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023MNRAS.520.5651C/EPRINT_PDF
+- title: Consistent lensing and clustering in a low-S<SUB>8</SUB> Universe with BOSS,
+    DES Year 3, HSC Year 1, and KiDS-1000
+  year: 2023
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stac2938
+  arxiv_id: '2202.07440'
+  abstract: 'We evaluate the consistency between lensing and clustering based on measurements
+    from Baryon Oscillation Spectroscopic Survey combined with galaxy-galaxy lensing
+    from Dark Energy Survey (DES) Year 3, Hyper Suprime-Cam Subaru Strategic Program
+    (HSC) Year 1, and Kilo-Degree Survey (KiDS)-1000. We find good agreement between
+    these lensing data sets. We model the observations using the DARK EMULATOR and
+    fit the data at two fixed cosmologies: Planck (S<SUB>8</SUB> = 0.83), and a Lensing
+    cosmology (S<SUB>8</SUB> = 0.76). For a joint analysis limited to large scales,
+    we find that both cosmologies provide an acceptable fit to the data. Full utilization
+    of the higher signal-to-noise small-scale measurements is hindered by uncertainty
+    in the impact of baryon feedback and assembly bias, which we account for with
+    a reasoned theoretical error budget. We incorporate a systematic inconsistency
+    parameter for each redshift bin, A, that decouples the lensing and clustering.
+    With a wide range of scales, we find different results for the consistency between
+    the two cosmologies. Limiting the analysis to the bins for which the impact of
+    the lens sample selection is expected to be minimal, for the Lensing cosmology,
+    the measurements are consistent with A = 1; A = 0.91 ± 0.04 (A = 0.97 ± 0.06)
+    using DES+KiDS (HSC). For the Planck case, we find a discrepancy: A = 0.79 ± 0.03
+    (A = 0.84 ± 0.05) using DES+KiDS (HSC). We demonstrate that a kinematic Sunyaev-Zeldovich-based
+    estimate for baryonic effects alleviates some of the discrepancy in the Planck
+    cosmology. This analysis demonstrates the statistical power of small-scale measurements;
+    however, caution is still warranted given modelling uncertainties and foreground
+    sample selection effects.'
+  authors:
+  - Amon, A.
+  - Robertson, N. C.
+  - Miyatake, H.
+  - Heymans, C.
+  - White, M.
+  - DeRose, J.
+  - Yuan, S.
+  - Wechsler, R. H.
+  - Varga, T. N.
+  - Bocquet, S.
+  - Dvornik, A.
+  - More, S.
+  - Ross, A. J.
+  - Hoekstra, H.
+  - Alarcon, A.
+  - Asgari, M.
+  - Blazek, J.
+  - Campos, A.
+  - Chen, R.
+  - Choi, A.
+  - Crocce, M.
+  - Diehl, H. T.
+  - Doux, C.
+  - Eckert, K.
+  - Elvin-Poole, J.
+  - Everett, S.
+  - Ferté, A.
+  - Gatti, M.
+  - Giannini, G.
+  - Gruen, D.
+  - Gruendl, R. A.
+  - Hartley, W. G.
+  - Herner, K.
+  - Hildebrandt, H.
+  - Huang, S.
+  - Huff, E. M.
+  - Joachimi, B.
+  - Lee, S.
+  - MacCrann, N.
+  - Myles, J.
+  - Navarro-Alsina, A.
+  - Nishimichi, T.
+  - Prat, J.
+  - Secco, L. F.
+  - Sevilla-Noarbe, I.
+  - Sheldon, E.
+  - Shin, T.
+  - Tröster, T.
+  - Troxel, M. A.
+  - Tutusaus, I.
+  - Wright, A. H.
+  - Yin, B.
+  - Aguena, M.
+  - Allam, S.
+  - Annis, J.
+  - Bacon, D.
+  - Bilicki, M.
+  - Brooks, D.
+  - Burke, D. L.
+  - Carnero Rosell, A.
+  - Carretero, J.
+  - Castander, F. J.
+  - Cawthon, R.
+  - Costanzi, M.
+  - da Costa, L. N.
+  - Pereira, M. E. S.
+  - de Jong, J.
+  - De Vicente, J.
+  - Desai, S.
+  - Dietrich, J. P.
+  - Doel, P.
+  - Ferrero, I.
+  - Frieman, J.
+  - García-Bellido, J.
+  - Gerdes, D. W.
+  - Gschwend, J.
+  - Gutierrez, G.
+  - Hinton, S. R.
+  - Hollowood, D. L.
+  - Honscheid, K.
+  - Huterer, D.
+  - Kannawadi, A.
+  - Kuehn, K.
+  - Kuropatkin, N.
+  - Lahav, O.
+  - Lima, M.
+  - Maia, M. A. G.
+  - Marshall, J. L.
+  - Menanteau, F.
+  - Miquel, R.
+  - Mohr, J. J.
+  - Morgan, R.
+  - Muir, J.
+  - Paz-Chinchón, F.
+  - Pieres, A.
+  - Plazas Malagón, A. A.
+  - Porredon, A.
+  - Rodriguez-Monroy, M.
+  - Roodman, A.
+  - Sanchez, E.
+  - Serrano, S.
+  - Shan, H.
+  - Suchyta, E.
+  - Swanson, M. E. C.
+  - Tarle, G.
+  - Thomas, D.
+  - To, C.
+  - Zhang, Y.
+  bibcode: 2023MNRAS.518..477A
+  citation_count: 107
+  ads_url: https://ui.adsabs.harvard.edu/abs/2023MNRAS.518..477A/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2023MNRAS.518..477A/EPRINT_PDF
+- title: Ultra-diffuse Galaxies as Extreme Star-forming Environments. I. Mapping Star
+    Formation in H i-rich UDGs
+  year: 2022
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac9964
+  arxiv_id: ''
+  abstract: Ultra-diffuse galaxies (UDGs) are both extreme products of galaxy evolution
+    and extreme environments in which to test our understanding of star formation.
+    In this work, we contrast the spatially resolved star formation activity of a
+    sample of 22 H I-selected UDGs and 35 low-mass galaxies from the NASA Sloan Atlas
+    (NSA) catalog within 120 Mpc. We employ a new joint spectral energy distribution
+    fitting method to compute star formation rate and stellar mass surface density
+    maps that leverage the high spatial resolution optical imaging data of the Hyper
+    Suprime-Cam Subaru Strategic Program and the UV coverage of the Galaxy Evolution
+    Explorer, along with H I radial profiles estimated from a subset of galaxies that
+    have spatially resolved H I maps. We find that UDGs have low star formation efficiencies
+    as a function of their atomic gas down to scales of 500 pc. We additionally find
+    that the stellar mass-weighted sizes of our UDG sample are unremarkable when considered
+    as a function of their H I mass-their stellar sizes are comparable to NSA dwarfs
+    at fixed H I mass. This is a natural result in the picture where UDGs are forming
+    stars normally, but at low efficiencies. We compare our results to predictions
+    from contemporary models of galaxy formation, and find in particular that our
+    observations are difficult to reproduce in models where UDGs undergo stellar expansion
+    due to vigorous star formation feedback should bursty star formation be required
+    down to z = 0.
+  authors:
+  - Kado-Fong, Erin
+  - Greene, Jenny E.
+  - Huang, Song
+  - Goulding, Andy
+  bibcode: 2022ApJ...941...11K
+  citation_count: 19
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022ApJ...941...11K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022ApJ...941...11K/EPRINT_PDF
+- title: 'Reaching for the Edge I: probing the outskirts of massive galaxies with
+    HSC, DECaLS, SDSS, and Dragonfly'
+  year: 2022
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stac2121
+  arxiv_id: ''
+  abstract: 'The outer light (stellar haloes) of massive galaxies has recently emerged
+    as a possible low scatter tracer of dark matter halo mass. To test the robustness
+    of outer light measurements across different data sets, we compare the 1D azimuthally
+    averaged surface brightness profiles of massive galaxies using four independent
+    data sets: the Hyper Suprime-Cam survey (HSC), the Dark Energy Camera Legacy Survey
+    (DECaLS), the Sloan Digital Sky Survey (SDSS), and the Dragonfly Wide Field Survey
+    (Dragonfly). We test the sky subtraction and proposed corrections for HSC and
+    DECaLS. For galaxies at z &lt; 0.05, Dragonfly has the best control of systematics,
+    reaching surface brightness levels of μ<SUB>r</SUB> ≈ 30 mag arcsec<SUP>-2</SUP>.
+    At 0.19 &lt; z &lt; 0.50, HSC can reliably recover individual surface brightness
+    profiles to μ<SUB>r</SUB> ≈ 28.5 mag arcsec<SUP>-2</SUP> (R = 100-150 kpc in semimajor
+    axis). In a statistical sense, DECaLS agrees with HSC to R &gt; 200 kpc. DECaLS
+    and HSC measurements of the stellar mass contained within 100 kpc agree within
+    0.05 dex. Finally, we use weak lensing to show that measurements of outer light
+    with DECaLS at 0.19 &lt; z &lt; 0.50 show a similar promise as HSC as a low scatter
+    proxy of halo mass. The tests and results from this paper represent an important
+    step forward for accurate measurements of the outer light of massive galaxies
+    and demonstrate that outer light measurements from DECam imaging will be a promising
+    method for finding galaxy clusters.'
+  authors:
+  - Li, Jiaxuan
+  - Huang, Song
+  - Leauthaud, Alexie
+  - Moustakas, John
+  - Danieli, Shany
+  - Greene, Jenny E.
+  - Abraham, Roberto
+  - Ardila, Felipe
+  - Kado-Fong, Erin
+  - Lokhorst, Deborah
+  - Lupton, Robert
+  - Price, Paul
+  bibcode: 2022MNRAS.515.5335L
+  citation_count: 32
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022MNRAS.515.5335L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022MNRAS.515.5335L/EPRINT_PDF
+- title: 'The outer stellar mass of massive galaxies: a simple tracer of halo mass
+    with scatter comparable to richness and reduced projection effects'
+  year: 2022
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stac1680
+  arxiv_id: ''
+  abstract: 'Using the weak gravitational lensing data from the Hyper Suprime-Cam
+    Subaru Strategic Program (HSC survey), we study the potential of different stellar
+    mass estimates in tracing halo mass. We consider galaxies with log<SUB>10</SUB>(M<SUB>⋆</SUB>/M<SUB>⊙</SUB>)
+    &gt; 11.5 at 0.2 &lt; z &lt; 0.5 with carefully measured light profiles, and clusters
+    from the redMaPPer and CAMIRA richness-based algorithms. We devise a method (the
+    ''Top-N test'') to evaluate the scatter in the halo mass-observable relation for
+    different tracers, and to inter-compare halo mass proxies in four number density
+    bins using stacked galaxy-galaxy lensing profiles. This test reveals three key
+    findings. Stellar masses based on CModel photometry and aperture luminosity within
+    R &lt;30 kpc are poor proxies of halo mass. In contrast, the stellar mass of the
+    outer envelope is an excellent halo mass proxy. The stellar mass within R = [50,
+    100] kpc, M<SUB>⋆, [50, 100]</SUB>, has performance comparable to the state-of-the-art
+    richness-based cluster finders at log<SUB>10</SUB>M<SUB>vir</SUB> ≳ 14.0 and could
+    be a better halo mass tracer at lower halo masses. Finally, using N-body simulations,
+    we find that the lensing profiles of massive haloes selected by M<SUB>⋆, [50,
+    100]</SUB> are consistent with the expectation for a sample without projection
+    or mis-centring effects. Richness-selected clusters, on the other hand, display
+    an excess at R ~ 1 Mpc in their lensing profiles, which may suggest a more significant
+    impact from selection biases. These results suggest that M<SUB>⋆</SUB>-based tracers
+    have distinct advantages in identifying massive haloes, which could open up new
+    avenues for cluster cosmology. The codes and data used in this work can be found
+    here:'
+  authors:
+  - Huang, Song
+  - Leauthaud, Alexie
+  - Bradshaw, Christopher
+  - Hearin, Andrew
+  - Behroozi, Peter
+  - Lange, Johannes
+  - Greene, Jenny
+  - DeRose, Joseph
+  - Speagle, Joshua S.
+  - Xhakaj, Enia
+  bibcode: 2022MNRAS.515.4722H
+  citation_count: 28
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022MNRAS.515.4722H/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022MNRAS.515.4722H/EPRINT_PDF
+- title: 'SDSS-IV MaNGA: Cannibalism Caught in the Act—On the Frequency of Occurrence
+    of Multiple Cores in Brightest Cluster Galaxies'
+  year: 2022
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac6d66
+  arxiv_id: ''
+  abstract: Although it is generally accepted that massive galaxies form in a two-phased
+    fashion, beginning with a rapid mass buildup through intense starburst activities
+    followed by primarily dry mergers that mainly deposit stellar mass at outskirts,
+    the late time stellar mass growth of brightest cluster galaxies (BCGs), the most
+    massive galaxies in the universe, is still not well understood. Several independent
+    measurements have indicated a slower mass growth rate than predictions from theoretical
+    models. We attempt to resolve the discrepancy by measuring the frequency of BCGs
+    with multiple cores, which serve as a proxy of the merger rates in the central
+    region and facilitate a more direct comparison with theoretical predictions. Using
+    79 BCGs at z = 0.06-0.15 with integral field spectroscopic data from the Mapping
+    Nearby Galaxies at Apache Point Observatory (MaNGA) project, we obtain a multiple-core
+    fraction of 0.11 ± 0.04 at z ≈ 0.1 within an 18 kpc radius from the center, which
+    is comparable to the value of 0.08 ± 0.04 derived from mock observations of 218
+    simulated BCGs from the cosmological hydrodynamical simulation IllustrisTNG. We
+    find that most cores that appear close to the BCGs from imaging data turn out
+    to be physically associated systems. Anchoring on the similarity in the multiple-core
+    frequency between the MaNGA and IllustrisTNG, we discuss the mass growth rate
+    of BCGs over the past 4.5 Gyr.
+  authors:
+  - Hsu, Yun-Hsin
+  - Lin, Yen-Ting
+  - Huang, Song
+  - Nelson, Dylan
+  - Rodriguez-Gomez, Vicente
+  - Lai, Hsuan-Ting
+  - Greene, Jenny
+  - Leauthaud, Alexie
+  - Aragón-Salamanca, Alfonso
+  - Bundy, Kevin
+  - Emsellem, Eric
+  - Merrifield, Michael
+  - More, Surhud
+  - Okabe, Nobuhiro
+  - Rong, Yu
+  - Brownstein, Joel R.
+  - Lane, Richard R.
+  - Pan, Kaike
+  - Schneider, Donald P.
+  bibcode: 2022ApJ...933...61H
+  citation_count: 8
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022ApJ...933...61H/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022ApJ...933...61H/EPRINT_PDF
+- title: The Nature of Low-surface-brightness Galaxies in the Hyper Suprime-Cam Survey
+  year: 2022
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac7238
+  arxiv_id: ''
+  abstract: We present the statistical redshift distribution of a large sample of
+    low-surface-brightness (LSB) galaxies identified in the first 200 deg<SUP>2</SUP>
+    of the Hyper Suprime-Cam Strategic Survey Program. Through cross-correlation with
+    the NASA-SDSS Atlas, we find that the majority of objects lie within z &lt; 0.15
+    or ~500 Mpc, yielding a mass range of M <SUB>*</SUB> ≈ 10<SUP>7</SUP>-10<SUP>9</SUP>
+    M <SUB>⊙</SUB> and a size range of r <SUB>eff,g </SUB> ≈ 1-8 kpc. We find a peak
+    in the distance distribution within 100 Mpc, corresponding mostly to ~10<SUP>7</SUP>
+    M <SUB>⊙</SUB> galaxies that fall on the known mass-size relation. There is also
+    a tail in the redshift distribution out to z ≈ 0.15, comprising more massive (M
+    <SUB>*</SUB> = 10<SUP>8</SUP> - 10<SUP>9</SUP> M <SUB>⊙</SUB>) galaxies at the
+    larger end of our size range. We see tentative evidence that at the higher-mass
+    end (M <SUB>*</SUB> &gt; 10<SUP>8</SUP> M <SUB>⊙</SUB>), the LSB galaxies do not
+    form a smooth extension of the mass-size relation of higher-surface-brightness
+    galaxies, perhaps suggesting that the LSB galaxy population is distinct in its
+    formation path.
+  authors:
+  - Greene, Jenny E.
+  - Greco, Johnny P.
+  - Goulding, Andy D.
+  - Huang, Song
+  - Kado-Fong, Erin
+  - Danieli, Shany
+  - Li, Jiaxuan
+  - Kim, Ji Hoon
+  - Komiyama, Yutaka
+  - Leauthaud, Alexie
+  - MacArthur, Lauren A.
+  - Sifón, Cristóbal
+  bibcode: 2022ApJ...933..150G
+  citation_count: 20
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022ApJ...933..150G/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022ApJ...933..150G/EPRINT_PDF
+- title: The In Situ Origins of Dwarf Stellar Outskirts in FIRE-2
+  year: 2022
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac6c88
+  arxiv_id: '2109.05034'
+  abstract: Extended, old, and round stellar halos appear to be ubiquitous around
+    high-mass dwarf galaxies (10<SUP>8.5</SUP> &lt; M <SUB>⋆</SUB>/M <SUB>⊙</SUB>
+    &lt; 10<SUP>9.6</SUP>) in the observed universe. However, it is unlikely that
+    these dwarfs have undergone a sufficient number of minor mergers to form stellar
+    halos that are composed of predominantly accreted stars. Here, we demonstrate
+    that FIRE-2 (Feedback in Realistic Environments) cosmological zoom-in simulations
+    are capable of producing dwarf galaxies with realistic structures, including both
+    a thick disk and round stellar halo. Crucially, these stellar halos are formed
+    in situ, largely via the outward migration of disk stars. However, there also
+    exists a large population of "nondisky" dwarfs in FIRE-2 that lack a well-defined
+    disk/halo and do not resemble the observed dwarf population. These nondisky dwarfs
+    tend to be either more gas-poor or to have burstier recent star formation histories
+    than the disky dwarfs, suggesting that star formation feedback may be preventing
+    disk formation. Both classes of dwarfs underscore the power of a galaxy's intrinsic
+    shape-which is a direct quantification of the distribution of the galaxy's stellar
+    content-to interrogate the feedback implementation in simulated galaxies.
+  authors:
+  - Kado-Fong, Erin
+  - Sanderson, Robyn E.
+  - Greene, Jenny E.
+  - Cunningham, Emily C.
+  - Wheeler, Coral
+  - Chan, T. K.
+  - El-Badry, Kareem
+  - Hopkins, Philip F.
+  - Wetzel, Andrew
+  - Boylan-Kolchin, Michael
+  - Faucher-Giguère, Claude-André
+  - Huang, Song
+  - Quataert, Eliot
+  - Starkenburg, Tjitske
+  bibcode: 2022ApJ...931..152K
+  citation_count: 24
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022ApJ...931..152K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022ApJ...931..152K/EPRINT_PDF
+- title: Lensing without borders – I. A blind comparison of the amplitude of galaxy–galaxy
+    lensing between independent imaging surveys
+  year: 2022
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stab3586
+  arxiv_id: ''
+  abstract: Lensing without borders is a cross-survey collaboration created to assess
+    the consistency of galaxy-galaxy lensing signals (ΔΣ) across different data sets
+    and to carry out end-to-end tests of systematic errors. We perform a blind comparison
+    of the amplitude of ΔΣ using lens samples from BOSS and six independent lensing
+    surveys. We find good agreement between empirically estimated and reported systematic
+    errors which agree to better than 2.3σ in four lens bins and three radial ranges.
+    For lenses with z<SUB>L</SUB> &gt; 0.43 and considering statistical errors, we
+    detect a 3-4σ correlation between lensing amplitude and survey depth. This correlation
+    could arise from the increasing impact at higher redshift of unrecognized galaxy
+    blends on shear calibration and imperfections in photometric redshift calibration.
+    At z<SUB>L</SUB> &gt; 0.54, amplitudes may additionally correlate with foreground
+    stellar density. The amplitude of these trends is within survey-defined systematic
+    error budgets that are designed to include known shear and redshift calibration
+    uncertainty. Using a fully empirical and conservative method, we do not find evidence
+    for large unknown systematics. Systematic errors greater than 15 per cent (25
+    per cent) ruled out in three lens bins at 68 per cent (95 per cent) confidence
+    at z &lt; 0.54. Differences with respect to predictions based on clustering are
+    observed to be at the 20-30 per cent level. Our results therefore suggest that
+    lensing systematics alone are unlikely to fully explain the 'lensing is low' effect
+    at z &lt; 0.54. This analysis demonstrates the power of cross-survey comparisons
+    and provides a promising path for identifying and reducing systematics in future
+    lensing analyses.
+  authors:
+  - Leauthaud, A.
+  - Amon, A.
+  - Singh, S.
+  - Gruen, D.
+  - Lange, J. U.
+  - Huang, S.
+  - Robertson, N. C.
+  - Varga, T. N.
+  - Luo, Y.
+  - Heymans, C.
+  - Hildebrandt, H.
+  - Blake, C.
+  - Aguena, M.
+  - Allam, S.
+  - Andrade-Oliveira, F.
+  - Annis, J.
+  - Bertin, E.
+  - Bhargava, S.
+  - Blazek, J.
+  - Bridle, S. L.
+  - Brooks, D.
+  - Burke, D. L.
+  - Rosell, A. Carnero
+  - Carrasco Kind, M.
+  - Carretero, J.
+  - Castander, F. J.
+  - Cawthon, R.
+  - Choi, A.
+  - Costanzi, M.
+  - da Costa, L. N.
+  - Pereira, M. E. S.
+  - Davis, C.
+  - De Vicente, J.
+  - DeRose, J.
+  - Diehl, H. T.
+  - Dietrich, J. P.
+  - Doel, P.
+  - Eckert, K.
+  - Everett, S.
+  - Evrard, A. E.
+  - Ferrero, I.
+  - Flaugher, B.
+  - Fosalba, P.
+  - García-Bellido, J.
+  - Gatti, M.
+  - Gaztanaga, E.
+  - Gruendl, R. A.
+  - Gschwend, J.
+  - Hartley, W. G.
+  - Hollowood, D. L.
+  - Honscheid, K.
+  - Jain, B.
+  - James, D. J.
+  - Jarvis, M.
+  - Joachimi, B.
+  - Kannawadi, A.
+  - Kim, A. G.
+  - Krause, E.
+  - Kuehn, K.
+  - Kuijken, K.
+  - Kuropatkin, N.
+  - Lima, M.
+  - MacCrann, N.
+  - Maia, M. A. G.
+  - Makler, M.
+  - March, M.
+  - Marshall, J. L.
+  - Melchior, P.
+  - Menanteau, F.
+  - Miquel, R.
+  - Miyatake, H.
+  - Mohr, J. J.
+  - Moraes, B.
+  - More, S.
+  - Surhud, M.
+  - Morgan, R.
+  - Myles, J.
+  - Ogando, R. L. C.
+  - Palmese, A.
+  - Paz-Chinchón, F.
+  - Malagón, A. A. Plazas
+  - Prat, J.
+  - Rau, M. M.
+  - Rhodes, J.
+  - Rodriguez-Monroy, M.
+  - Roodman, A.
+  - Ross, A. J.
+  - Samuroff, S.
+  - Sánchez, C.
+  - Sanchez, E.
+  - Scarpine, V.
+  - Schlegel, D. J.
+  - Schubnell, M.
+  - Serrano, S.
+  - Sevilla-Noarbe, I.
+  - Sifón, C.
+  - Smith, M.
+  - Speagle, J. S.
+  - Suchyta, E.
+  - Tarle, G.
+  - Thomas, D.
+  - Tinker, J.
+  - To, C.
+  - Troxel, M. A.
+  - Van Waerbeke, L.
+  - Vielzeuf, P.
+  - Wright, A. H.
+  bibcode: 2022MNRAS.510.6150L
+  citation_count: 23
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022MNRAS.510.6150L/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022MNRAS.510.6150L/EPRINT_PDF
+- title: 'Ultra-diffuse galaxies in the perseus cluster: comparing galaxy properties
+    with globular cluster system richness'
+  year: 2022
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stab3297
+  arxiv_id: '2111.06007'
+  abstract: It is clear that within the class of ultra-diffuse galaxies (UDGs), there
+    is an extreme range in the richness of their associated globular cluster (GC)
+    systems. Here, we report the structural properties of five UDGs in the Perseus
+    cluster based on deep Subaru/Hyper Suprime-Cam imaging. Three appear GC-poor and
+    two appear GC-rich. One of our sample, PUDG_R24, appears to be undergoing quenching
+    and is expected to fade into the UDG regime within the next ~0.5 Gyr. We target
+    this sample with Keck Cosmic Web Imager (KCWI) spectroscopy to investigate differences
+    in their dark matter haloes, as expected from their differing GC content. Our
+    spectroscopy measures both recessional velocities, confirming Perseus cluster
+    membership, and stellar velocity dispersions, to measure dynamical masses within
+    their half-light radius. We supplement our data with that from the literature
+    to examine trends in galaxy parameters with GC system richness. We do not find
+    the correlation between GC numbers and UDG phase space positioning expected if
+    GC-rich UDGs environmentally quench at high redshift. We do find GC-rich UDGs
+    to have higher velocity dispersions than GC-poor UDGs on average, resulting in
+    greater dynamical mass within the half-light radius. This agrees with the first
+    order expectation that GC-rich UDGs have higher halo masses than GC-poor UDGs.
+  authors:
+  - Gannon, Jonah S.
+  - Forbes, Duncan A.
+  - Romanowsky, Aaron J.
+  - Ferré-Mateu, Anna
+  - Couch, Warrick J.
+  - Brodie, Jean P.
+  - Huang, Song
+  - Janssens, Steven R.
+  - Okabe, Nobuhiro
+  bibcode: 2022MNRAS.510..946G
+  citation_count: 45
+  ads_url: https://ui.adsabs.harvard.edu/abs/2022MNRAS.510..946G/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2022MNRAS.510..946G/EPRINT_PDF
+- title: 'Hyper Suprime-Cam Subaru Strategic Program: A Mass-dependent Slope of the
+    Galaxy Size−Mass Relation at z < 1'
+  year: 2021
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac1f21
+  arxiv_id: ''
+  abstract: We present the galaxy size-mass (R<SUB>e</SUB>-M<SUB>*</SUB>) distributions
+    using a stellar mass complete sample of ~1.5 million galaxies, covering ~100 deg<SUP>2</SUP>,
+    with $\mathrm{log}({M}_{* }/{M}_{\odot })\gt 10.2\,(9.2)$ over the redshift range
+    0.2 &lt; z &lt; 1.0 (z &lt; 0.6) from the second public data release of the Hyper
+    Suprime-Cam Subaru Strategic Program. We confirm that, at fixed redshift and stellar
+    mass over the range of $\mathrm{log}({M}_{* }/{M}_{\odot })\lt 11$ , star-forming
+    galaxies are on average larger than quiescent galaxies. The large sample of galaxies
+    with accurate size measurements, thanks to the excellent imaging quality, also
+    enables us to demonstrate that the R<SUB>e</SUB>-M<SUB>*</SUB> relations of both
+    populations have a form of a broken power law, with a clear change of slopes at
+    a pivot stellar mass M<SUB>p</SUB>. For quiescent galaxies, below an (evolving)
+    pivot mass of $\mathrm{log}({M}_{p}/{M}_{\odot })=10.2\mbox{--}10.6$ , the relation
+    follows ${R}_{e}\propto {M}_{\ast }^{0.1}$ ; above M<SUB>p</SUB> the relation
+    is steeper and follows ${R}_{e}\propto {M}_{* }^{0.6\mbox{--}0.7}$ . For star-forming
+    galaxies, below $\mathrm{log}({M}_{p}/{M}_{\odot })\sim 10.7$ the relation follows
+    ${R}_{e}\propto {M}_{* }^{0.2}$ ; above M<SUB>p</SUB> the relation evolves with
+    redshift and follows ${R}_{e}\propto {M}_{* }^{0.3\mbox{--}0.6}$ . The shallow
+    power-law slope for quiescent galaxies below M<SUB>p</SUB> indicates that large
+    low-mass quiescent galaxies have sizes similar to those of their counterpart star-forming
+    galaxies. We take this as evidence that large low-mass quiescent galaxies have
+    been recently quenched (presumably through environment-specific processes) without
+    significant structural transformation. Interestingly, the pivot stellar mass of
+    the R<SUB>e</SUB>-M<SUB>*</SUB> relations for both populations also coincides
+    with the mass at which half of the galaxy population is quiescent, implying that
+    the pivot mass represents the transition of galaxy growth from being dominated
+    by in situ star formation to being dominated by (dry) mergers.
+  authors:
+  - Kawinwanichakij, Lalitwadee
+  - Silverman, John D.
+  - Ding, Xuheng
+  - George, Angelo
+  - Damjanov, Ivana
+  - Sawicki, Marcin
+  - Tanaka, Masayuki
+  - Taranu, Dan S.
+  - Birrer, Simon
+  - Huang, Song
+  - Li, Junyao
+  - Onodera, Masato
+  - Shibuya, Takatoshi
+  - Yasuda, Naoki
+  bibcode: 2021ApJ...921...38K
+  citation_count: 86
+  ads_url: https://ui.adsabs.harvard.edu/abs/2021ApJ...921...38K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2021ApJ...921...38K/EPRINT_PDF
+- title: Brightest cluster galaxies are statistically special from z = 0.3 to z =
+    1
+  year: 2021
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stab2363
+  arxiv_id: '2108.11288'
+  abstract: We study brightest cluster galaxies (BCGs) in ~5000 galaxy clusters from
+    the Hyper Suprime-Cam (HSC) Subaru Strategic Program. The sample is selected over
+    an area of 830 deg<SUP>2</SUP> and is uniformly distributed in redshift over the
+    range of z = 0.3-1.0. The clusters have stellar masses in the range of 10<SUP>11.8</SUP>-10<SUP>12.9</SUP>M<SUB>⊙</SUB>.
+    We compare the stellar mass of the BCGs in each cluster to what we would expect
+    if their masses were drawn from the mass distribution of the other member galaxies
+    of the clusters. The BCGs are found to be 'special', in the sense that they are
+    not consistent with being a statistical extreme of the mass distribution of other
+    cluster galaxies. This result is robust over the full range of cluster stellar
+    masses and redshifts in the sample, indicating that BCGs are special up to a redshift
+    of z = 1.0. However, BCGs with a large separation from the centre of the cluster
+    are found to be consistent with being statistical extremes of the cluster member
+    mass distribution. We discuss the implications of these findings for BCG formation
+    scenarios.
+  authors:
+  - Dalal, Roohi
+  - Strauss, Michael A.
+  - Sunayama, Tomomi
+  - Oguri, Masamune
+  - Lin, Yen-Ting
+  - Huang, Song
+  - Park, Youngsoo
+  - Takada, Masahiro
+  bibcode: 2021MNRAS.507.4016D
+  citation_count: 13
+  ads_url: https://ui.adsabs.harvard.edu/abs/2021MNRAS.507.4016D/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2021MNRAS.507.4016D/EPRINT_PDF
+- title: Anomaly detection in Hyper Suprime-Cam galaxy images with generative adversarial
+    networks
+  year: 2021
+  journal: Monthly Notices of the Royal Astronomical Society
+  doi: 10.1093/mnras/stab2589
+  arxiv_id: ''
+  abstract: 'The problem of anomaly detection in astronomical surveys is becoming
+    increasingly important as data sets grow in size. We present the results of an
+    unsupervised anomaly detection method using a Wasserstein generative adversarial
+    network (WGAN) on nearly one million optical galaxy images in the Hyper Suprime-Cam
+    (HSC) survey. The WGAN learns to generate realistic HSC-like galaxies that follow
+    the distribution of the data set; anomalous images are defined based on a poor
+    reconstruction by the generator and outlying features learned by the discriminator.
+    We find that the discriminator is more attuned to potentially interesting anomalies
+    compared to the generator, and compared to a simpler autoencoder-based anomaly
+    detection approach, so we use the discriminator-selected images to construct a
+    high-anomaly sample of ~13 000 objects. We propose a new approach to further characterize
+    these anomalous images: we use a convolutional autoencoder to reduce the dimensionality
+    of the residual differences between the real and WGAN-reconstructed images and
+    perform UMAP clustering on these. We report detected anomalies of interest including
+    galaxy mergers, tidal features, and extreme star-forming galaxies. A follow-up
+    spectroscopic analysis of one of these anomalies is detailed in the Appendix;
+    we find that it is an unusual system most likely to be a metal-poor dwarf galaxy
+    with an extremely blue, higher-metallicity H II region. We have released a catalogue
+    with the WGAN anomaly scores; the code and catalogue are available at https://github.com/kstoreyf/anomalies-GAN-HSC;
+    and our interactive visualization tool for exploring the clustered data is at
+    https://weirdgalaxi.es.'
+  authors:
+  - Storey-Fisher, Kate
+  - Huertas-Company, Marc
+  - Ramachandra, Nesar
+  - Lanusse, Francois
+  - Leauthaud, Alexie
+  - Luo, Yifei
+  - Huang, Song
+  - Prochaska, J. Xavier
+  bibcode: 2021MNRAS.508.2946S
+  citation_count: 30
+  ads_url: https://ui.adsabs.harvard.edu/abs/2021MNRAS.508.2946S/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2021MNRAS.508.2946S/EPRINT_PDF
+- title: 'The Intrinsic Shapes of Low Surface Brightness Galaxies (LSBGs): A Discriminant
+    of LSBG Galaxy Formation Mechanisms'
+  year: 2021
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac15f0
+  arxiv_id: ''
+  abstract: We use the low surface brightness galaxy (LSBG) samples created from the
+    Hyper Suprime-Cam Subaru Strategic Program (781 galaxies), the Dark Energy Survey
+    (20977 galaxies), and the Legacy Survey (selected via H I detection in the Arecibo
+    Legacy Fast ALFA Survey, 188 galaxies) to infer the intrinsic shape distribution
+    of the LSBG population. To take into account the effect of the surface brightness
+    cuts employed when constructing LSBG samples, we simultaneously model both the
+    projected ellipticity and the apparent surface brightness in our shape inference.
+    We find that the LSBG samples are well characterized by oblate spheroids, with
+    no significant difference between red and blue LSBGs. This inferred shape distribution
+    is in good agreement with similar inferences made for ultra-diffuse cluster galaxy
+    samples, indicating that environment does not play a key role in determining the
+    intrinsic shape of LSBGs. We also find some evidence that LSBGs are more thickened
+    than similarly massive high surface brightness dwarfs. We compare our results
+    to intrinsic shape measures from contemporary cosmological simulations, and find
+    that the observed LSBG intrinsic shapes place considerable constraints on the
+    formation path of such galaxies. In particular, LSBG production via the migration
+    of star formation to large radii produces intrinsic shapes in good agreement with
+    our observational findings.
+  authors:
+  - Kado-Fong, Erin
+  - Petrescu, Mihai
+  - Mohammad, Majid
+  - Greco, Johnny
+  - Greene, Jenny E.
+  - Adams, Elizabeth A. K.
+  - Huang, Song
+  - Leisman, Lukas
+  - Munshi, Ferah
+  - Tanoglidis, Dimitrios
+  - Van Nest, Jordan
+  bibcode: 2021ApJ...920...72K
+  citation_count: 34
+  ads_url: https://ui.adsabs.harvard.edu/abs/2021ApJ...920...72K/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2021ApJ...920...72K/EPRINT_PDF
+- title: A Search for Wandering Black Holes in the Milky Way with Gaia and DECaLS
+  year: 2021
+  journal: The Astrophysical Journal
+  doi: 10.3847/1538-4357/ac0896
+  arxiv_id: '2105.04581'
+  abstract: We present a search for "hypercompact" star clusters in the Milky Way
+    using a combination of Gaia and the Dark Energy Camera Legacy Survey (DECaLS).
+    Such putative clusters, with sizes of ~1 pc and containing 500-5000 stars, are
+    expected to remain bound to intermediate-mass black holes (M<SUB>BH</SUB> ≈ 10<SUP>3</SUP>-10<SUP>5</SUP>
+    M<SUB>⊙</SUB>) that may be accreted into the Milky Way halo within dwarf satellites.
+    Using the semianalytic model SatGen, we find an expected ~100 wandering intermediate-mass
+    black holes if every infalling satellite hosts a black hole. We do not find any
+    such clusters in our search. Our upper limits rule out 100% occupancy but do not
+    put stringent constraints on the occupation fraction. Of course, we need stronger
+    constraints on the properties of the putative star clusters, including their assumed
+    sizes and the fraction of stars that would be compact remnants.
+  authors:
+  - Greene, Jenny E.
+  - Lancaster, Lachlan
+  - Ting, Yuan-Sen
+  - Koposov, Sergey E.
+  - Danieli, Shany
+  - Huang, Song
+  - Jiang, Fangzhou
+  - Greco, Johnny P.
+  - Strader, Jay
+  bibcode: 2021ApJ...917...17G
+  citation_count: 21
+  ads_url: https://ui.adsabs.harvard.edu/abs/2021ApJ...917...17G/abstract
+  pdf_url: https://ui.adsabs.harvard.edu/link_gateway/2021ApJ...917...17G/EPRINT_PDF

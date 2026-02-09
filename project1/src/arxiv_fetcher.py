@@ -211,7 +211,8 @@ def fetch_papers(
     categories: list[str],
     max_results_per_category: int = 100,
     delay_seconds: float = 3.0,
-    days: int = 1
+    days: int = 1,
+    since_date: Optional[datetime] = None
 ) -> list[ArxivPaper]:
     """Fetch papers from multiple arXiv categories.
 
@@ -219,14 +220,19 @@ def fetch_papers(
         categories: List of arXiv categories
         max_results_per_category: Max papers per category
         delay_seconds: Delay between requests (arXiv rate limit)
-        days: Filter papers from the last N days
+        days: Filter papers from the last N days (used when since_date is None)
+        since_date: Explicit cutoff date; when provided, overrides days-based calculation
 
     Returns:
         Deduplicated list of ArxivPaper objects, sorted by published date
     """
-    cutoff_date = datetime.now() - timedelta(days=days + 1)  # +1 for timezone buffer
+    if since_date is not None:
+        cutoff_date = since_date
+    else:
+        cutoff_date = datetime.now() - timedelta(days=days)
 
     # Fetch from all categories
+    category_set = set(categories)
     seen_ids: set[str] = set()
     all_papers: list[ArxivPaper] = []
 
@@ -239,12 +245,13 @@ def fetch_papers(
             delay_seconds=delay
         )
 
-        # Deduplicate and filter by date
+        # Deduplicate, filter by date, and reject cross-listings
         for paper in papers:
             if paper.arxiv_id not in seen_ids:
-                # Use updated date for filtering (more reliable)
+                seen_ids.add(paper.arxiv_id)
+                if paper.primary_category not in category_set:
+                    continue
                 if paper.updated.replace(tzinfo=None) >= cutoff_date:
-                    seen_ids.add(paper.arxiv_id)
                     all_papers.append(paper)
 
         print(f"Fetched {len(papers)} papers from {category}, {len(all_papers)} total unique")

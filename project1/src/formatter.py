@@ -128,7 +128,7 @@ def format_digest(
             if summary:
                 lines.append(summary)
             else:
-                lines.append("*Summary not available.*")
+                lines.append(paper.abstract)
 
             lines.append("")
             lines.append("---")
@@ -151,9 +151,7 @@ def format_digest(
             if summary:
                 lines.append(summary)
             else:
-                # Use truncated abstract as fallback
-                abstract = paper.abstract[:400] + "..." if len(paper.abstract) > 400 else paper.abstract
-                lines.append(abstract)
+                lines.append(paper.abstract)
 
             lines.append("")
             lines.append("---")

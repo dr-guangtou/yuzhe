@@ -326,7 +326,9 @@ def create_fallback_client(config: Config) -> LLMClient:
     Raises:
         ValueError: If no clients could be initialized.
     """
-    provider_names = config.llm_fallback if config.llm_fallback else [config.llm.provider]
+    primary = config.llm.provider
+    fallback = config.llm_fallback if config.llm_fallback else []
+    provider_names = [primary] + [name for name in fallback if name != primary]
 
     clients = []
     for name in provider_names:

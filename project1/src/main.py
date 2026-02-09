@@ -253,6 +253,7 @@ Modes:
     logger.debug(f"Secondary categories: {config.category.secondary}")
 
     # Check for updates in update mode
+    since_date = None
     if update_mode:
         latest_digest_date = get_latest_digest_date(config)
         if latest_digest_date:
@@ -263,10 +264,8 @@ Modes:
                 logger.info("Use --debug to force run")
                 return
             logger.info(f"Latest digest: {latest_digest_date.strftime('%Y-%m-%d')} ({days_since_latest} days ago)")
-            # Adjust days to look back
-            if args.days == 1:  # If using default
-                args.days = days_since_latest + 1  # Include overlap
-                logger.info(f"Looking back {args.days} days to catch new papers")
+            since_date = latest_digest_date
+            logger.info(f"Using cutoff date: {since_date.strftime('%Y-%m-%d')}")
         else:
             logger.info("No previous digest found - running initial fetch")
 
@@ -281,14 +280,18 @@ Modes:
 
     logger.info(f"Fetching papers from {len(categories)} categories...")
     logger.info(f"Max papers per category: {max_papers}")
-    logger.info(f"Days to look back: {args.days}")
+    if since_date:
+        logger.info(f"Cutoff date: {since_date.strftime('%Y-%m-%d')}")
+    else:
+        logger.info(f"Days to look back: {args.days}")
 
     # Fetch papers
     papers = fetch_papers(
         categories=categories,
         max_results_per_category=max_papers,
         delay_seconds=config.api.arxiv_delay_seconds,
-        days=args.days
+        days=args.days,
+        since_date=since_date
     )
 
     logger.info(f"Total papers fetched: {len(papers)}")
@@ -374,8 +377,10 @@ Modes:
             logger.info("Using mock LLM client")
             llm_client = MockLLMClient(config.llm)
         else:
-            fallback_names = config.llm_fallback if config.llm_fallback else [config.llm.provider]
-            logger.info(f"Initializing LLM clients: {fallback_names}")
+            primary = config.llm.provider
+            fallback = config.llm_fallback if config.llm_fallback else []
+            chain = [primary] + [n for n in fallback if n != primary]
+            logger.info(f"Initializing LLM clients: {chain}")
 
             try:
                 llm_client = create_fallback_client(config)
@@ -475,8 +480,10 @@ Modes:
                 logger.info("Using mock LLM client")
                 llm_client = MockLLMClient(config.llm)
             else:
-                fallback_names = config.llm_fallback if config.llm_fallback else [config.llm.provider]
-                logger.info(f"Initializing LLM clients: {fallback_names}")
+                primary = config.llm.provider
+                fallback = config.llm_fallback if config.llm_fallback else []
+                chain = [primary] + [n for n in fallback if n != primary]
+                logger.info(f"Initializing LLM clients: {chain}")
 
                 try:
                     llm_client = create_fallback_client(config)

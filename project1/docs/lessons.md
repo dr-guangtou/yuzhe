@@ -94,7 +94,32 @@ For digest generation systems:
 - This prevents missing papers if state file is corrupted/deleted
 - Allows recovering from failed runs by just deleting bad output file
 
-### 15. Default Should Minimize Token Usage
+### 15. Fallback Chain Must Include Primary Provider
+**Problem**: `create_fallback_client()` used `config.llm_fallback` directly when non-empty, skipping the primary provider (`kimi`). The fallback list `[moonshot, nvidia, gemini]` didn't include `kimi`, so `moonshot` was always tried first.
+
+**Solution**: Always prepend the primary provider to the fallback chain:
+```python
+primary = config.llm.provider
+fallback = config.llm_fallback if config.llm_fallback else []
+provider_names = [primary] + [name for name in fallback if name != primary]
+```
+
+### 16. Use Source Timestamps, Not Local Time, for Date Boundaries
+**Problem**: Date cutoff used `datetime.now()` (local time) with compounding `+1` buffers in two places, causing 2 extra days of lookback and timezone-dependent behavior.
+
+**Solution**: Pass the last digest date directly as `since_date` to the fetcher. Compare against arXiv's own UTC timestamps — both sides are in the same timezone. Keep `days` parameter only as fallback for debug/first-run mode.
+
+### 17. Filter by Primary Category to Reject Cross-Listings
+**Problem**: arXiv API returns papers cross-listed in a queried category even if their primary category is unrelated (e.g., `hep-ph` paper cross-listed to `astro-ph.CO`). This creates noise.
+
+**Solution**: After fetching, check `paper.primary_category in configured_categories` and reject papers whose primary category is outside the configured set.
+
+### 18. Always Provide Full Abstracts as Summary Fallback
+**Problem**: When summaries are unavailable (`--no-summary`), the "Most Relevant" tier showed "*Summary not available.*" and "Somewhat Relevant" truncated abstracts to 400 chars. The arXiv API returns full abstracts — truncation was purely in the formatter.
+
+**Solution**: Use `paper.abstract` as fallback in both tiers when no LLM summary exists.
+
+### 19. Default Should Minimize Token Usage
 For LLM-based pipelines:
 - **Default mode should minimize API calls** to save tokens/cost
 - Make expensive operations opt-in via flags (`--use-llm-scoring`)

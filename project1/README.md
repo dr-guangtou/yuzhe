@@ -42,7 +42,7 @@ Edit `config.yaml` to customize. The three main sections have distinct purposes:
 
 ### Categories (Fetch Filter)
 
-Which arXiv categories to monitor for new papers:
+Which arXiv categories to monitor for new papers. Only papers whose **primary category** matches one of these are kept; cross-listed papers from other fields are filtered out.
 
 ```yaml
 category:

@@ -8,6 +8,7 @@ Pipeline stages:
 """
 
 import argparse
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -46,6 +47,33 @@ def get_latest_digest_date(config) -> datetime | None:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
         return None
+
+
+def get_previous_digest_ids(config) -> set[str]:
+    """Extract arxiv IDs from the latest digest file.
+
+    Reads the most recent digest Markdown and extracts all arxiv IDs
+    from both detailed sections (arXiv: [ID](url)) and title-only
+    sections ([title](arxiv.org/abs/ID)).
+
+    Returns:
+        Set of arxiv ID strings, or empty set if no digest exists
+    """
+    current_year = datetime.now().year
+    digest_path = config.get_digest_path(current_year)
+
+    if not digest_path.exists():
+        return set()
+
+    digest_files = sorted(digest_path.glob("*.md"))
+    if not digest_files:
+        return set()
+
+    latest_file = digest_files[-1]
+    content = latest_file.read_text(encoding="utf-8")
+
+    ids = set(re.findall(r"arxiv\.org/abs/(\d{4}\.\d{4,5})", content))
+    return ids
 
 
 def main():
@@ -104,8 +132,8 @@ Modes:
     parser.add_argument(
         "--days",
         type=int,
-        default=1,
-        help="Number of days to look back (default: 1)"
+        default=None,
+        help="Number of days to look back (default: 1, overrides digest-based cutoff)"
     )
     parser.add_argument(
         "--max-papers",
@@ -252,22 +280,31 @@ Modes:
     logger.debug(f"Primary categories: {config.category.primary}")
     logger.debug(f"Secondary categories: {config.category.secondary}")
 
-    # Check for updates in update mode
+    # Determine cutoff date from latest digest (all modes)
     since_date = None
-    if update_mode:
-        latest_digest_date = get_latest_digest_date(config)
-        if latest_digest_date:
-            # Only fetch papers newer than latest digest
-            days_since_latest = (datetime.now() - latest_digest_date).days
-            if days_since_latest < 1:
-                logger.info(f"Skipping: latest digest is from today ({latest_digest_date.strftime('%Y-%m-%d')})")
-                logger.info("Use --debug to force run")
-                return
-            logger.info(f"Latest digest: {latest_digest_date.strftime('%Y-%m-%d')} ({days_since_latest} days ago)")
-            since_date = latest_digest_date
-            logger.info(f"Using cutoff date: {since_date.strftime('%Y-%m-%d')}")
-        else:
-            logger.info("No previous digest found - running initial fetch")
+    latest_digest_date = get_latest_digest_date(config)
+
+    if latest_digest_date:
+        days_since_latest = (datetime.now() - latest_digest_date).days
+        logger.info(f"Latest digest: {latest_digest_date.strftime('%Y-%m-%d')} ({days_since_latest} days ago)")
+
+        if update_mode and days_since_latest < 1:
+            logger.info(f"Skipping: latest digest is from today ({latest_digest_date.strftime('%Y-%m-%d')})")
+            logger.info("Use --debug to force run")
+            return
+
+        since_date = latest_digest_date - timedelta(days=1)
+        logger.info(f"Using cutoff date: {since_date.strftime('%Y-%m-%d')} (1-day overlap from digest {latest_digest_date.strftime('%Y-%m-%d')})")
+    else:
+        logger.info("No previous digest found - using --days lookback")
+
+    # Explicit --days overrides digest-based cutoff
+    if args.days is not None:
+        since_date = None
+        logger.info(f"--days {args.days} specified, overriding digest-based cutoff")
+
+    # Default to 1 day when neither digest nor --days is available
+    days = args.days if args.days is not None else 1
 
     # Determine categories to fetch
     if args.category:
@@ -283,18 +320,25 @@ Modes:
     if since_date:
         logger.info(f"Cutoff date: {since_date.strftime('%Y-%m-%d')}")
     else:
-        logger.info(f"Days to look back: {args.days}")
+        logger.info(f"Days to look back: {days}")
 
     # Fetch papers
     papers = fetch_papers(
         categories=categories,
         max_results_per_category=max_papers,
         delay_seconds=config.api.arxiv_delay_seconds,
-        days=args.days,
+        days=days,
         since_date=since_date
     )
 
     logger.info(f"Total papers fetched: {len(papers)}")
+
+    # Deduplicate against previous digest
+    previous_ids = get_previous_digest_ids(config)
+    if previous_ids:
+        before = len(papers)
+        papers = [p for p in papers if p.arxiv_id not in previous_ids]
+        logger.info(f"Dedup against previous digest: {before} -> {len(papers)} ({before - len(papers)} already in previous digest)")
 
     if not papers:
         logger.warning("No papers found.")

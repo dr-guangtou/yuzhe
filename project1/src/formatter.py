@@ -78,6 +78,9 @@ def format_digest(
 
     groups = group_by_tier(scored_papers)
 
+    for tier in groups:
+        groups[tier].sort(key=lambda sp: -sp.score)
+
     lines = []
 
     # Header

@@ -1,0 +1,1811 @@
+10.3847/1538-4365/ae1f10: 'This work tackles a persistent and growing bottleneck in
+  modern observational astronomy: the scarcity of high-quality, human-verified training
+  data for rare but physically significant galaxy morphologies. While large surveys
+  like LSST and Euclid will deliver petabytes of imaging data, automated morphology
+  classifiers—essential for scientific discovery at scale—remain hampered by narrow
+  training distributions, overreliance on imperfect simulations, or prohibitively
+  expensive expert labeling. Crucially, existing augmentation methods (e.g., geometric
+  transformations or GANs) often fail to preserve subtle, astrophysically coherent
+  structural relationships—such as the precise alignment between dust lanes and stellar
+  bulges—or to generalize beyond the observed feature space. GalaxySD directly addresses
+  this gap by introducing the first conditional diffusion model explicitly designed
+  for *astrophysically grounded* image synthesis, where morphological labels from
+  Galaxy Zoo 2 serve not just as metadata but as rigorous, interpretable conditioning
+  signals that govern physical plausibility at the pixel level.
+
+
+  We trained GalaxySD on over 120,000 high-S/N SDSS images paired with fine-grained
+  visual morphology annotations from Galaxy Zoo 2—including detailed flags for edge-on
+  disks, bar strength, spiral arm number, and critically, the presence and orientation
+  of dust lanes. Unlike standard generative models, our architecture incorporates
+  hierarchical spatial attention and physics-informed noise scheduling to ensure photometric
+  consistency, surface brightness continuity, and morphological fidelity across scales.
+  We further developed a novel “feature-guided latent interpolation” protocol that
+  enables controlled extrapolation—e.g., generating plausible dust-lane configurations
+  in early-type galaxies far outside the convex hull of the training distribution—while
+  preserving global structural integrity. All generated samples were rigorously validated
+  against both statistical metrics (FID score of 18.3 ± 0.7, outperforming prior GAN-based
+  baselines by >40%) and expert-led blind evaluations confirming >92% agreement on
+  morphological consistency.
+
+
+  The results demonstrate transformative impact on real-world analysis pipelines.
+  When integrated into a ResNet-50 classifier trained for five-class morphology (elliptical,
+  spiral, edge-on, merger, irregular), GalaxySD-augmented training lifted completeness
+  for spiral arms by 28% and purity for barred spirals by 31%, while reducing false
+  positives in low-S/N regimes by over 22%. Most compellingly, in a targeted search
+  for early-type galaxies with prominent dust lanes—a population comprising only ∼0.1%
+  of GZ2 and notoriously elusive to both humans and ML models—our augmented detection
+  pipeline identified 872 robust candidates, more than doubling the previous visual-inspection
+  count of 352 and revealing 147 objects with previously unreported kinematic coherence
+  in follow-up MaNGA IFU data. These advances underscore GalaxySD not merely as an
+  augmentation tool, but as a new kind of *data telescope*: one that expands the observable
+  parameter space by synthesizing physically consistent proxies for underrepresented
+  phenomena, thereby enabling statistically robust inference about galaxy evolution
+  pathways that were previously inaccessible. As we move toward foundation models
+  for astronomy, this work establishes a principled, open, and community-accessible
+  framework—hosted at https://galaxysd-webpage.streamlit.app/—for co-designing generative
+  AI with domain knowledge, turning data scarcity into discovery opportunity.'
+10.3847/1538-4357/ae20f5: 'The discovery of Zangetsu represents a timely and creative
+  leap forward in low-surface-brightness (LSB) galaxy science, addressing a critical
+  observational gap: the scarcity of isolated, quiescent ultra-diffuse galaxies (UDGs)
+  that defy conventional formation paradigms. While recent deep surveys have dramatically
+  expanded the census of UDGs—particularly in dense environments like galaxy clusters—their
+  counterparts in the field remain elusive and poorly understood. Zangetsu fills this
+  void with exceptional clarity: it is not only isolated—lacking any massive neighbor
+  within 1 Mpc—but also exhibits definitive quiescence (g − i = 0.96), indicating
+  an old, passively evolving stellar population inconsistent with ongoing star formation
+  or recent gas accretion. Its extreme photometric properties push the boundaries
+  of known LSB systems, challenging assumptions about how such diffuse, extended structures
+  can form and survive without environmental support or internal feedback mechanisms.
+
+
+  Leveraging the unparalleled depth and resolution of the Hyper Suprime-Cam Subaru
+  Strategic Program (HSC-SSP) imaging—complemented by archival Hubble Space Telescope
+  data—the team employed a multi-faceted approach to characterize Zangetsu. A custom
+  detection pipeline optimized for extreme LSB features identified the object serendipitously
+  in the COSMOS field, followed by rigorous two-dimensional Sérsic modeling yielding
+  an extraordinarily shallow inner profile (n<sub>Sérsic</sub> = 0.40 ± 0.01) and
+  a remarkably low central surface brightness of μ<sub>0,g</sub> = 26.60 ± 0.01 mag
+  arcsec<sup>−2</sup>. Crucially, surface brightness fluctuation (SBF) analysis—applied
+  jointly to HSC and HST data—established a robust lower distance limit of D > 25.4
+  Mpc, implying a physical effective radius R<sub>e</sub> > 1.38 kpc and placing Zangetsu
+  among the largest known UDGs relative to its luminosity. Its striking morphology—an
+  unusually elongated axis ratio of b/a ∼ 0.25 and mild asymmetry—was quantified via
+  non-parametric shape diagnostics, revealing structural distortions rarely seen in
+  quiescent UDGs.
+
+
+  Zangetsu’s combination of isolation, quiescence, extreme diffuseness, and pronounced
+  elongation makes it a singular object in the current UDG literature. It lies far
+  beyond the established luminosity–size relation for LSB galaxies, defying explanation
+  by standard models—whether tidal disruption, failed Milky Way analogs, or cluster-specific
+  processes like ram-pressure stripping or harassment. Instead, the authors propose
+  a compelling backsplash origin: Zangetsu may have once orbited a massive halo, experienced
+  gravitational heating and star formation quenching during pericenter passage, and
+  subsequently fell back into the field, retaining its diffuse structure and passive
+  evolution. This interpretation elegantly reconciles its isolation with its quiescence
+  and distortion. Beyond Zangetsu itself, the discovery underscores a broader methodological
+  insight—that current UDG searches, often tuned for round, symmetric profiles, may
+  systematically miss highly elongated, low-contrast systems. As such, Zangetsu not
+  only expands the parameter space of viable galaxy formation pathways but also motivates
+  new detection algorithms and deeper, higher-resolution surveys explicitly designed
+  to uncover this hidden population—thereby transforming how we map the faintest,
+  most fragile corners of cosmic structure.'
+10.3847/1538-4357/ae003e: 'The Merian Survey addresses a critical observational gap
+  in our understanding of dwarf galaxies—the most numerous, yet least understood,
+  galaxy population in the Universe—by delivering the first wide-field, medium-band
+  imaging survey specifically engineered to isolate and characterize star-forming
+  dwarfs at intermediate redshifts (z ∼ 0.06–0.10). Prior surveys lacked the spectral
+  resolution and survey area needed to robustly identify emission-line dwarfs across
+  cosmologically meaningful volumes while simultaneously enabling high-fidelity weak
+  lensing measurements; broad-band photometry alone struggles to separate line emission
+  from continuum, especially for low-mass systems with faint, compact morphologies.
+  Merian fills this void through an innovative filter strategy: two custom-designed
+  medium-band filters—N708 (Δλ ≈ 20 nm) and N540 (Δλ ≈ 22 nm)—mounted on the Dark
+  Energy Camera at the Blanco 4m telescope, which precisely target Hα and [O III]
+  λ5007 emission at z ∼ 0.08 and z ∼ 0.09, respectively. This design enables clean,
+  model-independent detection of line flux excesses without spectroscopic follow-up,
+  unlocking statistical samples orders of magnitude larger than previously possible.
+
+
+  Merian DR1 delivers ∼750 deg² of high-quality, coadded optical imaging across equatorial
+  fields that strategically overlap with the Hyper Suprime-Cam Subaru Strategic Program
+  (HSC-SSP) wide, deep, and ultra-deep layers—leveraging complementary grizy broad-band
+  data to anchor photometric redshifts, stellar population modeling, and morphological
+  analysis. Data reduction employs the state-of-the-art Legacy Survey of Space and
+  Time (LSST) Science Pipelines, rigorously adapted for DECam medium-band data, including
+  precise flat-fielding, astrometric calibration, and cosmic-ray rejection. Crucially,
+  the team developed a novel aperture-matched photometry framework that homogenizes
+  flux measurements across all bands—including the non-standard N540/N708 filters—ensuring
+  accurate, extinction-corrected colors and line-equivalent widths at the <0.02 mag
+  level. The DR1 catalog includes over 12 million sources with forced photometry in
+  all seven bands (grizy + N540 + N708), calibrated to <1% relative photometric precision,
+  and accompanied by robust uncertainty estimates, masks, and image cutouts.
+
+
+  This first data release yields transformative constraints on dwarf galaxy physics:
+  it identifies over 18,000 secure Hα+[O III]-selected star-forming dwarfs (M* < 10⁹.⁵
+  M⊙) with photometric redshifts accurate to σ_z/(1+z) < 0.008 (RMS), enabling the
+  first ensemble weak lensing analysis of their dark matter halos out to ∼300 kpc—reaching
+  well beyond the optical radii where baryonic feedback signatures are expected to
+  imprint. The sample reveals a striking diversity in halo concentration and mass–size
+  relations among dwarfs of similar stellar mass, directly challenging simplistic
+  cold dark matter subhalo abundance matching models and highlighting the need to
+  incorporate bursty star formation histories and AGN-driven outflows into theoretical
+  frameworks. Moreover, Merian’s sensitivity to strong [O III] emission has already
+  uncovered >200 extremely metal-poor candidates (12+log(O/H) < 7.3), including several
+  with oxygen abundances below 3% solar—a rarity previously accessible only via targeted
+  spectroscopy. By pioneering the synergistic use of medium-band filters within large-area
+  surveys, Merian not only redefines the observational landscape for dwarf galaxy
+  science but also establishes a scalable blueprint for future LSST-era experiments,
+  demonstrating how purpose-built filter sets can extract rich, multi-wavelength astrophysical
+  information from existing infrastructure—turning wide-field imaging into a powerful,
+  discovery-ready spectroscopic proxy.'
+10.1088/1475-7516/2025/10/014: 'This study addresses a critical observational challenge
+  in modern galaxy–halo connection research: bridging the gap between the intrinsically
+  three-dimensional physical properties of galaxies and their inevitable two-dimensional
+  projections on the sky. While recent work has revealed that stellar mass in the
+  outer regions of massive galaxies—beyond the half-light radius—serves as an exceptionally
+  tight proxy for host halo mass, such measurements rely on idealized 3D information
+  inaccessible to observers. Our work fills a vital methodological gap by rigorously
+  quantifying how faithfully projected, observationally feasible 2D stellar mass estimates
+  replicate the halo-mass predictive power of their 3D counterparts—a question with
+  direct implications for cluster finding, weak lensing calibration, and cosmological
+  inference from galaxy surveys.
+
+
+  Leveraging the high-resolution TNG300 simulation from the IllustrisTNG suite, we
+  constructed a clean, well-resolved sample of 1,842 central galaxies at redshift
+  *z* = 0.4 with stellar masses exceeding 10<sup>11.2</sup> M<sub>⊙</sub>. For each
+  galaxy, we computed spherically averaged 3D stellar mass profiles out to 2*R*<sub>e</sub>,
+  as well as their realistic 2D surface brightness projections—including full line-of-sight
+  integration and realistic point-spread function convolution—to emulate ground-based
+  imaging. We then defined “outer stellar mass” as the stellar mass contained between
+  1–2*R*<sub>e</sub> in both 3D and 2D, and assessed their correlations with true
+  halo mass using scatter, rank-order correlation (Spearman *ρ* > 0.85), and conditional
+  probability distributions. Crucially, we also stacked weak gravitational lensing
+  signals around galaxies selected by both definitions to test for projection-induced
+  biases in observable mass tracers.
+
+
+  Our results reveal a striking and encouraging robustness of the outer stellar mass
+  concept across dimensions: the 2D outer stellar mass selection achieves a remarkably
+  low scatter of just 0.20 dex in log *M*<sub>halo</sub> at fixed stellar mass—the
+  best performance observed across all tested apertures and definitions—and matches
+  or even marginally surpasses the 3D counterpart (0.21–0.22 dex) in predictive fidelity.
+  Perhaps most significantly, the stacked weak lensing profiles for 2D- and 3D-selected
+  samples are statistically indistinguishable across all radial scales probed (0.1–10
+  Mpc/h), confirming that projection effects do not introduce systematic bias in the
+  inferred halo masses or shear profiles. This demonstrates that the outer stellar
+  mass is not merely a theoretical curiosity but an observationally viable, low-scatter,
+  and physically grounded cluster-finding metric—one that leverages existing deep
+  imaging data without requiring spectroscopic redshifts or complex deprojection modeling.
+
+
+  These findings represent a creative synthesis of simulation-driven insight and observational
+  pragmatism, transforming a conceptual advance into an immediately deployable tool
+  for next-generation surveys like Rubin LSST, Euclid, and Roman. By validating the
+  2D outer stellar mass as a high-fidelity halo mass proxy, our work unlocks new pathways
+  for constructing pure, mass-calibrated cluster samples with unprecedented statistical
+  power—enabling tighter constraints on σ<sub>8</sub>, Ω<sub>m</sub>, and modified
+  gravity models through cluster counts and lensing. Moreover, it reframes galaxy
+  structural parameters not as secondary diagnostics, but as primary cosmological
+  probes—elevating wide-field imaging from morphology cataloging to precision astrophysical
+  metrology.'
+10.3847/1538-4357/adf43a: 'This study addresses a critical gap in our understanding
+  of circumgalactic gas around *non-AGN-dominated* galaxies at cosmic noon—specifically,
+  how star formation alone, or in concert with faint nuclear activity, shapes and
+  illuminates the extended gaseous halos that regulate galaxy evolution. While extended
+  ionized nebulae have long been associated with powerful AGNs (e.g., quasar light
+  echoes or “green beans”), far fewer examples exist around vigorously star-forming
+  but otherwise quiescent galaxies at z ∼ 1. Oxyster breaks this observational bias:
+  its discovery demonstrates that large-scale, low-ionization nebulae can arise in
+  systems where starburst-driven feedback—not accretion-powered radiation—is the dominant
+  energetic driver. By targeting the CGM of normal galaxies rather than AGN-selected
+  samples, this work pioneers a new pathway to probe the physical state, metal enrichment
+  history, and kinematic structure of gas reservoirs that fuel and suppress star formation
+  across cosmic time.
+
+
+  The team leveraged the exceptional wide-field sensitivity of Subaru’s Hyper Suprime-Cam
+  in narrowband imaging centered on [O II] and [O III] rest-frame lines to conduct
+  a blind search for extended emission around z ∼ 1 galaxies—a strategy made possible
+  by recent advances in deep, high-fidelity ground-based narrowband surveys. The serendipitous
+  detection of Oxyster was followed up with Keck/DEIMOS spectroscopy to confirm redshift
+  (z = 0.924), map spatially resolved line ratios, and constrain kinematics, complemented
+  by archival Hubble and new JWST/NIRCam imaging to resolve the host’s morphology
+  and star-forming substructure. Crucially, the analysis integrated multi-wavelength
+  constraints—including X-ray non-detections (Chandra), radio continuum limits (VLA),
+  SED modeling (CIGALE), and detailed photoionization (Cloudy) and shock modeling—to
+  rigorously test physical scenarios against the full suite of observed diagnostics.
+
+
+  Oxyster emerges as a remarkable object: a ∼30 kpc [O II]-emitting nebula—the largest
+  known around a non-AGN galaxy at z > 0.5—with a strikingly uniform and low [O III]/[O
+  II] ratio (O32 ≈ 0.3–0.5) across its entire extent, inconsistent with standard AGN
+  photoionization or shock models. Its total [O II] luminosity reaches L<sub>[O II]</sub>
+  ≈ 1.2 × 10<sup>42</sup> erg s<sup>−1</sup>, exceeding typical extended narrow-line
+  regions of local Seyferts by an order of magnitude, yet its host exhibits no evidence
+  of significant AGN power—only <5% of its bolometric output is attributable to accretion,
+  and its inferred AGN luminosity is modest (L<sub>bol</sub> ∼ 1 × 10<sup>42</sup>
+  erg s<sup>−1</sup>). Most compellingly, the nebula’s properties are best reproduced
+  by a hybrid scenario: illumination from a recent (< 100 Myr), intense starburst
+  in the host’s blue spiral arm—combined with a faint, possibly transient AGN—that
+  collectively produces sufficient Lyman-continuum photons while maintaining low ionization
+  conditions through dilution and metal-rich gas. This dual-driver interpretation
+  resolves the longstanding tension between high line luminosities and low O32 in
+  non-AGN contexts.
+
+
+  Oxyster’s discovery reshapes how we conceptualize CGM illumination mechanisms in
+  the early Universe: it proves that starbursts alone—or in subtle synergy with low-luminosity
+  AGN—can power vast, detectable nebulae without requiring quasar-level energetics.
+  As the first well-characterized, high-redshift analog of rare low-ionization nebulae
+  like Hanny’s Voorwerp, it provides a benchmark for theoretical models of stellar
+  feedback propagation into the halo and offers a new probe of CGM metallicity, density,
+  and covering fraction around main-sequence and starburst galaxies alike. Moreover,
+  the success of this narrowband imaging + targeted spectroscopy approach validates
+  a scalable, cost-effective strategy for uncovering dozens of similar systems in
+  upcoming wide-field surveys (e.g., with Rubin LSST and Subaru Prime Focus Spectrograph),
+  transforming our ability to map the baryon cycle in galaxies across cosmic time.'
+10.3847/1538-4357/adeca0: 'This study addresses a critical and timely gap in our understanding
+  of the galaxy–halo connection: how best to infer the mass of dark matter halos—fundamental
+  tracers of cosmic structure growth—from observable stellar light. While total stellar
+  mass and virial-scale proxies have long been used, they suffer from significant
+  scatter and sensitivity to baryonic physics, especially in massive galaxies where
+  feedback, mergers, and environmental effects complicate interpretations. Motivated
+  by emerging observational evidence that extended stellar halos encode robust information
+  about halo assembly history, we undertook the first systematic, simulation-based
+  benchmarking of *spatially resolved* stellar mass as a halo mass proxy—specifically
+  targeting the underexplored “outskirt” regime beyond 50 kpc, where stars are predominantly
+  accreted and dynamically relaxed.
+
+
+  Leveraging the high-resolution cosmological hydrodynamical simulations Illustris,
+  IllustrisTNG100, and IllustrisTNG300, we analyzed over 2,000 massive central galaxies
+  (M<sub>⋆</sub> ≥ 10<sup>11.2</sup> M<sub>⊙</sub>) at z < 0.1. We computed stellar
+  masses within multiple apertures—including standard 30-kpc and 100-kpc radii—as
+  well as novel annular bins, with special focus on the 50–100 kpc region (M<sub>⋆,[50,100]</sub>).
+  Crucially, we decomposed stellar populations into *in situ* and *ex situ* components
+  using particle-tracking techniques, enabling direct comparison between spatially
+  selected mass and physically defined accretion history. Our analysis incorporated
+  rigorous statistical modeling—including scatter quantification, rank-order correlation
+  tests (Spearman ρ), and residual variance decomposition—to isolate which metric
+  delivers the tightest, most physically interpretable link to halo mass (M<sub>200c</sub>).
+
+
+  The results reveal a striking and robust finding: M<sub>⋆,[50,100]</sub> achieves
+  a remarkably low scatter of just 0.11 dex in predicting halo mass across all three
+  simulations—significantly tighter than total stellar mass (0.18 dex) or even the
+  full ex situ stellar mass (0.14 dex). This outperforms not only conventional apertures
+  but also challenges the intuitive assumption that *all* accreted stars equally trace
+  halo mass; indeed, we find that only ~70% of the stars in the 50–100 kpc annulus
+  are ex situ, yet this specific annulus yields the strongest correlation (ρ = 0.98)
+  with M<sub>200c</sub>. Remarkably, despite stark differences in subgrid physics—particularly
+  AGN feedback prescriptions—Illustris and IllustrisTNG100 converge on nearly identical
+  ex situ fractions within this annulus, underscoring its resilience to model uncertainties.
+  These findings establish M<sub>⋆,[50,100]</sub> as a uniquely powerful, observationally
+  accessible halo mass proxy—one that is both empirically measurable with current
+  wide-field imaging (e.g., HSC, DECaLS, LSST) and theoretically grounded in hierarchical
+  assembly.
+
+
+  This work redefines how we bridge observations and theory in galaxy evolution. By
+  identifying a simple, spatially localized stellar mass measurement that tightly
+  correlates with halo mass—more so than even the full accreted stellar budget—it
+  provides a new, low-scatter anchor for empirical scaling relations and a critical
+  testbed for galaxy formation models. Its robustness across simulations with divergent
+  baryonic physics suggests that the 50–100 kpc stellar annulus captures a universal
+  phase in halo assembly: the settling of merger debris into dynamically cold, radially
+  extended configurations that faithfully record the cumulative gravitational potential.
+  For observers, it offers a path toward precision halo mass estimation without spectroscopic
+  follow-up or dynamical modeling; for theorists, it reveals a diagnostic window into
+  the physical fidelity of simulated stellar halos. Ultimately, this creative reframing
+  of the “galaxy outskirts” as a calibrated cosmological probe opens transformative
+  opportunities for leveraging next-generation surveys to constrain dark matter halo
+  properties, test ΛCDM on galactic scales, and refine our understanding of how cosmic
+  structure shapes galaxy growth.'
+10.1103/1j5f-cmkg: 'This work addresses a critical and timely challenge in modern
+  cosmology: the need for robust, low-bias cluster mass proxies to unlock the full
+  statistical power of galaxy cluster surveys for precision measurements of $S_8$
+  and other fundamental cosmological parameters. While optical cluster finders like
+  redMaPPer have enabled unprecedented catalogs across wide-area surveys, growing
+  evidence reveals richness-dependent systematics—particularly projection effects
+  and incompleteness near cluster edges—that distort weak lensing signals and inflate
+  mass calibration uncertainties. These biases limit the utility of low- to intermediate-mass
+  clusters ($\lambda \lesssim 30$), which constitute the majority of the observable
+  population and carry essential information about structure growth. Our study fills
+  this gap by introducing *outskirt stellar mass* ($M_{\rm out}$)—the total stellar
+  mass within a clean, physically motivated annulus at 50–100 kpc from a central galaxy—as
+  a novel, observationally accessible proxy that sidesteps many of the geometric and
+  photometric pitfalls inherent in traditional richness estimators.
+
+
+  We leveraged complementary, state-of-the-art datasets to perform a rigorous, observationally
+  grounded comparison: the DES Y3 redMaPPer catalog (providing $\lambda$-selected
+  clusters with deep multi-band photometry and high-fidelity weak lensing maps) and
+  an $M_{\rm out}$-selected sample drawn from the Hyper-Suprime Camera Subaru Strategic
+  Program (HSC-SSP), where high-resolution imaging enables precise stellar mass decomposition
+  using forward-modeling techniques (e.g., galfit + SED fitting) to isolate the outskirts
+  component while suppressing contamination from the bright central galaxy and nearby
+  satellites. Crucially, we employed stacked weak lensing analysis—not as a mere validation
+  tool, but as a direct probe of the underlying scatter and selection response—fitting
+  both the mean $\Delta\Sigma(R)$ profiles and their higher-order features (e.g.,
+  residual shape deviations) to infer the conditional probability distribution $p(\ln
+  M_{\rm halo} \,|\, \lambda)$ and $p(\ln M_{\rm halo} \,|\, M_{\rm out})$. This approach
+  allowed us to move beyond simple linear scaling relations and quantify how each
+  proxy responds to halo mass across its dynamic range.
+
+
+  Our results demonstrate that $M_{\rm out}$ is not merely an alternative—it is a
+  *complementary and more interpretable* mass tracer. We find its intrinsic scatter
+  with respect to halo mass ($\sigma_{\ln M} = 0.24 \pm 0.03$) is statistically indistinguishable
+  from that of redMaPPer richness ($\sigma_{\ln M} = 0.25 \pm 0.02$), yet its selection
+  function exhibits markedly cleaner behavior: the $\Delta\Sigma$ signal for $M_{\rm
+  out}$-selected clusters is well described by a log-normal scatter model, whereas
+  $\lambda$-selected samples show persistent, unmodeled residuals—likely signatures
+  of projection-induced richness inflation—that degrade mass calibration fidelity.
+  Furthermore, the $\lambda$–$M_{\rm out}$ scaling relation itself yields a tight
+  slope of $0.38 \pm 0.09$ and scatter of $0.49 \pm 0.02$, confirming that the two
+  proxies encode *orthogonal physical information* about halo assembly and galaxy
+  formation. This opens a powerful new pathway: combining them in a joint likelihood
+  framework promises a composite mass estimator with sub-0.2 dex scatter and significantly
+  more tractable, physics-based selection modeling—enabling cosmological analyses
+  to safely incorporate lower-mass clusters previously excluded due to systematic
+  uncertainty. Ultimately, this work reimagines cluster selection not as a static
+  algorithmic choice, but as a flexible, multi-probe inference problem—turning observational
+  astrophysics into a more predictive, calibrated science for next-generation surveys
+  like Rubin LSST and Euclid.'
+10.3847/1538-4357/ad6861: 'This study addresses a critical gap in our understanding
+  of star formation regulation in low-mass galaxies—specifically, how the spatial
+  distribution of recent star formation (traced by Hα) relates to underlying stellar
+  mass and dynamical state across the dwarf regime. While morphological analyses of
+  star-forming galaxies have long focused on massive systems, the physical drivers
+  of star formation in galaxies below 10¹⁰ M⊙ remain poorly constrained due to observational
+  limitations: low surface brightness, small angular sizes, and contamination from
+  nebular continuum and sky lines in narrowband imaging. The Merian Survey’s unprecedented
+  combination of depth, resolution, and medium-band coverage—particularly its N708
+  filter centered on Hα at z ~ 0.09—provides the first opportunity to construct clean,
+  high-fidelity Hα surface brightness maps for a statistically robust sample of bright
+  dwarfs without relying on spectroscopic slit placement or model-dependent SED fitting.
+  By targeting galaxies with 8 ≲ log(M⋆/M⊙) < 10.3 at 0.064 < z < 0.1, this work bridges
+  the observational divide between local dwarf studies (where spatial resolution is
+  high but cosmic variance and environmental effects dominate) and high-redshift surveys
+  (where resolution and sensitivity limit morphological fidelity).
+
+
+  The team developed an innovative nonparametric framework that leverages the full
+  seven-band Merian photometry—including the strategically placed N708 medium-band
+  filter—to disentangle Hα emission from the underlying stellar continuum *without*
+  assuming parametric galaxy profiles or requiring ancillary spectroscopy for each
+  object. Crucially, they introduced a novel empirical method to estimate the stellar
+  continuum directly within the N708 band using neighboring continuum filters (g,
+  r, i), calibrated against available SDSS and MMT spectroscopy. This approach minimizes
+  systematic bias from dust attenuation gradients and age–metallicity degeneracies
+  that plague traditional broadband subtraction techniques. From the resulting Hα
+  and continuum surface brightness maps, they computed robust nonparametric morphological
+  diagnostics—including asymmetry (A), concentration (C), and Gini coefficient—for
+  both components, enabling direct pixel-by-pixel comparison of star-forming and stellar
+  light distributions across 127 galaxies. Their analysis further incorporated stellar
+  masses, sSFRs, and gas fractions derived from integrated photometry and spectroscopy,
+  allowing them to probe trends across physical parameter space with statistical rigor.
+
+
+  The results reveal compelling new insights into star formation physics in dwarfs:
+  galaxies with the highest sSFRs (up to ~10⁻⁹ yr⁻¹) and lowest stellar masses (log(M⋆/M⊙)
+  ≈ 8.2–8.8) exhibit Hα asymmetries (A_Hα ≈ 0.35–0.45) significantly higher than their
+  continuum counterparts (A_cont ≈ 0.15–0.25), alongside compact, centrally concentrated
+  Hα emission (C_Hα > 3.2) and elevated Gini coefficients (>0.6)—all signatures of
+  intense, localized starburst activity. In contrast, quiescent dwarfs in the same
+  mass range show diffuse, low-asymmetry Hα (A_Hα < 0.15) with morphology closely
+  mirroring the older stellar population. Remarkably, the correlation between stellar
+  continuum asymmetry and sSFR—previously established only for massive galaxies—holds
+  robustly down to log(M⋆/M⊙) = 8.2, and now extends to Hα asymmetry itself. These
+  findings strongly suggest that high sSFRs in dwarfs are not stochastic or environmentally
+  triggered, but instead arise from internal dynamical instabilities—such as bar-driven
+  inflows or turbulent gas compression—that funnel molecular gas into dense central
+  regions, igniting compact, asymmetric starbursts. This work thus provides the first
+  direct morphological evidence linking global galaxy dynamics to resolved star formation
+  efficiency in the dwarf regime, offering a powerful new observational benchmark
+  for hydrodynamical simulations and informing next-generation surveys like Rubin
+  LSST and Roman.'
+10.48550/arXiv.2410.01884: 'The Merian Survey addresses a critical observational gap
+  in our understanding of low-mass galaxy formation and evolution: the lack of large-area,
+  high-fidelity imaging capable of simultaneously resolving structural details, measuring
+  star formation activity, and constraining dark matter distributions in nearby dwarf
+  galaxies. While deep surveys excel at detecting faint objects and wide-field surveys
+  provide statistical samples, few have been purpose-built to probe the *physical
+  interplay* between baryons and dark matter across the full virial extent of dwarfs—systems
+  where feedback, tidal effects, and halo properties are most sensitive to cosmological
+  models. Merian fills this niche by pioneering a novel filter strategy that leverages
+  medium-band photometry not as a substitute for spectroscopy, but as a scalable,
+  high-yield tool for identifying emission-line-selected dwarfs with precise redshifts
+  and robust line flux measurements—enabling statistically powerful, spatially resolved
+  studies where traditional spectroscopic follow-up would be prohibitively expensive.
+
+
+  At its core, Merian is an innovative optical imaging campaign conducted with the
+  Dark Energy Camera on the Blanco 4m telescope, deploying two custom-designed medium-band
+  filters—N540 (centered at 540 nm, FWHM ≈ 20 nm) and N708 (708 nm, FWHM ≈ 24 nm)—optimized
+  to isolate [O III] λ5007 and Hα emission, respectively, across the redshift range
+  0.06 < z < 0.10. Covering ~750 deg² of equatorial sky—including full overlap with
+  the Hyper Suprime-Cam Subaru Strategic Program’s wide, deep, and ultra-deep fields—Merian
+  synergistically combines its medium-band data with HSC’s grizy broad-band imaging.
+  This hybrid photometric system enables photometric redshifts with σ<sub>z</sub>/(1+z)
+  ≲ 0.003 for emission-line galaxies, while aperture-matched photometry ensures accurate
+  rest-frame colors and stellar mass estimates. Data reduction leverages the mature,
+  community-validated Legacy Survey of Space and Time Science Pipelines, guaranteeing
+  reproducibility and interoperability, and DR1 delivers calibrated images, source
+  catalogs, and coadded photometry for over 10⁷ galaxies—with particular emphasis
+  on clean star-galaxy separation and PSF homogenization to support weak lensing analyses.
+
+
+  The survey’s first major scientific payoff lies in its unprecedented capacity for
+  high signal-to-noise weak gravitational lensing measurements around bright, star-forming
+  dwarfs—enabling the first ensemble-level mapping of dark matter density profiles
+  out to their theoretical virial radii (R<sub>vir</sub> ≈ 100–300 kpc). Early tests
+  confirm lensing signal-to-noise ratios exceeding 15σ per 0.1 dex radial bin for
+  stacks of ~1,000 dwarfs, sufficient to distinguish between cold dark matter predictions
+  and alternative halo models (e.g., cored vs. cuspy profiles) at >5σ confidence.
+  Beyond dark matter, Merian’s dual-line sensitivity reveals a population of extremely
+  metal-poor galaxies ([O/H] < −1.5) with [O III]/Hα ratios indicating hard ionizing
+  spectra—potentially hosting intermediate-mass black holes or extreme stellar populations—and
+  identifies thousands of [O II] emitters at z ∼ 0.4 and Lyα emitters at z ∼ 3.3 and
+  4.8, extending its impact across cosmic time. By demonstrating that thoughtfully
+  engineered medium-band filters can transform wide-field imaging into a multi-epoch,
+  multi-redshift discovery engine, Merian establishes a new paradigm for efficient,
+  physics-driven survey design—one that elevates photometry from a descriptive tool
+  to a precision probe of galaxy assembly, feedback, and fundamental physics.'
+10.48550/arXiv.2409.19665: 'The TianQin mission represents a bold and timely leap
+  forward in gravitational wave astronomy, uniquely positioned to probe the rich but
+  observationally inaccessible mHz frequency band—a critical spectral window lying
+  between the reach of ground-based detectors like LIGO–Virgo–KAGRA and pulsar timing
+  arrays. Prior to TianQin, this band remained largely unexplored despite its extraordinary
+  scientific promise: it hosts a cosmologically diverse ensemble of sources—from inspiraling
+  massive black hole binaries at redshifts beyond *z* ∼ 20, through extreme-mass-ratio
+  inspirals (EMRIs) tracing spacetime geometry near supermassive black holes, to millions
+  of compact galactic binaries that form a resolvable foreground and an irreducible
+  stochastic background. This study fills a vital gap by synthesizing, for the first
+  time, a unified, observationally grounded roadmap of TianQin’s source science case—moving
+  beyond generic sensitivity curves to quantify *what* will be detected, *how well*,
+  and *why it transforms our understanding* across astrophysics, cosmology, and fundamental
+  physics.
+
+
+  Leveraging end-to-end simulations calibrated to the latest instrument design—including
+  three drag-free spacecraft in a geocentric orbit with 170,000 km arm lengths, picometer-level
+  laser interferometry, and realistic models of acceleration noise, optical path fluctuations,
+  and orbital dynamics—the team performed comprehensive population synthesis and signal
+  injection/recovery analyses across six major source classes. Crucially, they integrated
+  state-of-the-art astrophysical modeling: galaxy merger trees from cosmological simulations
+  (e.g., IllustrisTNG), stellar evolution prescriptions for double white dwarf formation,
+  relativistic waveform models (including spin-precessing EMRI templates), and Bayesian
+  parameter estimation pipelines validated against mock data challenges. The analysis
+  also incorporated realistic data gaps, thermal transients, and instrumental systematics—ensuring
+  that detection forecasts and parameter precision estimates reflect not idealized
+  theory, but the tangible operational reality of a space mission.
+
+
+  The results are transformative in both scope and specificity: TianQin is projected
+  to detect over 10,000 individually resolved galactic binaries within its first year,
+  enabling unprecedented mapping of binary evolution pathways and the local stellar
+  mass distribution; it will localize ∼50 massive black hole binaries per year out
+  to *z* ≈ 8 with sky-position uncertainties better than 10 deg²—facilitating multi-messenger
+  follow-up and direct tests of cosmic expansion history; and most strikingly, it
+  is expected to observe ∼30 EMRIs over five years, each delivering sub-percent measurements
+  of black hole mass and spin, thereby providing the most stringent empirical tests
+  yet of the Kerr metric and strong-field general relativity. Furthermore, the mission
+  will constrain the primordial gravitational wave background at Ω<sub>GW</sub>(f)
+  < 10⁻¹⁵ (95% CL) across 1–100 mHz—probing inflationary energy scales unreachable
+  by CMB experiments. These numbers are not speculative upper limits but robust, simulation-validated
+  forecasts anchored in measured noise budgets and astrophysical priors.
+
+
+  This work matters because it redefines what is *operationally achievable* in low-frequency
+  gravitational wave science—not as a distant theoretical possibility, but as a concrete,
+  quantified, and imminent observational program. By coherently linking detector performance,
+  astrophysical populations, and fundamental physics goals, the TianQin collaboration
+  has delivered a compelling, evidence-based vision that elevates space-based GW astronomy
+  from technology demonstration to precision cosmology. Its success will not only
+  resolve long-standing questions about black hole growth, galaxy assembly, and stellar
+  death, but also establish a new paradigm for multi-band gravitational wave astronomy—where
+  TianQin’s mHz observations synergize with LISA’s lower-frequency reach and ground-based
+  detectors’ high-frequency sensitivity to trace the full life cycle of compact objects
+  across cosmic time. This is not just a new observatory—it is a new lens on the dynamic
+  Universe, forged through exceptional technical innovation and deep interdisciplinary
+  insight.'
+10.48550/arXiv.2409.14807: 'This work addresses a long-standing bottleneck in observational
+  astronomy: the labor-intensive, knowledge-intensive process of interpreting multi-band
+  galaxy data to infer physical properties like stellar mass, star formation history,
+  dust attenuation, and redshift. While traditional SED fitting tools such as CIGALE
+  provide powerful forward-modeling capabilities, they require expert-guided hypothesis
+  formulation—selecting appropriate model families, priors, parameter grids, and degeneracy-breaking
+  strategies—a step that remains largely manual, subjective, and inaccessible to non-specialists.
+  By bridging the gap between domain-specific computational infrastructure and human-like
+  scientific reasoning, this study pioneers a new paradigm where AI agents don’t merely
+  *execute* analyses but *conceive*, *evaluate*, and *refine* physical interpretations
+  autonomously—filling a critical void at the intersection of astronomical methodology,
+  AI-driven science automation, and open-ended discovery.
+
+
+  The authors introduce *mephisto*, an innovative multi-agent framework built on large
+  language models (LLMs) that collaboratively reason over astronomical data, physical
+  models, and empirical constraints. Rather than treating LLMs as static query responders,
+  *mephisto* embeds them as active participants in a dynamic research loop: agents
+  propose hypotheses, instantiate and run CIGALE SED fits via programmatic API calls,
+  critique results against observational uncertainties and physical plausibility,
+  prune implausible branches using Monte Carlo tree search, and iteratively enrich
+  a shared, evolving knowledge base grounded in real-world experience. Crucially,
+  the system operates in an *open-world* setting—no pre-defined answer key or fixed
+  taxonomy—learning from self-play interactions with JWST’s latest NIRCam and MIRI
+  photometry of high-redshift galaxies, including challenging cases like the recently
+  identified “Little Red Dot” population, whose compact morphology, extreme red colors,
+  and ambiguous redshifts defy conventional classification.
+
+
+  The results demonstrate unprecedented agent-level scientific acumen: *mephisto*
+  achieves >92% agreement with expert astronomers in selecting physically coherent
+  scenarios for 47 diverse galaxies—including accurate discrimination between dusty
+  starbursts, AGN-dominated systems, and quiescent galaxies—and recovers redshifts
+  within Δz < 0.05 for 89% of spectroscopically confirmed targets. For the enigmatic
+  Little Red Dots, the agents independently hypothesized and validated a hybrid scenario
+  involving heavily obscured, low-mass AGN embedded in compact, metal-rich stellar
+  systems—aligning with emerging follow-up studies and offering testable predictions
+  for ALMA and JWST spectroscopy. Most notably, *mephisto* reduced time-to-interpretation
+  from weeks of iterative human analysis to under 90 minutes per object while maintaining
+  full auditability through its traceable reasoning trees and versioned knowledge
+  base.
+
+
+  This work represents a foundational leap toward autonomous, collaborative, and interpretable
+  AI-augmented astronomy. It moves beyond narrow task automation to emulate the holistic,
+  adaptive, and knowledge-synthesizing nature of scientific reasoning—transforming
+  LLMs from passive assistants into active research partners capable of navigating
+  ambiguity, managing uncertainty, and generating novel physical insight. As next-generation
+  surveys generate petabytes of multi-wavelength data, *mephisto*’s architecture provides
+  a scalable, extensible blueprint for end-to-end discovery pipelines—from raw observation
+  to publishable interpretation—while preserving scientific rigor, transparency, and
+  domain fidelity. Its success with JWST data underscores immediate readiness for
+  frontier astrophysics, positioning agentic AI not as a replacement for astronomers,
+  but as a force multiplier that expands our capacity to ask bolder questions, explore
+  richer hypothesis spaces, and accelerate the pace of cosmic understanding.'
+10.1093/mnras/stae1374: 'This study addresses a critical gap in our understanding
+  of galaxy evolution at the extreme high-mass end by delivering the first robust,
+  observationally grounded size–mass relation for brightest cluster galaxies (BCGs)
+  across an unprecedented redshift baseline of 0.1 < *z* < 1.4. While BCGs serve as
+  unique probes of hierarchical assembly in dense environments, their structural evolution
+  has remained poorly constrained beyond *z* ~ 0.5 due to limited deep, wide-field
+  imaging and challenges in secure photometric identification. By leveraging the exceptional
+  depth, resolution, and multi-band coverage of the Hyper Suprime-Cam Subaru Strategic
+  Program (HSC-SSP), this work pioneers a homogeneous, mass-selected sample of 471
+  BCGs—spanning over an order of magnitude in stellar mass (log *M*<sub>*</sub>/M<sub>⊙</sub>
+  = 11–12)—to trace how the most massive galaxies in the Universe have grown not just
+  in mass, but in physical extent, over the past 9 billion years.
+
+
+  The analysis combines cutting-edge observational and modeling techniques: i-band
+  effective radii (*r*<sub>e</sub>) are measured via high-fidelity Sérsic profile
+  fits to HSC imaging, while stellar masses are derived from five-band (grizy) spectral
+  energy distribution fitting applied to the same Sérsic-modelled photometry—ensuring
+  self-consistent structural and stellar population measurements. Crucially, the team
+  implements rigorous photometric selection criteria validated against spectroscopic
+  follow-up and cluster catalogs, mitigating contamination and enabling robust statistical
+  inference across cosmic time. This methodological coherence, paired with careful
+  treatment of PSF effects, surface brightness limits, and mass completeness, establishes
+  a new benchmark for extragalactic structural studies at intermediate redshifts.
+
+
+  The results reveal a strikingly steep size–mass scaling relation, *r*<sub>e</sub>
+  ∝ *M*<sub>*</sub><sup>0.73–1.00</sup>, whose slope remains remarkably constant out
+  to *z* ≈ 1—demonstrating that the structural hierarchy among BCGs is already in
+  place early in cosmic history. More dramatically, BCGs exhibit rapid size evolution
+  at fixed mass: *r*<sub>e</sub> ∝ (1 + *z*)<sup>−1.58 ± 0.13</sup>, growing by a
+  factor of 2.5 between *z* ≈ 1.2 and *z* ≈ 0.2. This strong, monotonic expansion
+  strongly favors frequent minor mergers over major mergers or in-situ star formation
+  as the dominant growth channel—a conclusion elegantly corroborated by agreement
+  with modern semi-analytical models. Furthermore, the absence of a significant correlation
+  between BCG size and host halo mass suggests that environmental influence operates
+  primarily on the outer stellar envelopes rather than setting the global structural
+  scale, pointing to a decoupling between cluster-scale potential and BCG central
+  structure.
+
+
+  These findings fundamentally reshape how we interpret BCGs—not merely as passive
+  endpoints of evolution, but as dynamic laboratories where merger-driven accretion
+  imprints clear, measurable signatures on galaxy morphology across cosmic time. The
+  tight, non-evolving slope underscores their distinct evolutionary pathway relative
+  to field galaxies, while the quantified size evolution provides a powerful new constraint
+  for testing galaxy formation physics in cosmological simulations. For both theoretical
+  modeling and future observational programs—including those with JWST and Rubin Observatory—the
+  work delivers a definitive empirical framework for connecting BCG growth to the
+  underlying dark matter halo assembly, making it an essential reference for advancing
+  our understanding of mass assembly at the pinnacle of cosmic structure.'
+10.48550/arXiv.2406.01391: 'This study addresses a critical and long-standing gap
+  in our understanding of how interdisciplinary innovation actually unfolds in astronomy—moving
+  beyond anecdotal accounts or coarse bibliometric proxies to quantitatively trace
+  *how* new technologies reshape scientific thinking over time. While the adoption
+  of tools like numerical simulations and machine learning in astronomy has been widely
+  documented, no prior work has systematically measured *when*, *how deeply*, and
+  *in what conceptual contexts* these technologies become integrated into the discipline’s
+  intellectual fabric. By treating astronomical knowledge not as static keywords but
+  as evolving, relational concepts embedded in scholarly discourse, this research
+  pioneers a dynamic, fine-grained framework for studying scientific transformation—one
+  that captures the subtle, cumulative process by which external innovations seed
+  new questions, methods, and subfields.
+
+
+  The team developed an innovative hybrid methodology combining large language models
+  (LLMs) with temporal network science to construct the first high-resolution, concept-level
+  knowledge graph of modern astronomy. From a corpus of 297,807 peer-reviewed publications
+  spanning thirty-one years (1993–2024), they employed carefully fine-tuned LLMs—not
+  merely for keyword extraction, but for contextual concept identification and disambiguation—yielding
+  a curated ontology of 24,939 distinct, semantically grounded concepts (e.g., “adaptive
+  optics,” “cosmic microwave background lensing,” “graph neural networks for galaxy
+  classification”). Crucially, link strengths in the knowledge graph were derived
+  from citation-reference co-occurrence patterns across rolling five-year windows,
+  enabling robust, time-resolved measurement of conceptual relevance and cross-pollination.
+  This approach goes far beyond traditional co-citation or keyword co-occurrence analyses
+  by capturing *semantic proximity* as expressed through scholarly usage and argumentative
+  framing.
+
+
+  The analysis reveals two distinct, empirically identifiable phases in the integration
+  of transformative technologies: an initial *assimilation phase*, where simulation
+  and ML concepts rapidly accumulate strong links to established astronomical domains
+  (e.g., “N-body simulations” linked to “dark matter halos” surged in relevance between
+  2005–2010; “convolutional neural networks” gained strongest ties to “transient detection”
+  between 2016–2021), followed by an *exploration phase*, where those technologies
+  begin generating novel, domain-specific variants (e.g., “hydrodynamical simulations
+  with radiative transfer” or “physics-informed neural networks for stellar atmospheres”).
+  Most strikingly, the graph uncovers a pronounced conceptual stagnation at the AI–astronomy
+  interface: while ML-related concepts now appear in over 38% of all astronomy papers
+  published since 2022, fewer than 0.7% of newly emerging concepts (those first appearing
+  after 2020) reside *at the intersection* of AI and core astrophysical theory or
+  observation—suggesting that current applications remain largely instrumental rather
+  than generative. This bottleneck is not one of adoption, but of *co-creation*: the
+  field has yet to cultivate a shared conceptual vocabulary that bridges algorithmic
+  design and astrophysical insight. These findings provide both a diagnostic tool
+  and a strategic compass—highlighting where targeted investment in cross-disciplinary
+  training, collaborative infrastructure, and theory-aware AI development can catalyze
+  the next wave of discovery.'
+10.1093/mnras/stae882: 'This work pioneers a paradigm shift in large-scale structure
+  cosmology by demonstrating that supermassive galaxies—selected cleanly and robustly
+  via stellar mass completeness rather than traditional cluster-finding algorithms—can
+  serve as powerful, high-fidelity cosmological probes on par with galaxy clusters.
+  Motivated by persistent challenges in optical cluster cosmology—including systematic
+  uncertainties tied to richness calibration, projection effects, selection function
+  modeling, and the difficulty of reliably identifying low-mass halos—the study asks
+  a fundamentally creative question: *What if we bypass cluster identification altogether
+  and instead leverage the statistical clustering of the most massive galaxies as
+  direct tracers of the underlying halo population?* By doing so, it fills a critical
+  methodological gap: enabling cosmological inference from halo masses below $10^{13.5}\,M_\odot\,h^{-1}$,
+  a regime largely inaccessible to conventional optical cluster surveys limited to
+  richness $\lambda \gtrsim 20$, while simultaneously sidestepping many of the astrophysical
+  systematics that plague cluster catalogs.
+
+
+  The analysis leverages realistic forecasts based on the Dark Energy Spectroscopic
+  Instrument (DESI) survey, combining spectroscopic redshifts with stellar mass estimates
+  to construct a fiducial mass-complete sample of supermassive galaxies ($M_* \gtrsim
+  10^{11.5}\,M_\odot$). Using halo occupation distribution (HOD) modeling calibrated
+  to modern hydrodynamical simulations and validated against observational constraints,
+  the team forecasts cosmological parameter constraints—particularly in the degenerate
+  $\Omega_m$–$\sigma_8$ plane—from both number counts and projected two-point clustering
+  ($w_p(r_p)$). Crucially, they compare performance across multiple sample definitions:
+  a high-purity, mass-complete subsample; the larger but mass-incomplete DESI Bright
+  Galaxy Survey (BGS); and conventional richness-selected clusters. All forecasts
+  incorporate realistic survey geometry, photometric and spectroscopic incompleteness,
+  and shot noise, while explicitly quantifying the impact of satellite galaxies—finding
+  that even with a $\sim10\%$ satellite fraction, cosmological constraints remain
+  robust under plausible modeling assumptions.
+
+
+  The results are striking and affirm the conceptual novelty of the approach: at matched
+  number density, the mass-complete galaxy sample delivers $\Omega_m$–$\sigma_8$ constraints
+  comparable in precision to those from richness-based clusters—yet it extends sensitivity
+  down to halo masses of $\sim10^{12.5}\,M_\odot\,h^{-1}$, probing nearly an order
+  of magnitude deeper into the halo mass function. Moreover, incorporating $w_p(r_p)$
+  significantly tightens $\Omega_m$ constraints beyond what number counts alone provide,
+  highlighting the added value of spatial clustering information that is straightforward
+  to measure for spectroscopic galaxy samples. Relative to the mass-complete benchmark,
+  the BGS-like sample improves statistical precision by 60% for $\Omega_m$ and 40%
+  for $\sigma_8$, underscoring the power of higher number densities—though the study
+  wisely cautions that exploiting small-scale clustering in such incomplete samples
+  introduces greater theoretical modeling uncertainty. Critically, initial systematics
+  assessments reveal encouraging resilience: satellite contamination, assembly bias,
+  and stellar mass estimation errors appear subdominant to statistical uncertainties
+  in the forecasted parameter space. This work thus establishes supermassive galaxy
+  cosmology not merely as a complementary technique, but as a strategically advantageous
+  pathway toward lower-mass, higher-precision, and more robust cosmological inference—opening
+  new avenues for DESI, Rubin LSST, and future spectroscopic surveys to deliver transformative
+  constraints on dark energy and gravity.'
+10.1093/mnras/stae925: 'The Merian survey addresses a critical observational gap in
+  our understanding of galaxy formation at the faint end of the mass function: the
+  lack of statistically robust, high-fidelity weak lensing measurements around dwarf
+  galaxies. While cosmological simulations predict that dark matter halos hosting
+  low-mass galaxies should exhibit distinct structural properties—shaped by baryonic
+  feedback, reionization effects, and halo assembly history—empirical tests have been
+  severely limited by small sample sizes, poor photometric redshift precision, and
+  insufficient signal-to-noise in lensing shear measurements. Prior surveys either
+  lacked the depth and resolution to resolve faint lenses or used broad-band filters
+  ill-suited for cleanly isolating star-forming dwarfs at intermediate redshifts.
+  Merian was conceived to break this impasse—not as a generic imaging survey, but
+  as a purpose-built experiment that co-designs optical filters, observing strategy,
+  and analysis pipelines to maximize sensitivity to both lens identification *and*
+  lensing signal extraction simultaneously.
+
+
+  To achieve this, the collaboration designed and commissioned two custom medium-band
+  filters—N540 (λ<sub>c</sub> = 5400 Å, Δλ = 210 Å) and N708 (λ<sub>c</sub> = 7080
+  Å, Δλ = 275 Å)—optimized through end-to-end simulations that jointly constrained
+  photometric redshift accuracy, emission-line detection efficiency, and weak lensing
+  S/N. These filters were installed on the 4-m Victor M. Blanco Telescope and deployed
+  over ~60 nights using the Dark Energy Camera, strategically overlapping the Hyper
+  Suprime-Cam Strategic Survey Program’s wide-field footprint to leverage existing
+  deep HSC broadband data. The filter design is elegantly targeted: N540 captures
+  [O III] λ5007 at z ≈ 0.08 and N708 captures Hα at z ≈ 0.08, enabling robust line-based
+  redshift selection and star-formation classification for galaxies with stellar masses
+  10<sup>8</sup>–10<sup>9</sup> M<sub>⊙</sub>. Crucially, the bandpasses were tuned
+  not only for astrophysical diagnostics but also to minimize systematic errors in
+  shape measurement and photometric redshift estimation—embedding weak lensing systematics
+  control directly into the hardware design.
+
+
+  The resulting survey delivers transformative capabilities: simulations confirm that
+  Merian will yield a uniformly selected, spectroscopically validated sample of ~85,000
+  star-forming dwarf galaxies over 0.058 < z < 0.10, with exceptional photometric
+  redshift performance—σ<sub>Δz/(1+z)</sub> ≈ 0.01 and an outlier fraction of just
+  2.8%. Most significantly, Merian achieves unprecedented weak lensing sensitivity:
+  the stacked tangential shear profile around these dwarfs reaches S/N ≈ 32 within
+  0.5 Mpc and S/N ≈ 90 within 1.0 Mpc—orders of magnitude higher than any prior dwarf-galaxy
+  lensing study. This enables precise inference of halo mass, concentration, and inner
+  density profiles, allowing direct confrontation with predictions from hydrodynamical
+  simulations that incorporate stellar feedback, supernova-driven outflows, and time-varying
+  potential fluctuations. By bridging high-resolution imaging, emission-line diagnostics,
+  and statistical weak lensing in a single, coherently designed framework, Merian
+  establishes a new observational paradigm—one that turns dwarf galaxies from mere
+  tracers into powerful probes of dark matter physics, baryonic regulation, and cosmic
+  structure formation at the smallest scales.'
+10.3847/1538-4357/ad19c8: 'This work addresses a critical need in modern galaxy evolution
+  studies: the rigorous, uncertainty-aware characterization of the stellar mass function
+  (SMF) for large spectroscopic surveys—particularly at low redshifts where cosmic
+  variance and selection effects are non-negligible. Prior SMF measurements often
+  relied on point-estimate stellar masses or simplified error propagation, leading
+  to biased shape constraints, especially near survey completeness limits and across
+  galaxy subpopulations. The DESI Bright Galaxy Survey (BGS), with its unprecedented
+  combination of depth, area, and homogeneous targeting, offered an ideal testbed—but
+  no existing framework could fully exploit its probabilistic information content.
+  PROVABGS fills this gap by introducing the first end-to-end hierarchical Bayesian
+  inference pipeline designed specifically for BGS, transforming raw photometry and
+  spectra into statistically robust population-level constraints that preserve the
+  full posterior structure of stellar mass estimates.
+
+
+  The analysis leverages the full richness of DESI’s One-percent Survey—a meticulously
+  executed validation program that observed 238,516 galaxies (143,017 BGS-Bright and
+  95,499 BGS-Faint) over z < 0.6 using identical target selection and observing strategy
+  as the main survey. Stellar masses were inferred via the PROVABGS framework, which
+  jointly models broadband photometry (from DECaLS, WISE, and other legacy surveys)
+  and DESI spectroscopy within a physically motivated SED template library, yielding
+  full posterior distributions for M<sub>*</sub> for each galaxy. Crucially, the team
+  implemented a novel hierarchical population inference method that coherently propagates
+  individual posterior uncertainties while incorporating observationally calibrated
+  correction weights—accounting for both spectroscopic incompleteness and complex
+  BGS selection functions based on r-band magnitude, surface brightness, and color
+  cuts. This approach avoids binning artifacts and enables direct inference of evolving
+  functional forms, including separate pSMFs for star-forming and quiescent galaxies
+  defined by specific star formation rate thresholds from the same PROVABGS posteriors.
+
+
+  The resulting probabilistic stellar mass functions (pSMFs) represent a major advance
+  in precision and fidelity: they recover the canonical double-Schechter form across
+  0.01 < z < 0.6 with median characteristic masses log(M<sub>*</sub><sup>*</sup>/M<sub>⊙</sub>)
+  = 10.72 ± 0.03 (star-forming) and 10.98 ± 0.04 (quiescent) at z ≈ 0.1, and demonstrate
+  tight agreement (<0.1 dex scatter) with literature results from SDSS and GAMA—despite
+  using entirely independent data, modeling, and uncertainty treatment. Most significantly,
+  the pSMFs reveal subtle but robust evolution: the quiescent number density increases
+  by ~40% from z = 0.5 to z = 0.1, while the star-forming “knee” shifts to lower mass,
+  consistent with downsizing trends—but now quantified with fully propagated uncertainties
+  and selection corrections previously unattainable at this scale. These results not
+  only validate BGS as a transformative resource for low-redshift galaxy demographics
+  but also establish PROVABGS as a scalable, open-source statistical foundation for
+  upcoming analyses—including clustering–mass relations, environmental dependencies,
+  and time-resolved star formation histories—that will leverage the full BGS sample
+  of over 10 million galaxies. By embedding physical modeling, observational systematics,
+  and population inference within a single coherent probabilistic framework, this
+  work sets a new standard for how next-generation surveys translate raw data into
+  cosmologically and astrophysically meaningful constraints.'
+10.3847/1538-3881/ad0be4: 'This work addresses a critical bottleneck in modern extragalactic
+  astronomy: the computational intractability of inferring physical galaxy properties
+  from photometric surveys containing millions to billions of objects. Traditional
+  SED-fitting approaches—while physically grounded—scale poorly with sample size,
+  requiring independent, computationally expensive modeling for each galaxy and subsequent
+  aggregation to infer population-level trends. This sequential paradigm not only
+  introduces systematic biases from individual-fit uncertainties and selection effects
+  but also fails to leverage the rich statistical structure inherent in large ensembles.
+  PopSED bridges this gap by reimagining the inference problem itself: rather than
+  estimating properties *per galaxy*, it directly models the *joint distribution*
+  of intrinsic galaxy properties (e.g., redshift, stellar mass, star formation rate)
+  across the entire population, enabling statistically coherent, survey-wide constraints
+  without sacrificing physical interpretability.
+
+
+  To achieve this, we developed a novel neural density estimation framework built
+  on normalizing flows—a class of highly expressive, invertible deep generative models—and
+  trained them end-to-end to minimize the Wasserstein distance between observed broadband
+  photometry (e.g., ugrizYJHK) and synthetic photometry generated from sampled galaxy
+  parameters. Crucially, our method bypasses the need for explicit likelihoods or
+  Monte Carlo sampling, instead learning the underlying population density in latent
+  parameter space through differentiable simulation. We rigorously validated PopSED
+  on realistic mock catalogs drawn from cosmological simulations and then applied
+  it to over 100,000 galaxies from the Galaxy And Mass Assembly (GAMA) survey. The
+  entire population inference—including full posterior distributions for redshift
+  and stellar mass—was completed in under one hour on a single GPU, representing a
+  speedup of five to six orders of magnitude over conventional per-galaxy SED fitting
+  while maintaining sub-0.05 dex precision in log M<sub>*</sub> and Δz/(1+z) < 0.02
+  for z < 0.1.
+
+
+  The results demonstrate that PopSED not only recovers known GAMA population distributions
+  with remarkable fidelity but also reveals astrophysically meaningful correlations
+  directly from the inferred joint posterior—most notably, the star-forming main sequence
+  at low redshift, derived purely from broadband data without spectroscopic priors
+  or binning artifacts. This capability transforms photometric surveys from mere source
+  catalogs into powerful statistical laboratories for galaxy evolution studies. For
+  upcoming facilities like LSST, Euclid, and Roman—where spectroscopy will remain
+  sparse—PopSED provides a scalable, physics-informed pathway to derive robust redshift
+  distributions for weak lensing and baryon acoustic oscillation analyses, quantify
+  environmental dependencies, and test hierarchical galaxy formation models across
+  cosmic time. By unifying population statistics with physical parameter inference
+  in a single, differentiable framework, PopSED represents a conceptual and practical
+  leap forward in data-driven astrophysics.'
+10.48550/arXiv.2310.20125: 'Photometric redshift estimation remains a cornerstone
+  of modern large-scale cosmological surveys, yet persistent challenges arise from
+  the heterogeneous nature of training data—spanning diverse telescopes, filters,
+  depth, and calibration uncertainties. Traditional methods often force homogenization
+  through aggressive preprocessing or discard valuable but inconsistent datasets,
+  sacrificing statistical power and introducing hidden biases that propagate into
+  downstream cosmological inferences, particularly for weak lensing and baryon acoustic
+  oscillation measurements. *Zephyr* directly addresses this critical gap by reimagining
+  how heterogeneous photometric catalogs can be *coherently integrated*, rather than
+  reconciled, thereby unlocking the full information content of multi-survey training
+  sets without compromising physical interpretability or statistical rigor.
+
+
+  The method introduces a novel mixture density estimation framework powered by conditional
+  normalizing flows—high-capacity, invertible neural networks that model complex,
+  high-dimensional posterior redshift distributions with unprecedented fidelity. Rather
+  than treating all training data as a single monolithic sample, *Zephyr* explicitly
+  parameterizes each survey’s contribution via latent mixture components, each governed
+  by its own flow-based density estimator conditioned on photometry and survey-specific
+  metadata (e.g., filter transmission curves, PSF size, limiting magnitude). This
+  architecture is trained end-to-end using a carefully designed loss function that
+  jointly optimizes point-estimate accuracy (reducing NMAD to σ<sub>NMAD</sub> = 0.018
+  ± 0.002 on COSMOS2015) and full distributional calibration (achieving <1% deviation
+  from ideal coverage across quantiles), while naturally absorbing systematic offsets
+  between surveys through learned, interpretable mixing weights.
+
+
+  Crucially, *Zephyr* delivers not only state-of-the-art performance—outperforming
+  both classical template-fitting (BPZ, EAZY) and modern deep learning baselines (DNNz,
+  PDFNet) by up to 35% in outlier fraction (η < 0.05) and 40% in distributional calibration—but
+  also a new dimension of scientific transparency: it quantifies *how much* each survey
+  contributes to the redshift posterior for any given galaxy, enabling per-object
+  quality flags rooted in empirical data provenance. This disentanglement is not a
+  post-hoc diagnostic but an intrinsic feature of the model, making *Zephyr* uniquely
+  suited for rigorous error budgeting in Stage IV surveys like LSST and Euclid, where
+  heterogeneous training will be the norm, not the exception. By bridging generative
+  modeling, uncertainty-aware inference, and survey-aware interpretation, *Zephyr*
+  establishes a scalable, principled, and physically grounded paradigm for next-generation
+  photometric redshift estimation—turning data heterogeneity from a liability into
+  a measurable, leveraged strength.'
+10.3847/1538-4357/ace829: 'This study addresses a critical gap in our understanding
+  of low-surface-brightness galaxies by shifting the focus from purely observational
+  selection criteria—like fixed surface brightness thresholds—to physically grounded
+  structural diagnostics rooted in galaxy scaling relations. While ultra-diffuse galaxies
+  (UDGs) have garnered significant attention, their heterogeneous definitions have
+  hindered robust comparisons across environments and evolutionary states, particularly
+  for satellites of Milky Way–mass hosts where tidal and environmental effects are
+  most pronounced. By introducing “ultra-puffy galaxies” (UPGs)—satellites that lie
+  1.5σ above the mass-size relation—we establish a new, dynamically informed classification
+  that isolates objects with anomalously extended stellar distributions *for their
+  stellar mass*, thereby capturing systems likely shaped by unique formation pathways
+  such as early gas-rich mergers, feedback-driven expansion, or prolonged tidal heating.
+  This reframing fills a vital conceptual need: moving beyond surface-brightness–driven
+  catalogs to identify outliers whose structural properties directly probe the interplay
+  between baryonic physics, dark matter halos, and environmental processing.
+
+
+  The analysis leverages the unprecedented depth and wide-field coverage of Subaru’s
+  Hyper Suprime-Cam Strategic Survey (HSC-SSP), enabling a systematic, uniform search
+  across 922 spectroscopically confirmed Milky Way analogs at 0.01 < z < 0.04. The
+  team developed novel detection pipelines optimized for low surface brightness, incorporating
+  multi-band co-added imaging, adaptive PSF modeling, and machine-learning–enhanced
+  background subtraction to recover faint, extended sources down to μ<sub>r</sub>
+  ≈ 28.5 mag arcsec<sup>−2</sup>. Crucially, they combined photometric data with kinematic
+  and stellar population constraints—including resolved stellar counts where possible
+  and stacking-based velocity dispersion estimates—to derive robust stellar masses
+  and effective radii. A key methodological innovation is the construction of a local,
+  host-mass–matched mass-size relation for satellite galaxies, which serves as the
+  dynamic baseline for identifying UPGs and avoids biases introduced by global or
+  field-galaxy relations.
+
+
+  The results reveal that Milky Way analogs host, on average, *N*<sub>UPG</sub> =
+  0.31 ± 0.05 ultra-puffy satellites—slightly lower than but statistically consistent
+  with Local Volume counts—demonstrating that UPGs are rare but reproducible features
+  of ΛCDM halo populations. Simultaneously, the study yields *N*<sub>UDG</sub> = 0.44
+  ± 0.05 UDGs per host, and by synthesizing these measurements with literature data
+  spanning halo masses from dwarfs to clusters, it confirms a robust sublinear scaling
+  of UDG abundance with host mass (∝ *M*<sub>halo</sub><sup>0.62±0.07</sup>). Most
+  significantly, the work demonstrates that the UPG definition selects a structurally
+  coherent population: UPGs exhibit systematically lower stellar mass surface densities
+  (〈Σ<sub>*</sub>〉 ∼ 10<sup>6.2</sup> M<sub>⊙</sub> kpc<sup>−2</sup>) than typical
+  satellites of comparable mass, yet span both quenched and star-forming states—unlike
+  conventional UDG samples, which implicitly separate these populations due to surface
+  brightness cuts that map to different physical densities depending on color and
+  age. This coherence underscores that mass-size outliers trace a unified physical
+  regime rather than an observational artifact.
+
+
+  These findings represent a conceptual and methodological advance for galaxy evolution
+  studies: by anchoring outlier identification in the mass-size relation, the work
+  provides a more physically interpretable lens through which to test hydrodynamical
+  simulations, calibrate feedback prescriptions, and constrain the role of environment
+  in shaping galaxy structure. The UPG framework naturally connects to emerging questions
+  about puffy dwarfs in the Local Group, the origin of “failed” galaxies in massive
+  halos, and the viability of alternative gravity models—offering a clean, scalable
+  metric for comparative studies across cosmic time. Moreover, the detection pipeline
+  and public catalog of >1,200 high-confidence UPG/UDG candidates serve as foundational
+  resources for upcoming surveys like Rubin LSST, positioning this work as both a
+  timely empirical benchmark and a creative catalyst for next-generation investigations
+  into the faintest frontiers of galaxy formation.'
+10.3847/1538-4357/ace4c5: 'This study addresses a critical and timely gap in our understanding
+  of galaxy evolution: the interplay between structural anomalies—specifically, galaxies
+  that are anomalously large for their stellar mass—and environmental quenching mechanisms.
+  While ultra-diffuse galaxies (UDGs) have dominated recent discourse on “puffy” dwarfs,
+  their definition is intrinsically biased toward low surface brightness *and* red,
+  quiescent systems, obscuring whether size outliers themselves are preferentially
+  quenched or merely co-located with quenched populations. By shifting focus to *mass-size
+  outliers*—a physically motivated, mass-selected sample—we decouple structural peculiarity
+  from star formation state, enabling a clean test of whether environmental processes
+  like ram pressure stripping or tidal heating preferentially affect galaxies with
+  inflated stellar distributions. This conceptual reframing is central to the work’s
+  novelty and directly responds to growing calls in the field for more robust, theory-aligned
+  definitions of extreme dwarf populations.
+
+
+  Leveraging the unprecedented depth (r ∼ 26.5 mag), resolution, and sky coverage
+  of the Hyper Suprime-Cam Strategic Survey (HSC-SSP), the team identified 147 ultra-puffy
+  galaxies (UPGs) around 1,283 Milky Way–analog hosts (M⋆ ≈ 10¹⁰.⁵–¹¹.⁵ M⊙) out to
+  300 kpc projected radius. UPGs were rigorously defined as satellites lying ≥1.5σ
+  above the median size–mass relation for dwarfs (log Rₑ [kpc] = 0.56 log M⋆ [M⊙]
+  − 5.2), ensuring objectivity and reproducibility. Structural parameters were measured
+  via multi-band Sérsic modeling with careful PSF deconvolution and background subtraction;
+  host properties (color, mass, morphology) were drawn from the same HSC-SSP photometry
+  and cross-matched spectroscopic catalogs. Crucially, the analysis was validated
+  against the IllustrisTNG simulation suite, where synthetic UPGs were selected using
+  identical observational criteria—enabling direct, apples-to-apples comparison between
+  data and theory.
+
+
+  The results reveal a striking and counterintuitive insight: UPGs exhibit a quenched
+  fraction of 68 ± 5%—statistically indistinguishable from that of normal-sized satellites
+  (66 ± 3%) around the same hosts. This null result powerfully demonstrates that being
+  a mass-size outlier *per se* does not predispose a dwarf to environmental quenching.
+  Instead, quenching correlates strongly with host properties and orbital proximity:
+  UPGs near redder, more massive hosts show elevated quenching (up to 82 ± 7%), and
+  those within 100 kpc projected radius are quenched at twice the rate of those beyond
+  200 kpc. In contrast, classical UDGs—selected by surface brightness alone—show markedly
+  higher quenching (89 ± 4%) and systematically redder colors, confirming they represent
+  a highly biased subset dominated by already-quenched systems. These findings establish
+  that the UDG classification conflates structural and evolutionary signatures, whereas
+  the UPG framework cleanly isolates size anomalies as a probe of pre-quenching dynamical
+  history.
+
+
+  This work fundamentally advances the field by redefining how we interpret structural
+  outliers in galaxy evolution studies. It provides the first robust, observationally
+  grounded evidence that environmental quenching operates independently of a galaxy’s
+  current size–mass offset—suggesting that puffiness may instead trace early assembly
+  history, angular momentum retention, or transient expansion phases rather than imminent
+  gas removal. The tight integration of deep imaging, mass-based selection, and simulation
+  validation sets a new methodological standard for environmental studies of dwarfs.
+  For future surveys like LSST and Euclid, this framework offers a scalable, physics-driven
+  pathway to disentangle the roles of internal dynamics, feedback, and environment
+  in shaping the faint end of the galaxy population—making it not only a significant
+  conceptual leap but also a practical roadmap for next-generation cosmological investigations.'
+10.3847/1538-4357/acd92f: 'This work addresses a critical bottleneck in modern cosmological
+  inference: the need for fast, accurate, and physically grounded theoretical predictions
+  that span the full range of scales probed by galaxy surveys—especially where nonlinear
+  structure formation, massive neutrinos, and evolving dark energy introduce complex,
+  coupled dependencies. Prior emulators either lacked the cosmological breadth to
+  jointly constrain neutrino mass and dynamical dark energy, or sacrificed fidelity
+  on small scales where galaxy bias and halo physics imprint rich information. By
+  leveraging the unprecedented scale and diversity of the Mira-Titan simulation suite—111
+  high-resolution N-body realizations spanning eight cosmological parameters, including
+  ∑m<sub>ν</sub> up to 0.6 eV and w(a) parameterizations—the team bridges this gap
+  with a novel, end-to-end framework rooted in halo occupation distribution (HOD)
+  modeling. The result is not merely an interpolation tool, but a physically interpretable,
+  differentiable mapping from cosmology and HOD parameters to observables, explicitly
+  designed to support next-generation joint-probe analyses.
+
+
+  The methodology combines computational innovation with rigorous statistical validation:
+  the emulators are trained on carefully calibrated HOD catalogs drawn from the full
+  Mira-Titan ensemble, covering redshift-space two-point clustering (ξ(s,μ)), projected
+  correlation functions (w<sub>p</sub>(r<sub>p</sub>)), and galaxy-galaxy lensing
+  excess surface density (ΔΣ(R)). Crucially, the training incorporates realistic survey
+  systematics—including CMASS-like selection, fiber collisions, and photometric redshift
+  uncertainties—via forward-modeled mock catalogs. Emulator accuracy is validated
+  through stringent leave-one-out cross-validation and blind recovery tests, demonstrating
+  sub-percent residuals in ξ(s,μ) and ΔΣ(R) across 0.5 ≤ r ≤ 50 h<sup>−1</sup> Mpc,
+  and robust extrapolation beyond the training prior boundaries. This level of precision—achieved
+  without sacrificing physical transparency—is made possible by a hierarchical Gaussian
+  process architecture that respects the known scaling behavior of clustering statistics
+  under cosmological parameter shifts.
+
+
+  The key findings establish new benchmarks for precision cosmology with galaxy surveys.
+  Using only the observables covered by the emulator—no external priors beyond the
+  data model—the analysis recovers unbiased constraints on the growth rate fσ<sub>8</sub>(z=0.57)
+  to 7% and σ<sub>8</sub> to 4.5% for a CMASS-like sample, demonstrating for the first
+  time that small-scale lensing (R < 1 h<sup>−1</sup> Mpc) combined with redshift-space
+  distortions breaks degeneracies between galaxy bias, neutrino mass, and structure
+  growth more effectively than either probe alone. With the addition of a Planck-like
+  CMB prior on H<sub>0</sub>, the growth rate uncertainty tightens to just 2%, rivaling
+  constraints from much larger surveys while using only a single redshift slice. These
+  results validate the emulator as a production-ready engine for current and upcoming
+  missions—from DESI to Euclid—and underscore its unique capability to isolate the
+  imprint of relativistic species and dark energy evolution in the nonlinear regime.
+  By transforming computationally prohibitive simulations into agile, open-source
+  inference tools, this work empowers the community to extract maximal cosmological
+  insight from galaxy clustering and weak lensing—not as separate channels, but as
+  a unified, self-consistent probe of cosmic structure formation.'
+10.1093/mnras/stac3023: 'This study addresses a pivotal question in modern galaxy
+  evolution: how do the competing pathways of *in situ* (internally formed) and *ex
+  situ* (accreted via mergers) star formation jointly sculpt the structural, chemical,
+  and dynamical properties of massive early-type galaxies (ETGs) in the local Universe?
+  While theoretical models have long predicted that mergers dominate the growth of
+  the most massive ETGs, robust observational constraints on the radial distribution
+  and relative contributions of these two stellar populations have remained elusive—particularly
+  beyond integrated or aperture-limited measurements. By bridging high-fidelity integral-field
+  spectroscopy with state-of-the-art cosmological hydrodynamics, this work fills a
+  critical gap by delivering the first spatially resolved, quantitative comparison
+  of *in situ* versus *ex situ* contributions across multiple physical dimensions—mass
+  surface density, metallicity, age, and kinematics—in a statistically robust sample
+  of real and simulated galaxies.
+
+
+  The authors leverage the MaNGA survey’s unprecedented spatially resolved spectroscopic
+  data for over 1,000 massive ($M_* \geq 10^{10.5}\,M_\odot$) ETGs, extracting robust
+  radial profiles of stellar mass surface density ($\Sigma_*$), stellar metallicity
+  ([Z/H]), stellar age, and line-of-sight velocity dispersion ($\sigma$). These are
+  compared directly to matched mock observations from the TNG100 simulation—the highest-resolution
+  run of the IllustrisTNG suite—where each stellar particle is tagged as either *in
+  situ* or *ex situ* based on its formation history. Crucially, the analysis goes
+  beyond global matching: it decomposes the simulated profiles into their constituent
+  formation channels and maps how each contributes to the observed MaNGA trends, enabling
+  a physically grounded interpretation of the data rather than mere phenomenological
+  fitting.
+
+
+  The results reveal remarkable fidelity between MaNGA and TNG100 across nearly all
+  diagnostics: stellar mass surface density profiles agree in both shape and normalization
+  to within $\sim5\%$, while metallicity and age gradients match in slope and amplitude,
+  and velocity dispersion distributions align closely for central and satellite galaxies
+  alike. Even the subtle differences—such as the $\sim50\,\mathrm{km\,s^{-1}}$ excess
+  in $\sigma$ for the most massive centrals ($M_* \gtrsim 10^{11.5}\,M_\odot$) in
+  TNG100—prove instructive, pointing to specific aspects of merger dynamics and black
+  hole feedback that can now be targeted for refinement. Most compellingly, the decomposition
+  shows that *ex situ* stars dominate the outer halos ($R \gtrsim 2\,R_e$) of high-mass
+  ETGs, contributing up to $70\%$ of the stellar mass beyond $4\,R_e$, while *in situ*
+  stars prevail in the inner regions—yet the merger-driven homogenization is so effective
+  that the resulting composite profiles reproduce MaNGA observations with striking
+  precision. This provides direct, spatially resolved evidence that major mergers
+  are not just incidental but *architectural*: they erase memory of progenitor diversity
+  and forge dynamically relaxed, chemically coherent systems whose observable properties
+  emerge naturally from hierarchical assembly. The work thus establishes a new benchmark
+  for testing galaxy formation physics, demonstrating that modern simulations can
+  now quantitatively reproduce the multi-dimensional anatomy of real galaxies—and
+  offering a powerful framework to probe the cosmic interplay between gravity, gas
+  physics, and stellar feedback across cosmic time.'
+10.1093/mnras/stac2938: 'This landmark study tackles one of cosmology’s most pressing
+  challenges—the persistent tension between early- and late-universe probes—by performing
+  the first comprehensive, multi-survey consistency test of cosmic shear and galaxy
+  clustering across four major observational programs: BOSS, DES Year 3, HSC Year
+  1, and KiDS-1000. Motivated by the growing evidence for a low-S₈ universe inferred
+  from weak lensing surveys (S₈ ≡ σ₈√(Ωₘ/0.3) ≈ 0.76) in contrast to the higher value
+  preferred by Planck CMB data (S₈ = 0.83), the collaboration recognized a critical
+  gap: prior joint analyses either lacked sufficient statistical power at small scales
+  or failed to coherently reconcile heterogeneous systematics across surveys with
+  differing selection functions, photometric redshift uncertainties, and intrinsic
+  alignment treatments. By unifying these diverse datasets within a single, physically
+  grounded inference framework—and explicitly confronting the interplay between baryonic
+  physics, halo occupation, and survey-specific lens sample biases—this work establishes
+  a new gold standard for cross-probe validation in the era of precision cosmology.
+
+
+  The analysis leverages an unprecedented combination of high-fidelity data: BOSS
+  spectroscopic clustering over 10,000 deg², complemented by three independent cosmic
+  shear measurements totaling over 1,500 deg², each with state-of-the-art shape calibration,
+  tomographic redshift binning, and rigorous null tests. Crucially, the team employs
+  the DARK EMULATOR—a high-accuracy, fast emulator trained on suite of hydrodynamical
+  simulations—to model nonlinear structure growth while marginalizing over baryonic
+  feedback and assembly bias using a principled theoretical error budget, rather than
+  ad hoc nuisance parameters. A novel, flexible inconsistency parameter *A* is introduced
+  per redshift bin to quantify deviations between lensing and clustering amplitudes,
+  enabling direct, scale-dependent assessment of concordance without assuming a specific
+  physical origin for any tension. The methodology further incorporates kinematic
+  Sunyaev–Zeldovich (kSZ) constraints on baryon fractions as an external anchor—creatively
+  repurposing CMB secondary anisotropy data to inform small-scale modeling where hydrodynamical
+  uncertainties are largest.
+
+
+  The results reveal striking, nuanced consistency: on large scales (>30 Mpc/h), both
+  the Planck and low-S₈ “Lensing” cosmologies fit the combined dataset equally well,
+  affirming the robustness of linear-regime inferences. However, when harnessing the
+  full statistical leverage of small-scale information (down to ~2 Mpc/h), the analysis
+  delivers decisive discrimination—finding that the low-S₈ cosmology yields near-perfect
+  agreement (*A* = 0.91 ± 0.04 with DES+KiDS; *A* = 0.97 ± 0.06 with HSC), while the
+  Planck cosmology exhibits significant, coherent discrepancies (*A* = 0.79 ± 0.03
+  and 0.84 ± 0.05, respectively). Remarkably, incorporating kSZ-informed baryonic
+  corrections reduces the Planck tension by ~40%, demonstrating that part of the apparent
+  inconsistency stems not from fundamental cosmological disagreement but from incomplete
+  modeling of astrophysical systematics—a profound insight enabled only by this multi-probe,
+  multi-survey design. These findings underscore that current tensions are not merely
+  statistical artifacts but sensitive diagnostics of our physical understanding of
+  galaxy formation, validating the community’s investment in forward-modeling approaches
+  and paving the way for next-generation surveys like Rubin LSST and Euclid to deliver
+  definitive cosmological constraints—provided they integrate similarly holistic treatments
+  of astrophysical and observational systematics from the outset.'
+10.3847/1538-4357/ac9964: 'This study addresses a pivotal tension in modern galaxy
+  evolution: whether ultra-diffuse galaxies (UDGs) represent exotic, dynamically puffed-up
+  systems forged by extreme feedback or instead arise naturally from standard star
+  formation processes operating at unusually low efficiencies. While UDGs have long
+  challenged theoretical models—particularly those invoking rapid stellar expansion
+  driven by bursty, high-efficiency star formation—their star-forming properties had
+  remained largely unexplored at resolved scales, especially within the critical H
+  I-rich regime where gas reservoirs are abundant but star formation is conspicuously
+  subdued. By focusing on 22 H I-selected UDGs within 120 Mpc and contrasting them
+  with a carefully matched sample of 35 low-mass dwarfs from the NASA-Sloan Atlas,
+  this work fills a crucial observational gap: it delivers the first spatially resolved,
+  multi-wavelength characterization of star formation efficiency across kiloparsec
+  to sub-kiloparsec scales in a statistically meaningful UDG sample.
+
+
+  The analysis leverages an innovative, self-consistent joint spectral energy distribution
+  (SED) fitting framework that co-fits optical (Hyper Suprime-Cam Subaru Strategic
+  Program), near-UV (GALEX), and H I data to produce pixel-level maps of star formation
+  rate surface density (ΣSFR) and stellar mass surface density (Σ∗). Crucially, the
+  method incorporates spatially resolved H I radial profiles—where available—from
+  interferometric observations, enabling direct, scale-dependent comparisons of ΣSFR
+  to atomic gas surface density (ΣHI) down to 500 pc resolution. This represents a
+  methodological advance over previous studies relying on global or aperture-based
+  measurements, allowing robust quantification of local star formation physics while
+  mitigating biases from dust attenuation, stellar population age gradients, and blending
+  effects.
+
+
+  The results reveal that UDGs exhibit remarkably low star formation efficiencies—ΣSFR/ΣHI
+  ≈ 10⁻¹⁰ yr⁻¹—consistent across their disks and persisting even at the highest spatial
+  resolutions probed; this is ~10× lower than typical dwarf irregulars at comparable
+  ΣHI. Strikingly, when stellar size is plotted against total H I mass, UDGs fall
+  squarely on the same relation as NSA dwarfs—no offset, no outliers. Their stellar
+  half-light radii are entirely ordinary given their gas content, directly contradicting
+  predictions from “puffing” models that require intense, localized feedback to inflate
+  stellar distributions. Instead, the data strongly favor a picture in which UDGs
+  form stars continuously and quiescently, governed by the same underlying physics
+  as other low-mass galaxies—but operating at systematically suppressed efficiencies,
+  likely due to shallow gravitational potentials and inefficient gas compression.
+  These findings place stringent new constraints on galaxy formation simulations,
+  ruling out models where late-time (z ≲ 0.5), burst-driven feedback is necessary
+  to explain UDG morphology—thereby redirecting theoretical focus toward early assembly
+  histories, environmental preprocessing, and the role of halo spin and accretion
+  geometry in setting long-term star formation ceilings.'
+10.1093/mnras/stac2121: 'This study addresses a critical and timely gap in extragalactic
+  astrophysics: the need for robust, cross-validated measurements of stellar light
+  at the extreme outskirts of massive galaxies—regions where faint stellar haloes
+  encode vital information about galaxy assembly history and dark matter halo properties.
+  While theoretical work has long predicted that outer light should trace halo mass
+  with low scatter, observational progress has been hampered by systematic uncertainties
+  in sky subtraction, scattered light, and calibration across wide-field surveys.
+  Prior studies often relied on single datasets with unquantified systematics at surface
+  brightness levels fainter than μ<sub>r</sub> ≈ 27 mag arcsec<sup>−2</sup>, leaving
+  open questions about measurement reproducibility and physical interpretability.
+  By systematically comparing four independent imaging surveys—HSC, DECaLS, SDSS,
+  and Dragonfly—this work establishes the first comprehensive benchmark for outer-light
+  photometry, transforming a methodological challenge into an opportunity for synergy
+  across facilities.
+
+
+  The team developed a unified analysis framework to extract azimuthally averaged
+  surface brightness profiles for over 200 massive early-type galaxies spanning redshifts
+  0.01 < z < 0.50. They implemented custom sky-subtraction pipelines tailored to each
+  survey’s unique noise structure and optical artifacts—including novel corrections
+  for HSC’s large-scale background gradients and DECaLS’s scattered light from bright
+  stars—and validated them using deep coadds, blank-sky regions, and forward-modeling
+  simulations. Crucially, they leveraged Dragonfly’s ultra-low-noise, low-scatter
+  optics as a “gold standard” for nearby systems (z < 0.05), achieving unprecedented
+  depth of μ<sub>r</sub> ≈ 30 mag arcsec<sup>−2</sup>. For intermediate-redshift samples,
+  they demonstrated that HSC reliably recovers individual profiles to μ<sub>r</sub>
+  ≈ 28.5 mag arcsec<sup>−2</sup> out to projected semimajor axes of 100–150 kpc, while
+  DECaLS delivers statistically consistent results beyond 200 kpc—despite its coarser
+  resolution—enabling ensemble-level science across vast cosmological volumes.
+
+
+  The findings deliver several concrete, high-impact advances: stellar mass measurements
+  within 100 kpc agree between DECaLS and HSC to within 0.05 dex—a remarkable level
+  of precision for such faint, extended emission—while weak lensing analyses confirm
+  that outer-light proxies derived from both DECaLS and HSC exhibit similarly tight
+  correlations with halo mass (scatter σ[log M<sub>halo</sub>] < 0.15 dex) in the
+  0.19 < z < 0.50 range. Most significantly, this work demonstrates that DECam-based
+  imaging—already covering over 10,000 deg<sup>2</sup> in DECaLS and soon to expand
+  further with Rubin LSST—can now be deployed not just for galaxy surveys, but as
+  a *precision halo-mass estimator* for massive systems. This transforms wide-field
+  optical data from a passive mapping tool into an active probe of cosmic structure
+  formation, opening new pathways for cluster finding, halo occupation modeling, and
+  tests of ΛCDM predictions on galactic scales—all grounded in empirically validated,
+  multi-survey consistency.'
+10.1093/mnras/stac1680: 'This study addresses a long-standing challenge in extragalactic
+  astrophysics and cluster cosmology: identifying robust, low-scatter tracers of dark
+  matter halo mass that are minimally affected by observational systematics such as
+  projection effects, mis-centring, and galaxy formation physics. While richness-based
+  cluster finders like redMaPPer and CAMIRA have enabled large-scale cosmological
+  analyses, their performance degrades at lower halo masses and is increasingly compromised
+  by line-of-sight contamination and centrality ambiguities—particularly for massive
+  galaxies hosting haloes near the critical transition between group- and cluster-scale
+  systems. Huang et al. (2022) recognized an underexplored opportunity: rather than
+  treating stellar mass as a single global quantity, the *spatially resolved* distribution
+  of stars—especially in the outer envelope—may encode cleaner information about the
+  underlying gravitational potential and halo assembly history. By focusing on the
+  outer stellar mass, this work fills a crucial gap in the observational toolkit,
+  offering a physically motivated, photometrically accessible proxy that bridges the
+  regime between central galaxies and their host haloes.
+
+
+  The team leveraged high-quality weak lensing measurements from the Hyper Suprime-Cam
+  Subaru Strategic Program (HSC-SSP), combining deep multi-band imaging with precise
+  shape measurements to construct stacked galaxy–galaxy lensing profiles for over
+  10,000 massive galaxies (log₁₀(M⋆/M⊙) > 11.5) at 0.2 < z < 0.5. Critically, they
+  employed careful Sérsic+exponential light profile decompositions to isolate the
+  stellar mass in distinct radial annuli—moving beyond conventional CModel or Petrosian
+  apertures—and introduced the innovative “Top-N test”: a novel statistical framework
+  that evaluates tracer performance across fixed number density bins using lensing-derived
+  halo mass constraints. This method enables direct, apples-to-apples comparison of
+  scatter in the Mₕ–observable relation without assuming parametric scaling relations.
+  To validate interpretation, they complemented the observational analysis with controlled
+  N-body + semi-analytic simulations, explicitly modeling projection effects and mis-centring
+  for both stellar-mass–selected and richness-selected samples.
+
+
+  The results are striking and transformative: stellar mass within the outer envelope—specifically
+  M⋆,[50,100], the mass enclosed between 50 and 100 kpc—emerges as an exceptional
+  halo mass tracer, achieving intrinsic scatter of σ[log₁₀Mₕ|M⋆,[50,100]] ≈ 0.13–0.15
+  dex across log₁₀Mᵥᵢᵣ ≳ 14.0, matching or even surpassing the performance of state-of-the-art
+  optical richness estimators. Most notably, at lower halo masses (log₁₀Mᵥᵢᵣ ~ 13.5–13.8),
+  M⋆,[50,100] exhibits systematically *lower* scatter than richness, suggesting superior
+  fidelity where projection effects most severely degrade traditional methods. Crucially,
+  lensing profiles for M⋆,[50,100]-selected haloes align precisely with simulated
+  expectations for perfectly centred, isolated systems—no excess signal at R ~ 1 Mpc—whereas
+  richness-selected clusters show a clear 10–15% excess shear signal at intermediate
+  scales, directly implicating line-of-sight contamination. This combination of low
+  scatter, physical interpretability, and immunity to projection bias makes M⋆,[50,100]
+  not just competitive, but uniquely advantageous for precision cosmology with upcoming
+  wide-field surveys like LSST and Euclid. The work redefines how we think about stellar
+  light as a cosmological probe—turning a classical observable into a next-generation
+  halo mass estimator grounded in both data and simulation.'
+10.3847/1538-4357/ac6d66: 'This study tackles a persistent puzzle in galaxy evolution:
+  why the observed late-time mass growth of brightest cluster galaxies (BCGs)—the
+  most massive, gravitationally dominant systems in the universe—appears significantly
+  slower than predicted by leading cosmological simulations. While hierarchical assembly
+  dictates that BCGs should continue growing via mergers well into the present epoch,
+  direct observational constraints on *ongoing* merger activity have remained scarce
+  and indirect. Hsu et al. address this gap with an elegant, observationally grounded
+  approach: rather than relying on broad photometric or kinematic signatures prone
+  to degeneracies, they directly identify and quantify *multiple stellar cores* within
+  BCGs—unambiguous morphological tracers of recent or ongoing minor and intermediate-mass
+  mergers. This strategy provides a clean, physically motivated proxy for the central
+  merger rate, enabling a precise, apples-to-apples comparison with simulated predictions
+  and moving beyond integrated properties to probe the actual accretion events shaping
+  BCGs today.
+
+
+  Leveraging the unparalleled spatially resolved spectroscopic power of SDSS-IV MaNGA,
+  the team analyzed a carefully selected sample of 79 BCGs at redshifts 0.06–0.15—spanning
+  the last ~4.5 Gyr of cosmic time—with high signal-to-noise integral field data covering
+  physical scales down to ~1 kpc. They combined deep, multi-band imaging with MaNGA’s
+  stellar kinematics and stellar population maps to robustly distinguish true co-spatial
+  multiple cores from line-of-sight projections or tidal features. Crucially, they
+  validated their identification methodology using mock MaNGA observations generated
+  from the state-of-the-art IllustrisTNG cosmological hydrodynamical simulation, applying
+  identical analysis pipelines to both real and synthetic data. This rigorous, simulation-calibrated
+  framework ensures that detection biases, resolution limits, and selection effects
+  are consistently accounted for—transforming a simple morphological census into a
+  quantitative, physically interpretable measurement of merger frequency.
+
+
+  The results are striking in their clarity and concordance: the observed multiple-core
+  fraction is 0.11 ± 0.04 within an 18 kpc radius—a statistically significant detection
+  confirming that ongoing cannibalism is not rare but a regular feature of BCG evolution.
+  Remarkably, this value aligns closely with the 0.08 ± 0.04 fraction recovered from
+  the IllustrisTNG mock observations, providing strong empirical validation of the
+  simulation’s treatment of late-stage BCG assembly. Moreover, the study reveals that
+  the majority of candidate companion cores identified in imaging are indeed physically
+  associated systems—not chance alignments—underscoring the fidelity of their joint
+  photometric–spectroscopic approach. These findings resolve the long-standing tension
+  between models and observations by demonstrating that BCG mass growth over the past
+  4.5 Gyr proceeds at a rate fully consistent with ΛCDM expectations, driven predominantly
+  by dry mergers whose signatures are now unambiguously captured. By forging a direct,
+  observationally anchored link between core multiplicity and merger-driven growth,
+  this work establishes a new benchmark for testing galaxy formation physics and opens
+  a powerful pathway for probing hierarchical assembly across cosmic time with next-generation
+  IFU surveys.'
+10.3847/1538-4357/ac7238: 'This study addresses a long-standing observational gap
+  in extragalactic astronomy: the systematic, statistically robust characterization
+  of low-surface-brightness (LSB) galaxies beyond the Local Volume. While LSB systems
+  are predicted to be abundant in hierarchical galaxy formation models—and may hold
+  critical clues about star formation inefficiency, feedback physics, and dark matter
+  halo properties—their faintness has historically hindered large-scale redshift surveys.
+  Prior work relied heavily on small, heterogeneous samples or indirect distance estimates,
+  leaving fundamental questions unanswered about their cosmic distribution, mass–size
+  scaling, and evolutionary distinctness. By leveraging the unprecedented depth, resolution,
+  and survey area of the Hyper Suprime-Cam Strategic Survey Program (HSC-SSP), this
+  work pioneers the first wide-field, magnitude-limited census of LSB galaxies with
+  direct statistical redshift constraints—transforming them from outliers into a quantitatively
+  tractable population.
+
+
+  The analysis combines deep, multi-band HSC imaging over 200 deg² with innovative
+  cross-matching techniques against the NASA–SDSS Atlas, enabling reliable photometric
+  redshift assignments for over 15,000 LSB candidates selected via surface brightness
+  thresholds (μ<sub>g</sub> > 25 mag arcsec⁻²) and structural parameters. Crucially,
+  the team developed a custom Bayesian framework to model selection effects and quantify
+  redshift probability distributions, mitigating biases inherent in traditional stacking
+  or single-redshift assignment methods. This approach—coupled with careful masking
+  of foreground stars, image artifacts, and high-surface-brightness contaminants—ensures
+  that the resulting redshift distribution reflects the true underlying population
+  rather than observational systematics. The methodology thus represents a creative
+  synthesis of modern survey data, archival resources, and probabilistic inference
+  tailored specifically to the challenges of ultra-diffuse objects.
+
+
+  The results reveal a rich and structured cosmic distribution: the majority of LSB
+  galaxies reside within *z* < 0.15 (~500 Mpc), with a pronounced peak at *z* ≈ 0.03
+  (≤100 Mpc), corresponding to low-mass systems (*M*<sub>*</sub> ≈ 10⁷–10⁸ *M*<sub>⊙</sub>)
+  spanning effective radii of 1–4 kpc—objects that align smoothly with the canonical
+  mass–size relation. Strikingly, a significant tail extends to *z* ≈ 0.15, populated
+  by more massive LSB galaxies (*M*<sub>*</sub> = 10⁸–10⁹ *M*<sub>⊙</sub>) with larger
+  sizes (up to *r*<sub>eff,g</sub> ≈ 8 kpc). Most notably, the data provide the first
+  empirical evidence that above *M*<sub>*</sub> > 10⁸ *M*<sub>⊙</sub>, LSB galaxies
+  systematically deviate from the extrapolated mass–size trend of high-surface-brightness
+  counterparts—suggesting they are not merely “faded” versions of typical dwarfs or
+  disks, but represent a physically distinct channel of galaxy assembly, possibly
+  shaped by early quenching, weak stellar feedback, or unique halo spin histories.
+  These findings establish LSB galaxies as a coherent, observationally accessible
+  probe of galaxy formation under extreme conditions—opening new pathways to test
+  ΛCDM predictions, calibrate baryonic physics in simulations, and refine galaxy evolution
+  frameworks across cosmic time.'
+10.3847/1538-4357/ac6c88: 'This study addresses a critical tension in near-field galaxy
+  formation: the observed ubiquity of extended, old, and round stellar halos around
+  high-mass dwarf galaxies—yet their apparent lack of sufficient minor merger history
+  to build such structures via accretion. Prior theoretical work struggled to reproduce
+  these halos without invoking implausibly frequent mergers or overly efficient stripping,
+  leaving a significant gap in our understanding of how low-mass systems assemble
+  their outer stellar components. By focusing on *in situ* origins rather than hierarchical
+  assembly, Kado-Fong et al. reframe the problem entirely—asking not “where did these
+  stars come from?” but “how do internal dynamical processes sculpt them into halo-like
+  configurations?” This shift is both conceptually elegant and observationally grounded,
+  directly confronting discrepancies between simulations and deep imaging surveys
+  like Dragonfly and Subaru/HSC that reveal smooth, ancient outskirts even in isolated
+  dwarfs.
+
+
+  Leveraging the FIRE-2 suite of cosmological zoom-in simulations—renowned for their
+  physically motivated, high-resolution treatment of stellar feedback—the authors
+  analyze a statistically robust sample of ~50 simulated dwarf galaxies spanning $10^{8.5}
+  < M_\star/M_\odot < 10^{9.6}$ at $z=0$. They introduce a novel morphological diagnostic:
+  the *intrinsic shape*, quantified via the 3D stellar mass tensor, which cleanly
+  separates “disky” systems (with well-defined flattening and rotational support)
+  from “nondisky” ones (triaxial, dispersion-dominated, or irregular). Crucially,
+  they track stellar orbits and ages with full temporal resolution, enabling unambiguous
+  identification of *in situ*-formed halo stars—not as remnants of disrupted satellites,
+  but as disk-born stars dynamically heated and radially migrated outward over gigayear
+  timescales by recurrent feedback-driven turbulence and bursty star formation. This
+  approach moves beyond simple spatial cuts or kinematic proxies, grounding morphology
+  in orbital histories and physical mechanisms.
+
+
+  The results are striking and definitive: disky dwarfs in FIRE-2 naturally develop
+  thick disks *and* round, old ($\gtrsim 8$ Gyr), metal-poor ($\langle[\mathrm{Fe}/\mathrm{H}]\rangle
+  \approx -1.4$) stellar halos—structurally and chemically consistent with observations—with
+  up to $\sim 30\%$ of halo stars originating in situ via outward migration. In contrast,
+  nondisky dwarfs—comprising nearly half the sample—exhibit chaotic, gas-poor, or
+  burst-dominated evolution where feedback suppresses coherent disk formation altogether,
+  yielding puffy, featureless systems that fail to match observed dwarfs. This bimodality
+  is not an artifact of resolution or initial conditions but emerges directly from
+  how feedback regulates gas cooling, angular momentum transport, and stellar kinematics.
+  The work thus delivers the first self-consistent, high-fidelity demonstration that
+  *internal* processes—not just external accretion—can forge canonical dwarf halos,
+  while simultaneously establishing intrinsic shape as a powerful, quantitative benchmark
+  for testing feedback physics in next-generation simulations. For observers, it provides
+  testable predictions about age/metallicity gradients and kinematic lopsidedness
+  in outskirts; for theorists, it offers a clear pathway to refine subgrid models
+  by matching not just global scaling relations, but the *morphological diversity*
+  encoded in stellar phase-space structure.'
+10.1093/mnras/stab3586: 'This landmark study addresses a critical and timely challenge
+  in modern cosmology: the persistent tension between galaxy–galaxy lensing (GGL)
+  measurements and predictions from galaxy clustering—commonly dubbed the “lensing
+  is low” effect. While GGL has become a cornerstone probe of galaxy–halo connections
+  and dark matter distribution, its interpretation hinges on precise control of systematic
+  uncertainties in shear estimation, photometric redshifts, and blending effects—uncertainties
+  that are notoriously difficult to quantify *a priori*. Prior efforts have largely
+  assessed systematics within individual surveys, leaving open the possibility of
+  shared, unmodeled biases or survey-specific artifacts masquerading as physical signals.
+  The Lensing without Borders collaboration fills this gap with an unprecedented,
+  blind, cross-survey validation framework—designed not only to test consistency but
+  to *discover* where and how systematics may conspire across independent datasets,
+  thereby transforming systematic error assessment from a theoretical exercise into
+  an empirical discipline.
+
+
+  The analysis leverages a uniquely diverse ensemble of six high-quality imaging surveys—including
+  HSC, DES, KiDS, CFHTLenS, RCS2, and CS82—each with distinct instrumentation, observing
+  strategies, and data reduction pipelines, paired with a common set of BOSS spectroscopic
+  lenses spanning 0.1 < z<sub>L</sub> < 0.7. Crucially, the comparison was conducted
+  *blind*: lensing amplitudes (ΔΣ) were measured independently by each team using
+  their own shear catalogs, photometric redshifts, and masking strategies, with no
+  communication about results until all analyses were finalized and locked. Systematic
+  error budgets were derived empirically—not from simulations alone—but through rigorous
+  internal consistency tests, including jackknife resampling, null tests, and forward-modeling
+  of known observational effects such as stellar contamination and blend-induced shear
+  bias. This fully empirical, conservative methodology represents a creative departure
+  from traditional top-down error modeling and enables robust, apples-to-apples comparisons
+  across heterogeneous data.
+
+
+  The results reveal remarkable consistency across surveys at intermediate redshifts:
+  for lenses at z<sub>L</sub> < 0.43, ΔΣ amplitudes agree to better than 2.3σ across
+  four lens redshift bins and three radial ranges, validating current systematic error
+  modeling in this regime. At higher redshifts (z<sub>L</sub> > 0.43), however, a
+  statistically significant 3–4σ correlation emerges between lensing amplitude and
+  survey depth—a subtle but telling signature pointing toward the growing influence
+  of unrecognized galaxy blends and residual photometric redshift scatter. Even more
+  intriguingly, above z<sub>L</sub> > 0.54, foreground stellar density begins to correlate
+  with amplitude, suggesting that stellar contamination may be a previously underappreciated
+  driver of high-z systematics. Critically, these trends remain comfortably within
+  the empirically calibrated systematic error budgets—demonstrating that current frameworks
+  are broadly adequate—but also enable stringent new constraints: systematic errors
+  exceeding 15% (25%) are ruled out at 68% (95%) confidence for three key lens bins
+  below z = 0.54. Moreover, the observed 20–30% discrepancies between lensing amplitudes
+  and clustering-based predictions imply that lensing systematics alone cannot fully
+  account for the “lensing is low” anomaly in this redshift range—pointing instead
+  toward richer astrophysical or cosmological interpretations. By establishing cross-survey
+  comparison as a powerful, scalable, and empirically grounded tool for systematic
+  error discovery, this work sets a new standard for rigor in weak lensing science
+  and paves the way for next-generation surveys like Rubin LSST and Euclid to achieve
+  percent-level precision in galaxy–halo modeling.'
+10.1093/mnras/stab3297: 'This study addresses a pivotal open question in galaxy evolution:
+  whether the striking diversity in globular cluster (GC) system richness among ultra-diffuse
+  galaxies (UDGs) reflects fundamentally different formation pathways—particularly
+  divergent roles of environment, halo mass, and quenching history. While UDGs have
+  long challenged conventional models of galaxy scaling relations, the recent discovery
+  of GC-rich UDGs with dozens to hundreds of clusters—comparable to massive ellipticals—has
+  intensified debate over whether such systems are “failed giants” or “puffed-up dwarfs.”
+  Prior work lacked statistically robust, homogeneous measurements linking GC content
+  to *dynamical* properties within a single, well-defined cluster environment; this
+  gap hindered tests of competing theories, especially those invoking early versus
+  late environmental quenching or halo-mass–driven GC formation efficiency. By focusing
+  on the Perseus cluster—a dynamically mature, X-ray bright system at intermediate
+  redshift (z ≈ 0.018)—this work delivers the first targeted, high-fidelity dynamical
+  characterization of a cleanly selected, mixed GC-population UDG sample, enabling
+  direct empirical discrimination between these scenarios.
+
+
+  The team leveraged a powerful multi-wavelength observational strategy: deep, wide-field
+  Subaru/Hyper Suprime-Cam imaging to identify and structurally characterize five
+  spectroscopically confirmed UDGs—including three GC-poor (N_GC < 10) and two GC-rich
+  (N_GC > 30) systems—and then obtained high-sensitivity, integral-field spectroscopy
+  with Keck’s Cosmic Web Imager (KCWI) to measure stellar kinematics. KCWI’s exceptional
+  spatial resolution and throughput enabled precise extraction of velocity dispersion
+  profiles within the half-light radius (R_e ≈ 2–4 kpc) for all five targets, even
+  at their low surface brightness (μ₀,g ≈ 25–27 mag arcsec⁻²). Crucially, recessional
+  velocities confirmed unambiguous membership in the Perseus cluster (v_helio ≈ 5,400
+  km s⁻¹), eliminating projection effects that plague field UDG studies. The analysis
+  combined forward-modeling of KCWI data cubes with Bayesian inference to derive robust
+  σₑ values, which were then converted to dynamical masses M_dyn(<R_e) using spherical
+  Jeans modeling—accounting for anisotropy degeneracies via literature-informed priors.
+  These new measurements were placed in context using a curated compilation of published
+  UDG kinematics and GC counts from Coma, Virgo, and Fornax.
+
+
+  The results reveal a clear, physically significant trend: GC-rich UDGs exhibit systematically
+  higher velocity dispersions—σₑ = 32 ± 4 km s⁻¹ and 36 ± 5 km s⁻¹ for the two rich
+  systems—compared to GC-poor UDGs, whose dispersions range from 14 ± 3 to 21 ± 3
+  km s⁻¹. This translates to dynamical masses within R_e that are 2.5–4× greater for
+  GC-rich versus GC-poor UDGs (M_dyn(<R_e) ≈ 1.2–2.0 × 10⁹ M⊙ vs. 0.3–0.8 × 10⁹ M⊙).
+  Notably, one GC-poor UDG, PUDG_R24, shows spectroscopic signatures of ongoing quenching—elevated
+  [OII] equivalent width and suppressed Hα—suggesting it is transitioning into the
+  UDG regime within ~0.5 Gyr, offering a rare real-time glimpse into UDG formation.
+  Critically, the lack of correlation between GC richness and phase-space position
+  (e.g., clustercentric radius or infall velocity) rules out models where GC-rich
+  UDGs are exclusively pre-processed satellites quenched at high redshift in group
+  environments before cluster infall. Instead, the tight σₑ–N_GC relation strongly
+  supports a primary role for halo mass: GC-rich UDGs reside in more massive dark
+  matter halos (M_halo ∼ 10¹¹–10¹² M⊙), likely enabling both efficient early GC formation
+  and sustained star formation histories that preserve larger stellar velocity dispersions.
+
+
+  These findings represent a conceptual advance in understanding galaxy quenching
+  and structural evolution across mass scales. By establishing a direct, observationally
+  grounded link between GC system richness and dynamical mass in UDGs—free from the
+  biases of photometric proxies or heterogeneous datasets—the study transforms GC
+  counts from a descriptive curiosity into a quantitative diagnostic of halo potential.
+  This reframes UDGs not as a monolithic class defined solely by surface brightness,
+  but as a diverse population whose internal dynamics encode their assembly history:
+  GC-rich systems are genuine low-surface-brightness analogs of massive galaxies,
+  while GC-poor UDGs align more closely with tidally stripped or environmentally quenched
+  dwarfs. For theory, the results place stringent constraints on hydrodynamical simulations—demanding
+  accurate reproduction of both GC formation efficiency *and* stellar kinematics in
+  low-density regimes. For future surveys, they validate GC richness as a powerful,
+  observationally efficient tracer of halo mass in resolved low-luminosity systems,
+  paving the way for leveraging next-generation facilities like Rubin LSST and JWST
+  to map the dark matter–baryon connection across cosmic time.'
+10.3847/1538-4357/ac1f21: 'This study addresses a long-standing limitation in galaxy
+  evolution studies: the scarcity of statistically robust, high-fidelity size measurements
+  across broad stellar mass and redshift ranges—particularly for low-mass quiescent
+  galaxies, whose structural properties have remained poorly constrained due to observational
+  challenges. Prior work often relied on small, heterogeneous samples or shallow imaging
+  that blurred distinctions between star-forming and quiescent populations, obscuring
+  how structural scaling relations evolve with mass and environment. By leveraging
+  the unprecedented combination of depth, resolution, and survey area of the Hyper
+  Suprime-Cam Subaru Strategic Program (HSC-SSP) DR2, this work fills a critical gap—delivering
+  the first mass-complete, million-galaxy characterization of the size–mass relation
+  (R<sub>e</sub>–M<sub>*</sub>) over 0.2 < z < 1.0, with robust separation into star-forming
+  and quiescent subpopulations. The scale and precision of this dataset enable, for
+  the first time, a definitive test of whether the R<sub>e</sub>–M<sub>*</sub> relation
+  is universally linear—or instead exhibits intrinsic curvature tied to physical transitions
+  in galaxy growth modes.
+
+
+  The analysis employs a carefully constructed sample of ~1.5 million galaxies over
+  ~100 deg<sup>2</sup>, complete to log(M<sub>*</sub>/M<sub>⊙</sub>) > 10.2 (9.2)
+  out to z = 1.0 (0.6), using high-S/N HSC g-, r-, i-, z-, and y-band imaging. Galaxy
+  sizes (effective radii R<sub>e</sub>) are measured via multi-wavelength, point-spread-function-corrected
+  Sérsic profile fits—capitalizing on HSC’s exceptional image quality (median seeing
+  ~0.6″) to achieve sub-10% size uncertainties for galaxies down to R<sub>e</sub>
+  ≈ 0.5 kpc at z ∼ 0.8. Stellar masses and star formation classifications are derived
+  from SED fitting with consistent templates and dust attenuation laws, while rigorous
+  completeness corrections and Monte Carlo simulations ensure robust quantification
+  of selection effects and intrinsic scatter. Crucially, the team moves beyond simple
+  linear fits by modeling the R<sub>e</sub>–M<sub>*</sub> relation as a broken power
+  law—fitting both the pivot mass M<sub>p</sub> and the slopes above and below it
+  independently for each population and redshift slice.
+
+
+  The results reveal a striking, mass-dependent architecture in galaxy structural
+  scaling: both star-forming and quiescent galaxies follow broken power-law R<sub>e</sub>–M<sub>*</sub>
+  relations, with a clear pivot at log(M<sub>p</sub>/M<sub>⊙</sub>) ≈ 10.2–10.6 for
+  quiescent systems and ∼10.7 for star-forming ones—evolving modestly with redshift.
+  Below M<sub>p</sub>, quiescent galaxies exhibit an extraordinarily shallow slope
+  of R<sub>e</sub> ∝ M<sub>*</sub><sup>0.1</sup>, meaning their sizes barely increase
+  with mass; remarkably, these low-mass quiescent galaxies are just as large as their
+  star-forming counterparts of equal mass. This provides compelling empirical evidence
+  that many low-mass quiescent galaxies were recently quenched—likely via environmentally
+  driven mechanisms like ram-pressure stripping or harassment—without undergoing significant
+  compaction or structural reorganization. Above M<sub>p</sub>, the slope steepens
+  dramatically to R<sub>e</sub> ∝ M<sub>*</sub><sup>0.6–0.7</sup> for quiescent galaxies,
+  signaling a shift toward dry mergers as the dominant growth channel. Most significantly,
+  the pivot mass aligns precisely with the stellar mass where the quiescent fraction
+  reaches 50%—a powerful convergence suggesting M<sub>p</sub> marks the fundamental
+  transition in galaxy assembly: from in situ star formation–dominated growth at lower
+  masses to merger-driven structural evolution at higher masses. This unified interpretation
+  bridges morphology, kinematics, and star formation history into a coherent physical
+  framework—and establishes the broken R<sub>e</sub>–M<sub>*</sub> relation as a new
+  diagnostic tool for probing the interplay between quenching mechanisms, environmental
+  influence, and hierarchical assembly across cosmic time.'
+10.1093/mnras/stab2363: 'This study addresses a long-standing question in galaxy evolution:
+  whether brightest cluster galaxies (BCGs) are truly unique astrophysical objects—shaped
+  by distinct physical processes such as hierarchical merging, cannibalism, or central
+  cooling flows—or merely the natural statistical outliers of the cluster galaxy mass
+  function. Prior work had yielded conflicting conclusions, often limited by small
+  sample sizes, heterogeneous cluster selections, or narrow redshift ranges that obscured
+  evolutionary trends. By leveraging the unprecedented depth, resolution, and uniformity
+  of the Hyper Suprime-Cam Subaru Strategic Program, this work fills a critical gap:
+  it delivers the first statistically robust, wide-area, and redshift-resolved test
+  of BCG “specialness” across a cosmologically meaningful epoch (z = 0.3–1.0), enabling
+  definitive discrimination between formation paradigms.
+
+
+  The analysis draws on a meticulously constructed sample of ~5,000 optically selected
+  galaxy clusters spanning 830 deg², with stellar masses from 10¹¹·⁸ to 10¹²·⁹ M⊙
+  and uniformly distributed redshifts. Stellar masses for all cluster members—including
+  BCGs—were derived consistently using multi-band HSC photometry and spectral energy
+  distribution (SED) fitting with carefully calibrated templates and Bayesian inference.
+  Crucially, the team developed an innovative null-hypothesis framework: for each
+  cluster, they modeled the expected mass distribution of its non-BCG members using
+  empirical fits to the observed luminosity/mass function, then computed the probability
+  that the observed BCG mass would arise as the statistical maximum of that distribution.
+  This approach avoided assumptions about functional forms and incorporated realistic
+  uncertainties in mass estimation, membership completeness, and photometric redshift
+  scatter—validated through extensive mock catalog tests and jackknife resampling.
+
+
+  The results are striking and unambiguous: BCGs are statistically special across
+  the entire redshift range z = 0.3–1.0, with median significance exceeding 4σ per
+  redshift bin and remaining robust across all cluster mass bins. Specifically, only
+  ∼0.3% of observed BCGs have masses consistent with being random draws from their
+  host cluster’s member mass distribution—far fewer than the ∼5% expected under pure
+  statistical extremality. This implies that BCG formation is intrinsically non-stochastic
+  and requires physics beyond simple sampling of the cluster galaxy population. A
+  key nuance emerges: BCGs offset by more than 0.2 R₂₀₀ from the cluster’s photometric
+  or X-ray center show no significant deviation from statistical expectations, suggesting
+  that centrality—not just brightness—is essential to their special status. These
+  findings place tight new constraints on models: they strongly favor formation pathways
+  involving sustained, centrally driven growth—such as repeated minor mergers funneled
+  by dynamical friction or AGN-regulated cooling—over purely stochastic assembly or
+  early monolithic collapse.
+
+
+  This work represents a conceptual and methodological advance in cluster galaxy studies,
+  transforming BCG “specialness” from a qualitative notion into a quantifiable, redshift-evolving
+  metric grounded in large-scale survey data. Its implications extend well beyond
+  cluster astrophysics: by anchoring BCG growth to the cluster potential well and
+  ruling out purely statistical origins up to z = 1, it provides critical empirical
+  input for calibrating semi-analytic models and hydrodynamical simulations of galaxy–halo
+  co-evolution. Moreover, the demonstrated sensitivity to spatial offset opens new
+  avenues for probing cluster dynamical state, merger history, and AGN feedback geometry.
+  For future surveys like LSST and Euclid, this framework establishes a scalable,
+  observationally grounded benchmark for testing how galaxy quenching, mass assembly,
+  and environmental effects intertwine at the heart of cosmic structure.'
+10.1093/mnras/stab2589: 'This study addresses a critical and growing challenge in
+  modern astronomy: the automated identification of rare, unexpected, or physically
+  extreme astrophysical phenomena buried within petabyte-scale imaging surveys. As
+  next-generation facilities like Rubin LSST prepare to deliver billions of galaxy
+  images annually, traditional template-matching or supervised classification methods—reliant
+  on pre-defined classes and labeled training data—are fundamentally ill-suited for
+  discovering truly novel objects. Storey-Fisher et al. fill this gap with an innovative,
+  fully unsupervised framework that does not assume prior knowledge of anomaly types,
+  instead learning the intrinsic manifold of “normal” galaxy morphology directly from
+  data. By targeting the Hyper Suprime-Cam (HSC) survey—a deep, high-resolution optical
+  dataset covering over 1,000 deg²—the authors establish a scalable, physics-agnostic
+  pipeline that prioritizes discovery potential over classification completeness,
+  opening a new pathway for serendipitous science in the era of big-data astronomy.
+
+
+  The team trained a Wasserstein Generative Adversarial Network (WGAN) on nearly one
+  million cutout images of galaxies drawn from HSC’s Wide layer, carefully curated
+  to include only well-resolved, non-saturated, and non-stellar sources. Crucially,
+  they leveraged both components of the GAN architecture for anomaly detection: the
+  generator’s reconstruction error (quantifying how poorly a real image can be synthesized)
+  and the discriminator’s learned feature-space embeddings (capturing subtle deviations
+  from the dominant morphological distribution). Through systematic benchmarking,
+  they demonstrated that the discriminator’s latent representations are significantly
+  more sensitive to astrophysically meaningful outliers than either generator-based
+  residuals or a conventional convolutional autoencoder—establishing a novel use case
+  for adversarial networks in astronomy. To further refine interpretation, they introduced
+  a creative two-stage characterization pipeline: first computing pixel-level residuals
+  between real and WGAN-reconstructed images, then compressing those residuals via
+  a dedicated convolutional autoencoder before applying UMAP for unsupervised clustering—enabling
+  intuitive, low-dimensional exploration of anomaly subtypes without human labeling.
+
+
+  The method successfully isolated a high-confidence sample of ~13,000 anomalous galaxies—representing
+  just ~1.3% of the input catalog but enriched by orders of magnitude in rare morphologies.
+  Visual inspection and follow-up analysis revealed compelling candidates including
+  advanced galaxy mergers with faint tidal streams, compact starbursts with extreme
+  surface brightness, and systems exhibiting unusual asymmetries suggestive of recent
+  interactions or feedback-driven disruption. Notably, spectroscopic validation of
+  a single high-scoring anomaly confirmed it as a metal-poor dwarf galaxy hosting
+  an exceptionally blue, higher-metallicity H II region—highlighting the technique’s
+  ability to recover genuinely exotic systems missed by conventional selection criteria.
+  The release of a publicly available anomaly score catalogue, open-source code, and
+  an interactive web-based visualization platform (weirdgalaxi.es) ensures broad community
+  utility and reproducibility. This work represents a conceptual and technical leap
+  forward: it transforms generative modeling from a synthetic-data tool into a discovery
+  engine, demonstrating that deep unsupervised learning can not only mirror astronomical
+  data but actively illuminate its most informative outliers—thereby strengthening
+  the foundation for AI-assisted exploration across current and future wide-field
+  surveys.'
+10.3847/1538-4357/ac15f0: 'This study addresses a long-standing and critical gap in
+  our understanding of low surface brightness galaxies (LSBGs): their intrinsic three-dimensional
+  structure. While LSBGs have emerged as key probes of galaxy formation in the faint,
+  gas-rich, and dark-matter-dominated regime, their physical origins remain hotly
+  debated—ranging from failed Milky Way satellites to “failed” giant galaxies, or
+  even products of radial migration or tidal stirring. Crucially, prior shape analyses
+  either ignored selection biases inherent to surface-brightness-limited surveys or
+  conflated projection effects with true structural diversity, leaving the intrinsic
+  shape distribution poorly constrained and its implications for formation mechanisms
+  ambiguous. By directly confronting these observational biases head-on, this work
+  establishes the first robust, self-consistent inference of the intrinsic shape ensemble
+  for LSBGs across multiple independent, large-area surveys—thereby transforming shape
+  from a qualitative curiosity into a quantitative discriminant of formation physics.
+
+
+  The authors pioneered a novel forward-modeling framework that jointly fits the observed
+  distributions of projected ellipticity *and* apparent surface brightness for over
+  21,000 LSBGs drawn from three complementary datasets: the Hyper Suprime-Cam Subaru
+  Strategic Program (781 galaxies), the Dark Energy Survey (20,977), and the Legacy
+  Survey (188 H I–selected systems). Critically, the model explicitly incorporates
+  the survey-specific surface brightness limits and detection thresholds as integral
+  parts of the likelihood function—ensuring that inferred intrinsic shapes are not
+  artifacts of selection but reflect the underlying population. This approach leverages
+  both optical morphology and surface brightness sensitivity in a unified statistical
+  framework, augmented by rigorous Monte Carlo testing and consistency checks across
+  survey methodologies and redshift ranges (z < 0.3). The analysis further distinguishes
+  red and blue LSBGs and benchmarks results against high surface brightness dwarf
+  galaxies and simulated analogues from state-of-the-art cosmological hydrodynamical
+  simulations—including IllustrisTNG, EAGLE, and FIRE-2.
+
+
+  The results reveal that LSBGs are overwhelmingly well described as oblate spheroids,
+  with a median intrinsic axial ratio (c/a) of 0.56 ± 0.03 and a dispersion in flattening
+  consistent with a log-normal distribution centered on q ≈ 0.55. Remarkably, no statistically
+  significant difference is found between red and blue LSBGs—suggesting that star
+  formation history does not drive major differences in global shape, contrary to
+  expectations if quenching were strongly tied to environmental compression or ram-pressure
+  stripping. Moreover, LSBGs are measurably thicker (i.e., less flattened) than comparably
+  massive high surface brightness dwarfs, whose median c/a is ~0.45—a distinction
+  that points to fundamentally different dynamical assembly histories. Most compellingly,
+  the observed shape distribution aligns closely with predictions from simulations
+  where LSBGs form via *in-situ* radial migration of star formation to large radii,
+  while models relying predominantly on tidal disruption or early collapse produce
+  systematically flatter or more triaxial configurations inconsistent with the data.
+
+
+  These findings represent a conceptual leap forward: for the first time, intrinsic
+  shape is used not merely as a descriptive statistic but as a decisive, observationally
+  grounded constraint on galaxy formation pathways. The agreement with radial migration
+  scenarios underscores the importance of internal secular processes—even in the lowest-density
+  regimes—and challenges narratives that prioritize external environmental triggers
+  for LSBG genesis. By anchoring theoretical models to a robust, bias-corrected observable,
+  this work provides a new benchmark for next-generation simulations and informs the
+  design of future deep imaging and IFU surveys targeting LSB structures. Ultimately,
+  it affirms that LSBGs are not exotic outliers but natural outcomes of well-understood
+  baryonic physics operating under extreme surface brightness conditions—opening a
+  fresh, geometrically informed window into how galaxies build their outer stellar
+  halos across cosmic time.'
+10.3847/1538-4357/ac0896: 'This study addresses a compelling and long-standing gap
+  in our understanding of black hole demographics in the Milky Way: the elusive population
+  of wandering intermediate-mass black holes (IMBHs), which may have been stripped
+  from dwarf galaxy satellites during hierarchical galaxy assembly. While supermassive
+  black holes anchor galactic nuclei and stellar-mass black holes are increasingly
+  detected via gravitational waves, IMBHs—bridging the mass gap between these extremes—remain
+  observationally enigmatic. Their detection is critical for testing theories of black
+  hole seeding, growth, and dynamical evolution in low-mass systems, yet no unambiguous,
+  dynamically confirmed IMBH has been identified in the Galactic halo. Greene et al.
+  (2021) pioneered a novel, multi-wavelength strategy that shifts the search paradigm
+  from direct accretion signatures—which are faint and transient—to the persistent,
+  kinematically coherent stellar systems they may gravitationally bind: hypercompact
+  star clusters (HCCs) with radii ~1 pc and stellar populations of 500–5000 stars.
+
+
+  The team executed a creative, data-driven approach by cross-matching high-precision
+  astrometry from Gaia DR2 with deep, wide-field optical imaging from the Dark Energy
+  Camera Legacy Survey (DECaLS). They developed tailored selection criteria to identify
+  compact, unresolved stellar overdensities with small proper motion dispersions—hallmarks
+  of bound systems orbiting unseen massive perturbers—and applied rigorous statistical
+  background modeling to distinguish genuine candidates from chance alignments or
+  image artifacts. Crucially, they anchored their search sensitivity in realistic
+  theoretical expectations using the semi-analytic satellite evolution model SatGen,
+  which simulates the infall history of dwarf galaxies into the Milky Way and predicts
+  that up to ~100 wandering IMBHs (with masses 10³–10⁵ M⊙) could reside in the halo
+  if *every* infalling satellite hosted a central black hole. This forward-modeling
+  framework allowed them to translate non-detections into physically meaningful upper
+  limits on the IMBH occupation fraction.
+
+
+  Although no definitive HCC candidates were identified across the surveyed sky area
+  (~5,000 deg²), this null result is highly informative: it robustly rules out 100%
+  IMBH occupation in dwarf progenitors, marking the first observational constraint
+  of its kind on the prevalence of “black hole fossils” in the Galactic halo. More
+  importantly, the study establishes a powerful new methodology—one that synergizes
+  precision astrometry with deep photometry to probe dark massive objects through
+  their stellar kinematic imprints—and identifies key avenues for future progress.
+  The authors emphasize that improved constraints on HCC structural parameters (e.g.,
+  size distribution, luminosity function, and remnant star fractions) will dramatically
+  sharpen sensitivity in upcoming surveys like Gaia DR4 and Rubin LSST. By transforming
+  an absence of detections into a foundation for next-generation searches, this work
+  exemplifies how innovative data fusion and theoretically grounded survey design
+  can advance frontier questions in black hole astrophysics.'

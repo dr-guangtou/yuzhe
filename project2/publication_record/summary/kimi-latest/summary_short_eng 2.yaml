@@ -1,0 +1,191 @@
+10.3847/1538-4365/ae1f10: GalaxySD—the first conditional diffusion model trained on
+  Galaxy Zoo 2 annotations—generates photorealistic, morphologically precise galaxy
+  images that double rare dust-lane early-type galaxy detections (352 → 872) and boost
+  classification completeness and purity by up to 30%, proving generative AI can reliably
+  expand the observable frontier where labeled data is vanishingly scarce.
+10.3847/1538-4357/ae20f5: We report the discovery of Zangetsu—a uniquely isolated,
+  quiescent, and extremely elongated ultra-diffuse galaxy that defies conventional
+  formation models and may be the first confirmed backsplash UDG, opening a new window
+  into the dynamics and evolution of the low-surface-brightness Universe.
+10.3847/1538-4357/ae003e: The Merian Survey’s first data release delivers unprecedented
+  medium-band imaging across 750 deg²—enabling precise, line-based photometric redshifts
+  for star-forming dwarfs at *z* ∼ 0.06–0.10 via Hα and [O III] excess detection—and
+  establishes the first high-fidelity weak lensing maps of dwarf galaxy halos out
+  to their virial radii, directly probing dark matter structure while disentangling
+  baryonic effects.
+10.1088/1475-7516/2025/10/014: We discover that projected 2D outer stellar mass—what
+  astronomers actually observe—is not just a practical proxy but a *superior* (or
+  at least equally powerful) predictor of halo mass compared to idealized 3D measurements,
+  achieving as low as 0.2 dex scatter and producing unbiased weak lensing signals—enabling
+  robust, observationally feasible cluster selection without requiring unattainable
+  3D data.
+10.3847/1538-4357/adf43a: We discover Oxyster—a massive, low-ionization oxygen nebula
+  extending 30 kpc around a starburst galaxy at z ∼ 1—challenging conventional models
+  by revealing that vigorous star formation alone (with only minor AGN contribution)
+  can power giant CGM-scale ionized structures previously thought to require luminous
+  AGNs. This first detection of an AGN-free “Hanny’s Voorwerp–like” nebula demonstrates
+  that starbursts dominate the ionizing output and CGM physics in normal galaxies
+  across cosmic time.
+10.3847/1538-4357/adeca0: We discover that the stellar mass in the 50–100 kpc outskirts
+  of massive galaxies is a uniquely powerful, simulation-validated proxy for dark
+  matter halo mass—outperforming both total stellar mass and even the full ex situ
+  (accreted) stellar mass—revealing a robust, observationally accessible tracer of
+  halo assembly.
+10.1103/1j5f-cmkg: We introduce outskirt stellar mass ($M_\mathrm{out}$) as a novel,
+  projection-resistant cluster proxy that matches redMaPPer richness in scatter but
+  eliminates unmodeled features in weak lensing signals—enabling more robust, lower-scatter
+  mass calibration and unlocking cosmological constraints from lower-mass clusters.
+10.3847/1538-4357/ad6861: This study reveals that in low-mass galaxies, high specific
+  star formation rates drive Hα emission to become consistently compact and heterogeneous—evidence
+  that dynamical instabilities concentrate molecular gas near the center—extending
+  a key morphological–star-formation relationship to unexplored mass regimes for the
+  first time using Merian Survey medium-band imaging.
+10.48550/arXiv.2410.01884: Merian’s innovative medium-band imaging—paired with HSC-SSP
+  broad-band data—enables the first high-precision, wide-field photometric redshift
+  selection of star-forming dwarf galaxies at *z*~0.06–0.10 via direct Hα and [O III]
+  line detection, unlocking unprecedented weak-lensing measurements of their dark
+  matter halos out to virial radii. This breakthrough establishes a new observational
+  pathway to disentangle baryonic physics from dark matter in low-mass systems and
+  probe the faintest, most metal-poor galaxies across cosmic time.
+10.48550/arXiv.2409.19665: TianQin will pioneer high-precision mHz gravitational wave
+  astronomy from space in the 2030s, uniquely enabling the simultaneous detection
+  and characterization of cosmic populations—from nearby ultracompact white dwarf
+  binaries to supermassive black hole mergers at redshifts beyond *z* = 2—thereby
+  transforming our understanding of structure formation across cosmic time.
+10.48550/arXiv.2409.14807: We introduce Mephisto—the first LLM-based multi-agent system
+  to autonomously interpret multi-band galaxy observations with near-human proficiency,
+  successfully decoding JWST data including elusive “Little Red Dot” galaxies—marking
+  the dawn of agentic, end-to-end astronomical research.
+10.1093/mnras/stae1374: BCGs defy typical galaxy scaling laws with a uniquely steep
+  size–mass relation ($r_e \propto M_*^{0.73\text{–}1.00}$) that remains stable across
+  cosmic time, while their dramatic size evolution—growing by 2.5× from $z \sim 1.2$
+  to $z \sim 0.2$—reveals minor mergers as the dominant driver of BCG growth, independent
+  of host halo mass.
+10.48550/arXiv.2406.01391: 'We built the first large-scale astronomical knowledge
+  graph—spanning 31 years and 298,000 papers—to objectively quantify how numerical
+  simulations and machine learning reshape discovery, revealing that while AI has
+  deeply penetrated astronomy, the field now faces a critical bottleneck: a striking
+  absence of *new, hybrid concepts* at the AI–astronomy interface, signaling where
+  transformative innovation must now be cultivated.'
+10.1093/mnras/stae882: Supermassive galaxies from DESI deliver cosmological constraints
+  on Ωₘ–σ₈ rivaling traditional cluster counts—but with access to lower-mass halos
+  (down to ~10¹³ M⊙ h⁻¹) and significantly cleaner, more robust systematics than optical
+  cluster finders. By leveraging mass-complete samples and projected clustering wₚ,
+  this “cluster cosmology without cluster finding” opens a new, high-precision pathway
+  to probe cosmic structure growth below the conventional cluster mass threshold.
+10.1093/mnras/stae925: The Merian survey delivers the first high signal-to-noise weak
+  lensing measurements around dwarf galaxies—achieving S/N ≈ 90 within 1 Mpc—by pioneering
+  a custom-designed medium-band filter set (N540/N708) that enables precise photometric
+  redshifts (σ<sub>Δz/(1+z)</sub> ≈ 0.01) for ~85,000 star-forming dwarfs, unlocking
+  transformative tests of dark matter halo structure and stellar feedback in the low-mass
+  regime.
+10.3847/1538-4357/ad19c8: We deliver the first rigorously probabilistic stellar mass
+  function for 238,516 DESI BGS galaxies—propagating full uncertainties, correcting
+  for selection effects, and resolving redshift evolution and star-forming/quiescent
+  subpopulations—establishing a new gold-standard statistical framework that unlocks
+  unprecedented precision for low-redshift galaxy demographics in the full DESI survey.
+10.3847/1538-3881/ad0be4: POPSED revolutionizes galaxy population analysis by directly
+  inferring the full joint distribution of physical properties—like redshift and stellar
+  mass—for 10⁵ galaxies from broadband photometry in under one GPU hour, achieving
+  a 10⁵–10⁶ speedup over traditional SED modeling while robustly recovering key astrophysical
+  relations such as the star-forming main sequence. This breakthrough enables scalable,
+  statistically rigorous population-level inference essential for next-generation
+  cosmological surveys.
+10.48550/arXiv.2310.20125: Zephyr pioneers the first interpretable, normalizing-flow-based
+  framework that seamlessly stitches heterogeneous photometric redshift training data—enabling
+  robust, uncertainty-aware inference while uniquely quantifying each dataset’s contribution
+  to improve weak lensing systematics control.
+10.3847/1538-4357/ace829: We discover that “ultra-puffy” galaxies—satellites 1.5σ
+  above the mass-size relation—are a robust, physically motivated population in Milky
+  Way analogs, with each host harboring ~0.3 UPGs on average, revealing a new lens
+  for probing galaxy formation physics beyond traditional surface-brightness–based
+  ultra-diffuse galaxy definitions.
+10.3847/1538-4357/ace4c5: This study reveals that ultra-puffy galaxies—mass-size outliers
+  around Milky Way analogs—are quenched at the same rate as normal-sized satellites,
+  proving that extreme size alone does not drive environmental quenching; instead,
+  it’s host color and proximity that matter, while the classic UDG definition artificially
+  conflates size with quiescence.
+10.3847/1538-4357/acd92f: We built the first cosmology-emulating framework—trained
+  on 111 high-fidelity N-body simulations—that simultaneously and accurately models
+  redshift-space clustering and galaxy-galaxy lensing across eight cosmological parameters,
+  including neutrino mass and dynamical dark energy, enabling 2% precision on the
+  growth rate when combined with CMB priors—a transformative leap for joint-probe
+  cosmology with current galaxy surveys.
+10.1093/mnras/stac3023: IllustrisTNG’s remarkable agreement with MaNGA observations—especially
+  in stellar mass, metallicity, and age profiles—provides the strongest observational
+  validation to date that massive early-type galaxies form predominantly through merger-driven
+  evolution, where major mergers homogenize stellar populations and erase progenitor
+  signatures.
+10.1093/mnras/stac2938: This landmark multi-survey analysis—combining BOSS, DES-Y3,
+  HSC-Y1, and KiDS-1000—demonstrates that cosmic shear and galaxy clustering measurements
+  are fully consistent under a low-S₈ = 0.76 “lensing cosmology” (A = 1), resolving
+  the long-standing tension with Planck while affirming the robustness of modern weak-lensing
+  probes when systematics like baryonic feedback and sample selection are rigorously
+  modeled.
+10.3847/1538-4357/ac9964: UDGs are not failed galaxies or relics of violent feedback—instead,
+  they form stars normally but at uniquely low efficiencies across all scales, challenging
+  models that rely on bursty star formation or stellar expansion to explain their
+  diffuse nature.
+10.1093/mnras/stac2121: This study establishes DECaLS as a robust, wide-field alternative
+  to HSC for measuring outer stellar light in massive galaxies—demonstrating sub-0.05
+  dex agreement in enclosed stellar mass and equivalent low-scatter correlation with
+  halo mass via weak lensing—thereby unlocking cluster-finding potential across the
+  full DECaLS footprint.
+10.1093/mnras/stac1680: We discover that the stellar mass in the outer envelope (50–100
+  kpc) of massive galaxies is an exceptionally clean, low-scatter tracer of halo mass—matching
+  the precision of leading richness-based cluster finders while avoiding their projection
+  and miscentering biases—offering a transformative, bias-resistant probe for cluster
+  cosmology.
+10.3847/1538-4357/ac6d66: MaNGA’s integral-field survey reveals that 11% of nearby
+  brightest cluster galaxies host multiple stellar cores—a direct observational signature
+  of ongoing cannibalism—matching IllustrisTNG simulations and finally reconciling
+  observed BCG mass growth rates with theory over the past 4.5 billion years.
+10.3847/1538-4357/ac7238: This study reveals that low-surface-brightness galaxies
+  are not merely faint extensions of normal galaxies but constitute a distinct population—especially
+  above 10⁸ M⊙—whose deviation from the canonical mass-size relation points to unique
+  formation pathways, resolving a long-standing ambiguity in galaxy evolution theory.
+10.3847/1538-4357/ac6c88: FIRE-2 simulations reveal that dwarf galaxies can build
+  extended, round, old stellar halos *in situ*—not through mergers, but via outward
+  migration of disk stars—a breakthrough that resolves the long-standing tension between
+  observed halo ubiquity and insufficient merger histories in dwarfs. This discovery
+  establishes stellar morphology as a powerful, observationally accessible diagnostic
+  for testing galaxy formation physics, especially star formation feedback.
+10.1093/mnras/stab3586: This blind, cross-survey comparison of galaxy–galaxy lensing
+  amplitudes—spanning six independent imaging surveys and over 100 authors—finds no
+  evidence for large unknown systematics (<15% at 68% confidence), robustly ruling
+  out lensing systematics as the sole explanation for the “lensing is low” tension
+  at z < 0.54 and affirming that collaborative, empirical validation is a powerful
+  path toward precision cosmic shear science.
+10.1093/mnras/stab3297: This study reveals that GC-rich ultra-diffuse galaxies in
+  the Perseus cluster possess significantly higher stellar velocity dispersions—and
+  thus greater dynamical masses within their half-light radii—than their GC-poor counterparts,
+  providing direct observational evidence that GC richness traces underlying halo
+  mass differences among UDGs.
+10.3847/1538-4357/ac1f21: This landmark HSC-SSP study reveals, for the first time
+  with unprecedented statistical power and imaging fidelity, that the galaxy size–mass
+  relation is not a single power law but breaks at a physically meaningful pivot mass—where
+  the transition from in situ star formation to dry merger dominance occurs—and crucially
+  shows that low-mass quiescent galaxies retain the large sizes of their star-forming
+  progenitors, providing direct structural evidence for recent, gentle quenching without
+  major structural disruption.
+10.1093/mnras/stab2363: BCGs are statistically special—unlike random draws from their
+  host clusters’ galaxy mass distributions—across 0.3 < z < 1.0, proving their distinct
+  formation pathway persists for over 7 billion years; crucially, this uniqueness
+  vanishes only when BCGs are spatially offset from the cluster center, directly linking
+  their exceptional nature to dynamical relaxation and central dominance.
+10.1093/mnras/stab2589: We developed the first scalable, unsupervised GAN-based anomaly
+  detector for million-galaxy survey data—identifying ~13,000 physically compelling
+  outliers including rare mergers, tidal features, and extreme star-forming systems—and
+  confirmed with follow-up spectroscopy that one such anomaly is a metal-poor dwarf
+  galaxy hosting an unusually blue, higher-metallicity H II region, proving the method’s
+  power to uncover genuinely new astrophysical phenomena.
+10.3847/1538-4357/ac15f0: We find that low surface brightness galaxies are intrinsically
+  oblate spheroids—regardless of color or environment—and their observed thickness
+  strongly favors formation via outward migration of star formation over alternative
+  pathways, providing the first robust, observationally grounded constraint on LSBG
+  genesis.
+10.3847/1538-4357/ac0896: This first-of-its-kind search for wandering intermediate-mass
+  black holes in the Milky Way—using Gaia’s precision astrometry and DECaLS’ deep
+  imaging to hunt for their telltale hypercompact star clusters—sets the strongest
+  observational limits to date, ruling out 100% occupancy and paving the way for next-generation
+  surveys to finally detect these elusive cosmic nomads.

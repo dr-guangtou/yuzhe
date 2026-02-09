@@ -31,12 +31,11 @@ The researcher follows these astronomical surveys/missions. Mentioning these pro
 
 ## Scoring Instructions
 
-Evaluate how relevant this paper is to the researcher's **topics** (not just projects). Consider:
+Evaluate how relevant this paper is to the researcher's **topics** (not just projects) using the title and abstract of the paper. Consider:
 
-1. Does the paper address a PRIMARY topic? (high score)
-2. Does the paper address a SECONDARY topic? (moderate score)
-3. Is the methodology or data type relevant to the researcher's interests?
-4. Would this paper be useful for the researcher's work?
+1. Does the paper address a PRIMARY topic? (high score). If the paper is directly related to one of the primary topic, it should have score >=8. If it is related to more than one primary topics, the score can be scaled higher.
+2. Does the paper address a SECONDARY topic? (moderate score). If the paper is directly related to one of the secondary topic, it should have score >=5. If it is related to more than one secondary topics, the score can be scaled higher.
+3. Is this paper directly related to any of the project of interest. If so, the paper should have a score >= 3.0, regardless of whether it is directly related to any of the primary or secondary topics.
 
 **Important**: The topics above are *descriptions of research areas*, not rigid keywords. Judge semantic relevance - a paper about "stellar mass functions of galaxies at z>3" is relevant to "High-redshift galaxies and their formation" even without exact keyword matches.
 

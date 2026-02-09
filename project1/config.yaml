@@ -12,46 +12,44 @@ category:
 # Scientific topics of interest (order does not matter)
 topics:
   primary:
-    - "Galaxy-dark matter halo connection"
-    - "Massive / Quiescent / Early-Type galaxies: formation and evolution in general at low or high redshift"
-    - "Massive / Quiescent / Early-Type galaxies: stellar population; star formation history; quenching history; initial mass function; element abundance"
-    - "Massive / Quiescent / Early-Type galaxies: stellar structure; morphology; stellar halo; interaction"
-    - "Massive / Quiescent / Early-Type galaxies: kinematics; dynamics" 
-    - "Massive / Quiescent / Early-Type galaxies: gravitational lensing; mass distribution; dark matter content"
-    - "Dwarf galaxies: dark matter halo mass and properties"
-    - "Formation and evolution of stellar populations in galaxy groups and clusters"
-    - "Stellar mass–halo mass relation and environmental effects on galaxy evolution"
-    - "High-redshift massive quiescent galaxies and their stellar populations"
-    - "Dark matter halo–galaxy mass relations and satellite galaxy populations"
-    - "Stellar angular momentum and kinematics in massive galaxies"
-    - "Stellar population synthesis and mass-SFR evolution in galaxies across cosmic time"
-    - "Stellar and AGN feedback mechanisms regulating star formation and galaxy evolution in cosmological simulations"
-    - "Strong gravitational lensing by galaxy clusters and early-type galaxies"
-    - "Weak gravitational lensing of galaxy clusters for cosmological parameter estimation and mass modeling"
-    - "Galaxy cluster detection and characterization using multi-survey photometric and spectroscopic data"
-    - "Galaxy structural decomposition and morphology: bulges, discs, bars, and stellar mass distributions"
-    - "Deep photometric galaxy surveys and low surface brightness galaxies"
-    - "Low surface brightness universe: stellar halos, tidal features, intra-cluster light, and low surface brightness galaxies, including the ultra-diffuse galaxies"
-    - "High-redshift galaxies and their formation, especially on the population of submillimeter galaxies (SMG), Lyman-break galaxies (LBG), Lyman-alpha emitters (LAE), and Little Red Dots (LRD)"
-    - "Method: spectral energy distribution (SED) and spectra fitting and analysis"
+    - "Extragalactic: Galaxy-dark matter halo connection; halo mass and properties (concentration, assembly history, halo age, halo shape, assembly bias, and splashback radius); satellite galaxies; stellar mass–halo mass relation"
+    - "Extragalactic: Galaxy structure and morphology; stellar halos; low surface brightness features; galaxy interactions and mergers"
+    - "Extragalactic: The star formation history, stellar mass growth/assembly history, chemical enrichment history, and quenching process of massive quiescent early-type galaxies across cosmic time"
+    - "Extragalactic: using galaxy-galaxy weak lensing to constrain the galaxy–dark matter halo connection, dark matter halo properties, and cosmological parameters"
+    - "Extragalactic: the dynamics and kinematics of stars (rotation velocity and velocity dispersion) in massive quiescent early-type galaxies"
+    - "Extragalactic: galaxy clusters as cosmological probes and laboratories for galaxy evolution, including cluster mass and properties, galaxy populations, intra-cluster light (ICL), and intra-cluster medium (ICM)"
+    - "Extragalactic: high-redshift massive or quiescent galaxies and their low redshift descendent"
+    - "Extragalactic: how does supernova feedback and AGN feedback regulate star formation and galaxy evolution in massive and dwarf galaxies?"
+    - "Extragalactic: low surface brightness universe, including stellar halos, tidal features, intra-cluster light, and low surface brightness galaxies, including the ultra-diffuse galaxies"
+    - "Extragalactic: Galaxy cluster detection and characterization using multi-survey photometric and spectroscopic data, including optical, X-ray, and Sunyaev-Zel'dovich (SZ) effect observations"
+    - "Extragalactic: 1-D surface brightness profile, 2-D image modeling and structural decomposition of galaxies, including bulge-disc-bar decomposition and stellar mass distribution modeling"
+    - "Extragalactic: high-redshift galaxies and their formation, especially on the population of submillimeter galaxies (SMG), Lyman-break galaxies (LBG), Lyman-alpha emitters (LAE), and Little Red Dots (LRD)"
+    - "Cosmology: cosmological constraints from galaxy clusters and groups."
+    - "Stellar population synthesis: initial mass function (IMF), stellar evolution models (isochrones), stellar spectral libraries, AGB and TP-AGB phases, and their applications to galaxy evolution studies"
+    - "Multi-object spectroscopic survey: target selection, survey strategy design, fiber assignment, mock catalog generation, and scientific analysis of survey data"
   secondary:
-    - "Galaxy evolution and star formation across cosmic time, focusing on star-formation history and quenching mechanisms"
-    - "High-redshift emission-line galaxies and multi-line diagnostics of star formation and chemical evolution"
-    - "Compact stellar systems: extragalactic globular clusters, ultra-compact dwarfs, and nuclear star clusters"
-    - "Data analysis methods and algorithms for extragalactic and cosmological data"
-    - "The design and scientific preparation of large astronomical surveys and missions"
-    - "The nature of dark matter and its impact on galaxy evolution"
-    - "Cosmological simulations of galaxy formation and evolution"
-    - "Large-scale structure of the universe and galaxy clustering"
-    - "Observational constraint of primordial non-Gaussianity using large-scale structure"
-    - "The impact of baryonic physics on cosmological observables"
-    - "Cosmological constraints from weak gravitational lensing and galaxy-galaxy lensing"
-    - "Cosmological constraints using galaxy clusters as probes"
-    - "Development of new instruments and technologies for astronomy"
+    - "Extragalactic: the galaxy–dark matter halo connection and halo mass and properties (concentration, assembly history, halo age, halo shape) for low-mass dwarf galaxies"
+    - "Extragalactic: the circumgalactic medium (CGM) and intergalactic medium (IGM) and their connection to galaxy formation and evolution"
+    - "Extragalactic: Super-massive black hole (SMBH) and active Galactic Nuclei (AGN) feedback and its impact on galaxy evolution, including the co-evolution of SMBHs and their host galaxies"
+    - "Extragalactic: diagnostics of star formation rate and gas-phase metallicity (chemical abundance) in galaxies across cosmic time"
+    - "Extragalactic: globular cluster population, ultra-compact dwarfs, and nuclear star clusters in galaxy clusters, massive galaxies, and dwarf galaxies"
+    - "Cosmology: halo occupation distribution (HOD) modeling and halo model of galaxy clustering and galaxy-galaxy lensing"
+    - "Cosmology: observational constraint of primordial non-Gaussianity using large-scale structure"
+    - "Cosmology: baryonic effects on the matter power spectrum and weak lensing cosmology; baryonification of N-body simulations"
+    - "Cosmological constraints from weak gravitational lensing, including the cosmic shear, galaxy-galaxy lensing, and 3x2pt analyses"
+    - "Instrumentation: multi-object spectrograph, integral field unit (IFU), and other advanced astronomical instrumentation design, development, and data analysis techniques"
     - "Method: photometric redshift estimation and its applications"
+    - "Method: spectral energy distribution (SED) and spectra fitting and analysis"
     - "Method: machine learning and artificial intelligence applications in astronomy"
     - "Method: statistical methods and data mining in astronomy"
     - "Stellar: physics related to the AGB and TP-AGB phases of stellar evolution"
+  negative:
+    - "Exoplanet; protoplanetary disks"
+    - "Solar physics; solar corona related physics; solar MHD; solar flares; solar wind"
+    - "Star formation and molecular gas clouds in the Milky Way (Galactic)"
+    - "Stellar physics (except for AGB and TP-AGB phases); stellar evolution (except for AGB and TP-AGB phases); stellar populations in the Milky Way (Galactic)" 
+    - "Compact object: neutron star, pulsar, or stellar mass black hole"
+    - "Galactic (Milky Way) structure and dynamics"
 
 # Projects to follow (papers mentioning these in title get minimum "Could Be Interesting")
 projects:
@@ -131,10 +129,10 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "kimi"
+  provider: "openai"
   model: ""  # empty = use provider default_model
   temperature: 0.3
-  max_tokens: 2000
+  max_tokens: 5000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
@@ -156,6 +154,27 @@ local_filter:
     w_topic: 0.60
     w_global: 0.30
     w_category: 0.10
+
+# Stage 2 (no-LLM path): Topic-Embedding Scorer
+# Maps cosine similarity between paper and topic embeddings to 0-10 scores
+# Primary topics map to higher scores (>=8 for strong match)
+# Secondary topics map to moderate scores (<=8 for strong match)
+topic_scorer:
+  primary_breakpoints:
+    0.20: 0.0
+    0.35: 3.0
+    0.45: 5.0
+    0.55: 8.0
+    0.70: 10.0
+  secondary_breakpoints:
+    0.20: 0.0
+    0.30: 2.0
+    0.40: 4.0
+    0.50: 6.0
+    0.65: 8.0
+  match_threshold: 0.50   # cosine sim above this counts as a topic match
+  multi_match_bonus: 0.10  # bonus per extra primary topic match (capped at +1.0)
+  negative_penalty: 3.0   # penalty multiplier when best negative sim > best primary sim
 
 # Stage 2: LLM Scoring (OPTIONAL - default OFF to save tokens)
 # Enable with --use-llm-scoring flag

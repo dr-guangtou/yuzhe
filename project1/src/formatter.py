@@ -21,16 +21,13 @@ def format_paper_header(paper: ArxivPaper, score: float = None) -> str:
     """
     lines = []
 
-    # Title with link
-    lines.append(f"### [{paper.title}]({paper.html_url})")
+    # Title with abs link + HTML link
+    html_render_url = f"https://arxiv.org/html/{paper.arxiv_id}"
+    lines.append(f"### [{paper.title}](https://arxiv.org/abs/{paper.arxiv_id}) [HTML]({html_render_url})")
     lines.append("")
 
-    # Metadata
-    lines.append(f"**arXiv:** [{paper.arxiv_id}](https://arxiv.org/abs/{paper.arxiv_id})")
-    lines.append(f"**PDF:** [Download]({paper.pdf_url})")
+    # Metadata (compact)
     lines.append(f"**Authors:** {format_authors(paper.authors, max_authors=8)}")
-    lines.append(f"**Categories:** {', '.join(paper.categories)}")
-    lines.append(f"**Published:** {paper.published.strftime('%Y-%m-%d')}")
 
     if score is not None:
         lines.append(f"**Relevance Score:** {score:.1f}/10")
@@ -117,14 +114,6 @@ def format_digest(
         for sp in most_relevant:
             paper = sp.paper
             lines.append(format_paper_header(paper, sp.score))
-
-            # Add matched info
-            if sp.matched_topics:
-                lines.append(f"**Matched Topics:** {', '.join(sp.matched_topics[:5])}")
-                lines.append("")
-            if sp.matched_projects:
-                lines.append(f"**Matched Projects:** {', '.join(sp.matched_projects)}")
-                lines.append("")
 
             # Add summary
             summary = summaries.get(paper.arxiv_id, "")

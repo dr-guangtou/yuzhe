@@ -1,12 +1,12 @@
 # Daily arXiv Summary
 
-Automated 3-stage pipeline that monitors arXiv daily, filters papers with local embeddings, optionally scores with LLM, and generates tiered Markdown summaries.
+Automated pipeline that monitors arXiv daily, filters and scores papers locally, and generates tiered Markdown summaries.
 
 ## Features
 
 - **3-Stage Architecture** (see `PIPELINE_DESIGN.md` for details):
-  1. **Local Filter** (MANDATORY) - Fast embedding-based filtering (song_db), no API calls
-  2. **LLM Scoring** (OPTIONAL) - Precise topic relevance scoring (default: OFF to save tokens)
+  1. **Local Filter** (MANDATORY) - Corpus-based embedding filter removes off-topic papers
+  2. **Scoring** (MANDATORY, two paths) - Topic-embedding scorer (default) or LLM scorer
   3. **Summary Generation** (OPTIONAL) - LLM summaries with graceful fallback to abstracts
 - **Three-Tier System**:
   - **Most Relevant**: Detailed summaries with methodology, key findings, and references
@@ -55,7 +55,7 @@ category:
 
 ### Topics (Core Scoring)
 
-**This is the heart of the system.** Describe your research interests as short phrases. The LLM evaluates each paper against these descriptions semantically (not keyword matching):
+**This is the heart of the system.** Describe your research interests as short phrases. Both the local topic-embedding scorer and the LLM scorer evaluate each paper against these descriptions semantically (not keyword matching):
 
 ```yaml
 topics:
@@ -117,25 +117,25 @@ scoring:
 
 ## Usage
 
-**📖 For complete pipeline documentation, see `PIPELINE_DESIGN.md`**
+**For complete pipeline documentation, see `PIPELINE_DESIGN.md`**
 
 All commands run from the `project1/` directory.
 
-### Default Mode: Local Filter + Summary (Most Efficient)
+### Default Mode (Recommended)
 
 ```bash
 uv run python src/main.py
 ```
 
-Runs **Stage 1** (local filter) + **Stage 3** (summaries). No LLM scoring = minimal token usage. Update mode enabled (skips if no new papers).
+Runs **Stage 1** (corpus filter) + **Stage 2** (topic-embedding scorer) + **Stage 3** (LLM summaries). The scoring is fully local (no LLM tokens spent on scoring). LLM is only used for summary generation. Update mode enabled (skips if no new papers).
 
-### With LLM Scoring: Full 3-Stage Pipeline
+### With LLM Scoring (Higher Precision)
 
 ```bash
 uv run python src/main.py --use-llm-scoring
 ```
 
-Runs all 3 stages: local filter → LLM scoring → summaries. More precise but uses more tokens.
+**Replaces** the local topic-embedding scorer with LLM-based scoring. Papers are **not scored twice** — `--use-llm-scoring` switches Stage 2 from the embedding path to the LLM path. More precise but uses significantly more tokens (one LLM call per paper for scoring + one for summary).
 
 ### Debug Mode: Force Run
 
@@ -143,15 +143,15 @@ Runs all 3 stages: local filter → LLM scoring → summaries. More precise but 
 uv run python src/main.py --debug
 ```
 
-Disable update check, run regardless of whether there are new papers. Combine with `--use-llm-scoring` for full pipeline in debug mode.
+Disable update check, run regardless of whether there are new papers.
 
-### No Summary: Filter/Score Only
+### No Summary: Score Only
 
 ```bash
 uv run python src/main.py --no-summary
 ```
 
-Skip summary generation, output abstracts only. Useful for checking tier distribution.
+Skip Stage 3 (summary generation), output abstracts only. Useful for checking tier distribution without spending LLM tokens.
 
 ### Key Options
 
@@ -172,14 +172,23 @@ Skip summary generation, output abstracts only. Useful for checking tier distrib
 ### Quick Test Runs
 
 ```bash
-# Test local filter only (5 papers, no API calls)
-uv run python src/main.py --no-summary --limit 5 --debug
+# Run pipeline with no LLM at all (local scoring + abstracts only)
+uv run python src/main.py --no-summary --debug
 
-# Test with LLM scoring (5 papers, mock LLM)
-uv run python src/main.py --use-llm-scoring --limit 5 --mock-llm --debug
+# Run full pipeline (local scoring + LLM summaries)
+uv run python src/main.py --debug
 
-# Test individual paper scoring
+# Run with LLM scoring (replaces local topic scorer with LLM scorer)
+uv run python src/main.py --use-llm-scoring --debug
+
+# Test individual paper: corpus filter (Stage 1) only
 uv run python test_local_filter.py --id 2301.07136
+
+# Test individual papers: full local scoring (Stage 1 + Stage 2)
+uv run python test_local_score.py 2602.06904,2602.06439
+
+# LLM scoring calibration tool
+uv run python src/get_llm_score.py 2602.04962
 ```
 
 ## Output
@@ -187,32 +196,51 @@ uv run python test_local_filter.py --id 2301.07136
 Daily digests are saved to `arxiv_digest/archive/YYYY/YYYY-MM-DD.md`.
 
 Each digest contains:
-- **Summary** with paper counts per tier
-- **Most Relevant** (score >= 8): structured summaries with key findings, methods, datasets
-- **Somewhat Relevant** (score >= 5): 3-5 sentence paragraphs
+- **Summary** with paper counts per tier and categories monitored
+- **Most Relevant** (score >= 8): title (linked to abs page + HTML rendering), authors, score, summary/abstract
+- **Somewhat Relevant** (score >= 5): same format as Most Relevant
 - **Could Be Interesting** (score >= 3): title and link only
 
 ## How the Pipeline Works
 
 ```
-Fetch by CATEGORY → Stage 1: Local Filter (embeddings) →
-    [Optional] Stage 2: LLM Scoring →
-    [Optional] Stage 3: Summary Generation → Digest
+Fetch by CATEGORY
+    → Stage 1: Corpus Filter (local embeddings, pass/fail gate)
+    → Stage 2: Scoring (one of two mutually exclusive paths)
+        ├── Default: Topic-Embedding Scorer (local, no LLM tokens)
+        └── --use-llm-scoring: LLM Scorer (sends prompt per paper)
+    → Stage 3: Summary Generation (optional, LLM)
+    → Digest
 ```
 
-**Stage 1** filters papers using pre-computed interest model (song_db), no API calls.
-**Stage 2** (optional) re-scores with LLM for precise topic relevance.
-**Stage 3** (optional) generates summaries or uses abstracts as fallback.
+### Stage 1: Corpus Filter (always runs)
 
-See `PIPELINE_DESIGN.md` for full architecture details and `song_db/README.md` for local filter details.
+Embeds each paper's title+abstract with `all-MiniLM-L6-v2` and computes cosine similarity against 12 KMeans centroids derived from the user's ~14.5k paper library (`song_db`). Papers below the threshold (default 0.5) are removed. This is a domain filter — it answers "is this paper in my general field?" No LLM calls.
 
-| Config Section | Purpose | Role in Scoring |
-|----------------|---------|-----------------|
+### Stage 2: Scoring (always runs, two paths)
+
+Stage 2 assigns each surviving paper a 0-10 relevance score and a tier. **Only one scoring path runs** — they are mutually exclusive. Papers are never scored by both.
+
+**Default path (topic-embedding scorer):**
+Embeds the ~40 topic descriptions from `config.yaml` using the same sentence-transformer, computes cosine similarity between each paper and each topic, and maps the best similarity to a 0-10 score via piecewise-linear breakpoints (configurable in `config.yaml` under `topic_scorer`). Primary topics map to higher scores than secondary topics. Multi-match bonuses and project floor boosts are applied. No LLM calls.
+
+**LLM path (`--use-llm-scoring`):**
+Sends each paper's title+abstract to an LLM along with the topic descriptions. The LLM returns a JSON with score, matched_topics, and reasoning. More precise but costs ~1 LLM call per paper. Enable with `--use-llm-scoring`.
+
+### Stage 3: Summary Generation (optional)
+
+Generates LLM-written summaries for scored papers. Uses LLM tokens regardless of which Stage 2 path ran. Disable with `--no-summary` (outputs abstracts instead).
+
+### Config Roles
+
+| Config Section | Purpose | Used By |
+|----------------|---------|---------|
 | **category** | Fetch filter | Which arXiv categories to monitor |
-| **topics** | **Core scoring** | LLM evaluates semantic relevance to these research descriptions |
-| **projects** | Floor booster | +0.5 score boost, guaranteed "Could Be Interesting" minimum |
+| **topics** | **Core scoring** | Both local topic scorer and LLM scorer |
+| **projects** | Floor booster | Guaranteed "Could Be Interesting" minimum |
+| **topic_scorer** | Breakpoint calibration | Local topic scorer only |
 
-The LLM returns a 0-10 score for each paper. Topics are semantic descriptions, not keywords - a paper about "stellar mass functions at z>3" matches "High-redshift galaxies" even without exact keyword overlap.
+Topics are semantic descriptions, not keywords — a paper about "stellar mass functions at z>3" matches "High-redshift galaxies" even without exact keyword overlap.
 
 ### Tier Thresholds
 
@@ -223,65 +251,71 @@ The LLM returns a 0-10 score for each paper. Topics are semantic descriptions, n
 | >= 3 | Could Be Interesting | Title and link only |
 | < 3 | Not Relevant | Excluded from digest |
 
-Thresholds are configurable in `config.yaml` under `scoring`.
+Thresholds are configurable in `config.yaml` under `llm_scoring.tier_thresholds`.
 
-### Degraded Mode (--skip-llm)
+### Score Calibration Tools
 
-When LLM is unavailable, uses category as a rough proxy:
-- Primary category: score 5.0 (Somewhat Relevant)
-- Secondary category: score 3.5 (Could Be Interesting)
-- Project boost: +1.5
+**Local scoring (no LLM, Stage 1 + Stage 2):**
 
-### Score Calibration Tool
-
-Use `get_llm_score.py` to check how specific papers score against your config. Useful for tuning thresholds and refining topic descriptions.
+Use `test_local_score.py` to see how papers score with the local pipeline. Shows corpus filter score, topic-embedding score, matched topics, cosine similarities, and tier assignment. Useful for calibrating breakpoints in `config.yaml`.
 
 ```bash
-# Score a single paper
-uv run python src/get_llm_score.py 2602.04962
+# Score one or more papers (comma or space separated)
+uv run python test_local_score.py 2602.06904,2602.06439
+uv run python test_local_score.py 2602.06904 2602.06439 2602.06119
 
-# Score multiple papers
-uv run python src/get_llm_score.py 2602.04962 2602.04974 2602.05396
-
-# Use a specific LLM provider
-uv run python src/get_llm_score.py 2602.04962 --provider nvidia
-
-# A/B test a modified prompt
-uv run python src/get_llm_score.py 2602.04962 --prompt prompts/match_preprint_v2.md
-
-# JSON output for scripting
-uv run python src/get_llm_score.py 2602.04962 2602.04974 --json
+# Accept full URLs
+uv run python test_local_score.py https://arxiv.org/abs/2602.06904
 ```
 
-Accepts arXiv IDs (e.g., `2602.04962`) or full URLs (e.g., `https://arxiv.org/abs/2602.04962`).
+**LLM scoring:**
+
+Use `get_llm_score.py` to check how papers score via the LLM path. Useful for comparing LLM scores against local scores.
+
+```bash
+uv run python src/get_llm_score.py 2602.04962
+uv run python src/get_llm_score.py 2602.04962 --provider nvidia
+uv run python src/get_llm_score.py 2602.04962 --json
+```
+
+**Corpus filter only (Stage 1):**
+
+Use `test_local_filter.py` to check whether a paper passes the corpus filter.
+
+```bash
+uv run python test_local_filter.py --id 2602.06904
+```
+
+All tools accept arXiv IDs (e.g., `2602.04962`) or full URLs (e.g., `https://arxiv.org/abs/2602.04962`).
 
 ## Project Structure
 
 ```
 project1/
-├── README.md           # This file
-├── PLAN.md             # Implementation plan
-├── config.yaml         # Configuration
-├── pyproject.toml      # Python dependencies
+├── README.md                # This file
+├── PLAN.md                  # Implementation plan
+├── config.yaml              # Configuration (topics, breakpoints, providers)
+├── pyproject.toml           # Python dependencies
+├── test_local_filter.py     # Calibration: Stage 1 corpus filter
+├── test_local_score.py      # Calibration: Stage 1 + Stage 2 local scoring
 ├── src/
-│   ├── main.py          # CLI entry point
-│   ├── get_llm_score.py # Score calibration tool
-│   ├── config.py        # Config loader
-│   ├── arxiv_fetcher.py # arXiv API client
-│   ├── llm_client.py    # LLM abstraction
-│   ├── scorer.py        # Paper scoring
-│   ├── summarizer.py    # Summary generation
-│   ├── formatter.py     # Markdown output
-│   ├── state.py         # Run state tracking
-│   └── logger.py        # Logging setup
-├── prompts/
-│   ├── match_preprint.md
-│   ├── summary_detailed.md
-│   └── summary_brief.md
+│   ├── main.py              # CLI entry point (pipeline orchestrator)
+│   ├── config.py            # Config loader
+│   ├── arxiv_fetcher.py     # arXiv API client
+│   ├── local_scorer.py      # Bridge: ArxivPaper <-> song_db
+│   ├── topic_scorer.py      # Stage 2: topic-embedding scorer (no-LLM path)
+│   ├── scorer.py            # Stage 2: LLM scorer + tier assignment
+│   ├── get_llm_score.py     # Calibration: LLM scoring
+│   ├── llm_client.py        # LLM abstraction
+│   ├── summarizer.py        # Stage 3: summary generation
+│   ├── formatter.py         # Markdown output
+│   ├── state.py             # Run state tracking
+│   └── logger.py            # Logging setup
+├── song_db/                 # Local interest model (corpus pipeline)
+├── prompts/                 # LLM prompt templates
 ├── arxiv_digest/
-│   └── archive/        # Daily outputs
-├── logs/               # Log files
-└── temp/               # Temporary files
+│   └── archive/             # Daily outputs (YYYY/YYYY-MM-DD.md)
+└── logs/                    # Log files
 ```
 
 ## Troubleshooting

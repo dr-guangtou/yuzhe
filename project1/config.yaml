@@ -115,12 +115,12 @@ providers:
   deepseek:
     api_key_env: "DEEPSEEK_API_KEY"
     base_url: "https://api.deepseek.com/v1"
-    default_model: "deepseek-chat"
+    default_model: "deepseek-reasoner"
 
   openai:
     api_key_env: "OPENAI_API_KEY"
     base_url: "https://api.openai.com/v1"
-    default_model: "gpt-4o-mini"
+    default_model: "gpt-5-mini"
 
   gemini:
     api_key_env: "GEMINI_API_KEY"
@@ -130,16 +130,16 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "nvidia"
+  provider: "kimi"
   model: ""  # empty = use provider default_model
   temperature: 0.3
   max_tokens: 5000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
-  - kimi
-  - openai
-  - moonshot 
+  - moonshot
+  - glm
+  - nvidia 
 
 # Pipeline Configuration
 # The pipeline runs in 3 stages:

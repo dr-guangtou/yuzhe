@@ -80,7 +80,7 @@
     - temp (in case you need to download a large PDF file or the LaTeX source files from the arXiv, put it in the temp folder. Make sure the folder is in .gitignore)
 ```
 
-## Draft of the Prompt to Get the Summary: 
+## Draft of the Prompt to Get the Summary:
 
 ```markdown
 ## SUMMARY FORMAT (respond in this structure):
@@ -121,12 +121,9 @@ What is the single most important finding? (1 sentence, plain language)
 ### 5. Knowledge Base from the Introduction:
 
 - Summarize the main topics of the Introduction or Background sections of the preprint into a few (1-3) bullet points. Be concise. These will be used as indices for future queries.
+```
 
----
-
-**Style guidelines:**
+### Style guidelines:**
 - Use professional but accessible language
 - Include specific numbers (redshifts, masses, timescales) when given
 - Flag any claims that seem overstated or need verification
-- Highlight connections to galaxy-halo connection work
-```

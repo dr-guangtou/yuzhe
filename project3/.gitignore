@@ -1,0 +1,6 @@
+temp/
+__pycache__/
+*.pyc
+.state.json
+.venv/
+summary/

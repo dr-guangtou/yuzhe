@@ -1,0 +1,41 @@
+# Project 3: Periodic Journal Summary
+# Reference to project1 config for topics, scoring, and interest model
+project1_config: "../project1/config.yaml"
+
+journals:
+  - {name: "The Astrophysical Journal", acronym: apj, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/0004-637X"}
+  - {name: "The Astronomical Journal", acronym: aj, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/1538-3881"}
+  - {name: "ApJ Letters", acronym: apjl, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/2041-8205"}
+  - {name: "ApJ Supplement", acronym: apjs, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/0067-0049"}
+  - {name: "MNRAS", acronym: mnras, publisher: oup, feed_url: "https://academic.oup.com/rss/site_5326/3192.xml"}
+  - {name: "MNRAS Letters", acronym: mnrasl, publisher: oup, feed_url: "https://academic.oup.com/rss/site_5327/3193.xml"}
+  - {name: "A&A", acronym: aa, publisher: edp, feed_url: "https://feeds.feedburner.com/edp_aa?format=xml"}
+  - {name: "Nature Astronomy", acronym: natastro, publisher: nature, feed_url: "https://www.nature.com/natastron.rss"}
+  - {name: "PASP", acronym: pasp, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/1538-3873"}
+  - {name: "PASJ", acronym: pasj, publisher: oup, feed_url: "https://academic.oup.com/rss/site_5345/3211.xml"}
+  - {name: "JCAP", acronym: jcap, publisher: iop, feed_url: "https://iopscience.iop.org/journal/rss/1475-7516"}
+  - {name: "OJA", acronym: oja, publisher: oja, feed_url: "https://astro.theoj.org/feed"}
+  - {name: "PASA", acronym: pasa, publisher: cambridge, feed_url: "", enabled: false}
+
+fetch:
+  delay_seconds: 2.0
+  timeout_seconds: 30
+  user_agent: "yuzhe-journal-summary/1.0"
+
+# Abstract enrichment (fetch full abstract from article HTML)
+enrichment:
+  enabled: true
+  delay_seconds: 1.0
+  publishers: ["edp", "oja"]
+
+# Stage 1: LocalRanker corpus filter
+local_filter:
+  threshold: 0.5
+
+# Stage 2: TopicScorer ranking
+scoring:
+  min_tier: "could_be_interesting"
+
+output:
+  reminder_dir: "summary/reminder"
+  archive_dir: "summary"

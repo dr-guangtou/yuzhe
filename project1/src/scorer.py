@@ -50,6 +50,14 @@ def load_scoring_prompt() -> str:
     return prompt_path.read_text(encoding="utf-8")
 
 
+def load_batch_scoring_prompt() -> str:
+    """Load the batch scoring prompt template."""
+    prompt_path = Path(__file__).parent.parent / "prompts" / "match_preprint_batch.md"
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Batch scoring prompt not found: {prompt_path}")
+    return prompt_path.read_text(encoding="utf-8")
+
+
 def check_project_match(paper: ArxivPaper, config: Config) -> list[str]:
     """Check if paper title mentions any projects of interest.
 
@@ -196,6 +204,85 @@ def score_paper_with_llm(
         return 5.0, [], f"Parse failed: {e}"
 
 
+def build_papers_block(papers: list[ArxivPaper]) -> str:
+    """Format a list of papers into a numbered block for batch prompts.
+
+    Args:
+        papers: Papers to format
+
+    Returns:
+        Formatted string with numbered paper entries
+    """
+    blocks = []
+    for i, paper in enumerate(papers, 1):
+        blocks.append(
+            f"### [Paper {i}] arxiv_id: {paper.arxiv_id}\n\n"
+            f"**Title:** {paper.title}\n\n"
+            f"**Abstract:**\n{paper.abstract}\n\n"
+            f"**arXiv Categories:** {', '.join(paper.categories)}"
+        )
+    return "\n\n---\n\n".join(blocks)
+
+
+def score_papers_batch_llm(
+    papers: list[ArxivPaper],
+    config: Config,
+    llm_client: LLMClient,
+    prompt_template: str
+) -> dict[str, tuple[float, list[str], str]]:
+    """Score a batch of papers in a single LLM call.
+
+    Args:
+        papers: Batch of papers to score
+        config: Configuration with topics
+        llm_client: LLM client instance
+        prompt_template: The batch scoring prompt template
+
+    Returns:
+        Dict mapping arxiv_id to (score, matched_topics, reasoning)
+
+    Raises:
+        ValueError: If response cannot be parsed as a JSON array
+    """
+    papers_block = build_papers_block(papers)
+
+    prompt = prompt_template.format(
+        primary_topics="\n".join(f"- {t}" for t in config.topics.primary),
+        secondary_topics="\n".join(f"- {t}" for t in config.topics.secondary),
+        projects="\n".join(f"- {p.name} ({p.acronym})" for p in config.projects),
+        papers_block=papers_block
+    )
+
+    def call_llm():
+        return llm_client.generate(prompt)
+
+    response = retry_with_backoff(
+        call_llm,
+        max_attempts=config.api.llm_retry_attempts,
+        initial_delay=config.api.llm_retry_delay_seconds
+    )
+
+    content = response.content
+    # Extract JSON array from markdown code blocks if present
+    array_match = re.search(r'\[.*\]', content, re.DOTALL)
+    if array_match:
+        content = array_match.group(0)
+
+    results = json.loads(content)
+    if not isinstance(results, list):
+        raise ValueError(f"Expected JSON array, got {type(results).__name__}")
+
+    scores_map: dict[str, tuple[float, list[str], str]] = {}
+    for entry in results:
+        arxiv_id = entry.get("arxiv_id", "")
+        score = max(0.0, min(10.0, float(entry.get("score", 5.0))))
+        matched_topics = entry.get("matched_topics", [])
+        reasoning = entry.get("reasoning", "")
+        scores_map[arxiv_id] = (score, matched_topics, reasoning)
+
+    return scores_map
+
+
 def assign_tier(
     score: float,
     project_match: bool,
@@ -242,6 +329,7 @@ def score_papers(
     skip_llm: bool = False,
     local_ranker=None,
     local_threshold: float = 0.0,
+    batch_size: int = 1,
 ) -> list[ScoredPaper]:
     """Score papers against configured topics.
 
@@ -249,6 +337,9 @@ def score_papers(
     1. LLM evaluates each paper against TOPIC descriptions (primary mechanism)
     2. Project matches provide a floor boost (secondary mechanism)
     3. Tier is assigned based on topic score, with project floor
+
+    When batch_size > 1 and LLM scoring is active, papers are sent to the LLM
+    in batches to amortize prompt overhead and reduce API calls.
 
     Local filter modes (additive, existing path stays intact):
     - skip_llm + local_ranker: Use embedding scores instead of crude category heuristic
@@ -261,6 +352,7 @@ def score_papers(
         skip_llm: If True, use category-based proxy scores (degraded mode)
         local_ranker: Optional local ranker for embedding-based scoring
         local_threshold: If > 0, skip LLM for papers below this local score
+        batch_size: Number of papers per LLM call (default 1 = single-paper mode)
 
     Returns:
         List of ScoredPaper objects, sorted by tier then score
@@ -280,6 +372,46 @@ def score_papers(
             print(f"Local scoring complete: {len(local_scores_map)} papers scored")
         except Exception as e:
             print(f"Warning: Local scoring failed, falling back: {e}")
+
+    # Batch LLM path: batch_size > 1 and LLM scoring is active
+    use_batch = batch_size > 1 and not skip_llm
+
+    if use_batch:
+        # Two-pass batch scoring
+        scored_papers = _score_papers_batch(
+            papers, config, llm_client, prompt_template,
+            local_scores_map, local_threshold, batch_size
+        )
+    else:
+        # Original single-paper scoring loop
+        scored_papers = _score_papers_single(
+            papers, config, llm_client, prompt_template,
+            local_scores_map, local_threshold, skip_llm
+        )
+
+    # Sort by tier (most relevant first) then by score (highest first)
+    tier_order = {
+        Tier.MOST_RELEVANT: 0,
+        Tier.SOMEWHAT_RELEVANT: 1,
+        Tier.COULD_BE_INTERESTING: 2,
+        Tier.NOT_RELEVANT: 3
+    }
+    scored_papers.sort(key=lambda p: (tier_order[p.tier], -p.score))
+
+    return scored_papers
+
+
+def _score_papers_single(
+    papers: list[ArxivPaper],
+    config: Config,
+    llm_client: LLMClient,
+    prompt_template: str,
+    local_scores_map: dict[str, float],
+    local_threshold: float,
+    skip_llm: bool,
+) -> list[ScoredPaper]:
+    """Original single-paper scoring loop (extracted for clarity)."""
+    scored_papers: list[ScoredPaper] = []
 
     for i, paper in enumerate(papers):
         print(f"Scoring paper {i+1}/{len(papers)}: {paper.arxiv_id}")
@@ -302,14 +434,11 @@ def score_papers(
         # Score against TOPICS
         if skip_llm:
             if local_score_val is not None:
-                # Local ranker available: use embedding-based score (replaces
-                # the crude category heuristic)
                 from local_scorer import local_score_to_llm_scale
                 score = local_score_to_llm_scale(local_score_val)
                 matched_topics = []
                 reasoning = f"Local embedding score: {local_score_val:.4f} -> {score:.1f}/10"
             else:
-                # Fallback: original category-based heuristic
                 if primary_match:
                     score = 5.0
                 else:
@@ -321,30 +450,25 @@ def score_papers(
                 matched_topics = []
                 reasoning = "LLM unavailable - category-based proxy score"
         elif local_threshold > 0 and local_score_val is not None and local_score_val < local_threshold:
-            # Pre-filter mode: paper below local threshold, skip LLM call
             from local_scorer import local_score_to_llm_scale
             score = local_score_to_llm_scale(local_score_val)
             matched_topics = []
             reasoning = f"Below local threshold ({local_score_val:.4f} < {local_threshold}), LLM skipped"
         else:
-            # Full mode: LLM evaluates topic relevance
             score, matched_topics, reasoning = score_paper_with_llm(
                 paper, config, llm_client, prompt_template
             )
 
-            # Project boost: small increase (+0.5) for tracked projects
-            # This is a BOOSTER, not the primary score driver
             if project_match and score < 10.0:
                 score = min(10.0, score + 0.5)
                 reasoning += f" [Project boost: {', '.join(matched_projects)}]"
 
-        # Project boost for skip_llm mode (applies to both local and category heuristic)
+        # Project boost for skip_llm mode
         if skip_llm and project_match and local_score_val is not None:
             if score < 10.0:
                 score = min(10.0, score + 0.5)
                 reasoning += f" [Project boost: {', '.join(matched_projects)}]"
 
-        # Assign tier based on topic score (with project floor)
         tier = assign_tier(score, project_match, config)
 
         scored_papers.append(ScoredPaper(
@@ -359,14 +483,113 @@ def score_papers(
             primary_category_match=primary_match
         ))
 
-    # Sort by tier (most relevant first) then by score (highest first)
-    tier_order = {
-        Tier.MOST_RELEVANT: 0,
-        Tier.SOMEWHAT_RELEVANT: 1,
-        Tier.COULD_BE_INTERESTING: 2,
-        Tier.NOT_RELEVANT: 3
-    }
-    scored_papers.sort(key=lambda p: (tier_order[p.tier], -p.score))
+    return scored_papers
+
+
+def _score_papers_batch(
+    papers: list[ArxivPaper],
+    config: Config,
+    llm_client: LLMClient,
+    single_prompt_template: str,
+    local_scores_map: dict[str, float],
+    local_threshold: float,
+    batch_size: int,
+) -> list[ScoredPaper]:
+    """Two-pass batch scoring: prefilter, batch LLM, assemble results."""
+    batch_prompt_template = load_batch_scoring_prompt()
+    scored_papers: list[ScoredPaper] = []
+
+    # Pass 1: prefilter all papers, identify which need LLM scoring
+    prefilter_results: dict[str, tuple[bool, list[str], bool, bool]] = {}
+    llm_eligible: list[ArxivPaper] = []
+
+    for paper in papers:
+        passed, matched_projects, primary_match, secondary_match = prefilter_paper(paper, config)
+        prefilter_results[paper.arxiv_id] = (passed, matched_projects, primary_match, secondary_match)
+
+        if not passed:
+            continue
+
+        # Check local threshold pre-filter
+        local_score_val = local_scores_map.get(paper.arxiv_id)
+        if local_threshold > 0 and local_score_val is not None and local_score_val < local_threshold:
+            continue
+
+        llm_eligible.append(paper)
+
+    print(f"Batch scoring: {len(llm_eligible)} papers eligible for LLM (batch_size={batch_size})")
+
+    # Batch LLM scoring
+    llm_scores: dict[str, tuple[float, list[str], str]] = {}
+
+    for batch_start in range(0, len(llm_eligible), batch_size):
+        batch = llm_eligible[batch_start:batch_start + batch_size]
+        batch_num = batch_start // batch_size + 1
+        total_batches = (len(llm_eligible) + batch_size - 1) // batch_size
+        print(f"Scoring batch {batch_num}/{total_batches} ({len(batch)} papers)...")
+
+        try:
+            batch_results = score_papers_batch_llm(
+                batch, config, llm_client, batch_prompt_template
+            )
+            llm_scores.update(batch_results)
+        except Exception as e:
+            # Fallback: retry papers individually
+            print(f"Warning: Batch {batch_num} failed ({e}), falling back to individual scoring")
+            for paper in batch:
+                score, matched_topics, reasoning = score_paper_with_llm(
+                    paper, config, llm_client, single_prompt_template
+                )
+                llm_scores[paper.arxiv_id] = (score, matched_topics, reasoning)
+
+    # Pass 2: assemble ScoredPaper objects
+    for paper in papers:
+        passed, matched_projects, primary_match, secondary_match = prefilter_results[paper.arxiv_id]
+        project_match = bool(matched_projects)
+
+        if not passed:
+            scored_papers.append(ScoredPaper(
+                paper=paper,
+                score=0.0,
+                tier=Tier.NOT_RELEVANT,
+                prefilter_passed=False
+            ))
+            continue
+
+        local_score_val = local_scores_map.get(paper.arxiv_id)
+
+        # Check if paper was below local threshold (skipped LLM)
+        if local_threshold > 0 and local_score_val is not None and local_score_val < local_threshold:
+            from local_scorer import local_score_to_llm_scale
+            score = local_score_to_llm_scale(local_score_val)
+            matched_topics = []
+            reasoning = f"Below local threshold ({local_score_val:.4f} < {local_threshold}), LLM skipped"
+        elif paper.arxiv_id in llm_scores:
+            score, matched_topics, reasoning = llm_scores[paper.arxiv_id]
+
+            # Project boost
+            if project_match and score < 10.0:
+                score = min(10.0, score + 0.5)
+                reasoning += f" [Project boost: {', '.join(matched_projects)}]"
+        else:
+            # Paper passed prefilter but not in LLM results (shouldn't happen)
+            score = 5.0
+            matched_topics = []
+            reasoning = "Missing from batch results, default score"
+
+        tier = assign_tier(score, project_match, config)
+
+        scored_papers.append(ScoredPaper(
+            paper=paper,
+            score=score,
+            tier=tier,
+            matched_topics=matched_topics,
+            matched_projects=matched_projects,
+            reasoning=reasoning,
+            prefilter_passed=True,
+            project_match=project_match,
+            primary_category_match=primary_match
+        ))
 
     return scored_papers
 

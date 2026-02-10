@@ -99,6 +99,9 @@ class OpenAICompatibleClient(LLMClient):
         except (KeyError, IndexError) as e:
             raise RuntimeError(f"Failed to parse {self.provider_name} response: {e}")
 
+        if content is None:
+            raise RuntimeError(f"{self.provider_name} returned null content")
+
         return LLMResponse(
             content=content.strip(),
             model=self.model,
@@ -177,6 +180,9 @@ class GeminiAPIClient(LLMClient):
             content = result["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError) as e:
             raise RuntimeError(f"Failed to parse Gemini response: {e}")
+
+        if content is None:
+            raise RuntimeError("Gemini returned null content")
 
         return LLMResponse(
             content=content.strip(),

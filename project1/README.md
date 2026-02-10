@@ -310,6 +310,15 @@ uv run python test_local_filter.py --id 2602.06904
 
 All tools accept arXiv IDs (e.g., `2602.04962`) or full URLs (e.g., `https://arxiv.org/abs/2602.04962`).
 
+**LLM API health check:**
+
+Use `check_llm_apis.py` to test all configured LLM providers. Sends a minimal prompt to each and reports status, latency, and model info. Useful for diagnosing API key issues or provider outages.
+
+```bash
+uv run python src/check_llm_apis.py              # Test all providers
+uv run python src/check_llm_apis.py kimi glm      # Test specific providers
+```
+
 ## Project Structure
 
 ```
@@ -329,6 +338,7 @@ project1/
 │   ├── topic_scorer.py      # Stage 2: topic-embedding scorer (no-LLM path)
 │   ├── scorer.py            # Stage 2: LLM scorer + tier assignment
 │   ├── get_llm_score.py     # Calibration: LLM scoring
+│   ├── check_llm_apis.py   # LLM API health check
 │   ├── llm_client.py        # LLM abstraction
 │   ├── summarizer.py        # Stage 3: summary generation
 │   ├── formatter.py         # Markdown output

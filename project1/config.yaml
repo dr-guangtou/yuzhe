@@ -129,14 +129,14 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "kimi"
+  provider: "nvidia"
   model: ""  # empty = use provider default_model
   temperature: 0.3
   max_tokens: 5000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
-  - nvidia
+  - kimi
   - openai
   - moonshot 
 

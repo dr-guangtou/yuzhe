@@ -78,7 +78,13 @@ class LocalRanker:
             if paper.primary_category:
                 s_cat = max(s_cat, priors.get(paper.primary_category, 0.0))
 
-            score_total = w_topic * s_topic_max + w_global * s_global + w_category * s_cat
+            # When a paper has no category info (e.g. journal articles),
+            # redistribute category weight proportionally to topic + global
+            if s_cat == 0.0 and not paper.categories and not paper.primary_category:
+                w_sum = w_topic + w_global
+                score_total = (w_topic / w_sum) * s_topic_max + (w_global / w_sum) * s_global
+            else:
+                score_total = w_topic * s_topic_max + w_global * s_global + w_category * s_cat
 
             scores.append(LocalScore(
                 score_total=score_total,

@@ -125,3 +125,16 @@ For LLM-based pipelines:
 - Make expensive operations opt-in via flags (`--use-llm-scoring`)
 - Provide fast local alternatives as default (embedding-based filtering)
 - Only use LLM for final output generation by default
+
+## Fetching
+
+### 20. RSS Feeds Use Announcement Date; API Uses Submission Date
+**Problem**: The arXiv Atom API (`export.arxiv.org/api/query`) sorts by **submission date**, not **announcement date**. Papers submitted Friday may not be announced until Monday (weekend batching), creating a 1-3 day gap. The API's date filter misses these papers because it looks at submission timestamps, not when the paper appeared on "new listings". Observed: papers 2602.07114, 2602.07159, 2602.08312 all appeared on the website but were missed by the API fetcher.
+
+**Solution**: Use arXiv RSS feeds (`rss.arxiv.org/rss/{categories}`) as the default source. RSS lists papers by announcement date, exactly matching the website. A single GET request with `+`-joined categories returns all papers with full abstracts and `announce_type` metadata (`new`, `cross`, `replace`, `replace-cross`).
+
+**Tradeoffs**:
+- RSS only has today's announcements — no historical lookback. Keep the API as fallback for `--days N`.
+- RSS includes `replace` and `replace-cross` entries (paper revisions) that must be filtered out.
+- The `announce_type` and abstract are embedded in the `<description>` field as a formatted string, not structured XML — requires regex parsing.
+- Auto-switch: when `--days` is specified with RSS source, automatically switch to API.

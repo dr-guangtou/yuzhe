@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from config import load_config, get_default_config_path
-from arxiv_fetcher import fetch_papers
+from arxiv_fetcher import fetch_papers, fetch_papers_from_rss
 from llm_client import create_fallback_client, MockLLMClient
 from scorer import score_papers, group_by_tier, filter_by_tier, Tier
 from summarizer import generate_summaries
@@ -140,6 +140,12 @@ Modes:
         type=int,
         default=None,
         help="Override: max papers per category"
+    )
+    parser.add_argument(
+        "--source",
+        choices=["rss", "api"],
+        default="rss",
+        help="Paper source: rss (announcement-date, default) or api (submission-date)"
     )
 
     # Local filter (Stage 1) options
@@ -315,21 +321,31 @@ Modes:
     # Determine max papers
     max_papers = args.max_papers if args.max_papers else config.api.arxiv_max_results_per_category
 
-    logger.info(f"Fetching papers from {len(categories)} categories...")
-    logger.info(f"Max papers per category: {max_papers}")
+    # Auto-switch to API when --days is specified (RSS only has today)
+    source = args.source
+    if args.days is not None and source == "rss":
+        source = "api"
+        logger.info(f"--days specified, auto-switching source from rss to api")
+
+    logger.info(f"Fetching papers from {len(categories)} categories (source: {source})...")
+    if source == "api":
+        logger.info(f"Max papers per category: {max_papers}")
     if since_date:
         logger.info(f"Cutoff date: {since_date.strftime('%Y-%m-%d')}")
     else:
         logger.info(f"Days to look back: {days}")
 
     # Fetch papers
-    papers = fetch_papers(
-        categories=categories,
-        max_results_per_category=max_papers,
-        delay_seconds=config.api.arxiv_delay_seconds,
-        days=days,
-        since_date=since_date
-    )
+    if source == "rss":
+        papers = fetch_papers_from_rss(categories=categories)
+    else:
+        papers = fetch_papers(
+            categories=categories,
+            max_results_per_category=max_papers,
+            delay_seconds=config.api.arxiv_delay_seconds,
+            days=days,
+            since_date=since_date
+        )
 
     logger.info(f"Total papers fetched: {len(papers)}")
 

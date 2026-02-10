@@ -1,14 +1,51 @@
 # Daily arXiv Pipeline Design (3-Stage Architecture)
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-10
 
 ## Overview
 
-The daily arXiv digest pipeline now uses a **3-stage architecture** to efficiently filter, score, and summarize papers:
+The daily arXiv digest pipeline uses a **3-stage architecture** to efficiently filter, score, and summarize papers:
 
+0. **Fetch** - RSS (default, announcement-date) or API (submission-date, multi-day)
 1. **Stage 1: Local Filter** (MANDATORY) - Fast, token-free embedding-based filtering
-2. **Stage 2: LLM Scoring** (OPTIONAL) - Precise LLM-based relevance scoring
+2. **Stage 2: Scoring** (MANDATORY, two paths) - Topic-embedding scorer or LLM scorer
 3. **Stage 3: Summary Generation** (OPTIONAL) - LLM-generated summaries with fallback
+
+## Fetch Stage: RSS vs API
+
+The pipeline supports two paper sources, selected via `--source {rss,api}` (default: `rss`).
+
+### RSS Feed (default)
+
+- **URL**: `https://rss.arxiv.org/rss/{cat1}+{cat2}+{cat3}` (single HTTP request)
+- **Ordering**: By **announcement date** — matches the arXiv website's "new listings" page
+- **Content**: Title, authors, abstract, categories, and `announce_type` metadata
+- **Filtering**: Keeps `new` and `cross` listings, excludes `replace` and `replace-cross`
+- **Limitation**: Only today's announcements. `--days` is not supported (auto-switches to API)
+
+### Atom API (fallback)
+
+- **URL**: `https://export.arxiv.org/api/query?search_query=cat:{category}` (one request per category)
+- **Ordering**: By **submission date**, which can differ from announcement by 1-3 days
+- **Content**: Full Atom XML with all metadata
+- **Rate limiting**: 3s minimum between requests (arXiv terms of use)
+- **Use case**: Multi-day lookback (`--days N`), specific date ranges
+
+### Why RSS is the Default
+
+The Atom API sorts by submission date, not announcement date. This causes systematic misses:
+
+1. **Weekend batching**: Papers submitted Friday are announced Monday — a 3-day gap between submission and announcement dates. The API's date filter misses these.
+2. **Indexing lag**: Newly announced papers may not appear in API search results for hours.
+3. **Observed impact**: Papers 2602.07114, 2602.07159, 2602.08312 all appeared on arXiv's "new listings" page but were missed by the API-based fetcher.
+
+The RSS feed returns exactly what the website shows under "new listings", eliminating these gaps. The tradeoff is that RSS only has today's papers — for historical lookback, the API remains available.
+
+### Auto-Switch Behavior
+
+When `--days` is specified with `--source rss` (the default), the pipeline automatically switches to the API source and logs the switch. This ensures `--days` always works regardless of the source setting.
+
+---
 
 ## Pipeline Stages
 
@@ -115,15 +152,28 @@ summary:
 
 ## Execution Modes
 
-### Default Mode: Local Filter + Summary
+### Default Mode: RSS + Local Filter + Summary
 
 ```bash
 uv run python src/main.py
 ```
 
-**Pipeline**: Stage 1 → Stage 3
+**Fetch**: RSS (today's announcements, single HTTP request)
+**Pipeline**: Stage 1 → Stage 2 (topic-embedding) → Stage 3
 **API Calls**: Summary generation only (most token-efficient)
 **Update Check**: Yes (skips if no new papers)
+
+---
+
+### API Source Mode: Multi-Day Lookback
+
+```bash
+uv run python src/main.py --source api --days 3
+```
+
+**Fetch**: Atom API (submission-date ordering, one request per category)
+**Pipeline**: Same as default mode
+**Use Case**: Catching up after holidays, historical lookback
 
 ---
 
@@ -133,7 +183,7 @@ uv run python src/main.py
 uv run python src/main.py --use-llm-scoring
 ```
 
-**Pipeline**: Stage 1 → Stage 2 → Stage 3
+**Pipeline**: Stage 1 → Stage 2 (LLM) → Stage 3
 **API Calls**: Scoring + summaries
 **Update Check**: Yes
 
@@ -156,7 +206,7 @@ uv run python src/main.py --debug
 uv run python src/main.py --no-summary
 ```
 
-**Pipeline**: Stage 1 only (or Stage 1 → 2 if `--use-llm-scoring`)
+**Pipeline**: Stage 1 → Stage 2 (topic-embedding, no LLM)
 **Output**: Abstracts only, no summaries
 **Use Case**: Quick tier distribution check
 
@@ -192,6 +242,13 @@ uv run python src/main.py --no-summary
 | `tier_thresholds.most_relevant` | `config.yaml` | 8.0 | 0-10 | LLM tier assignment |
 | `tier_thresholds.somewhat_relevant` | `config.yaml` | 5.0 | 0-10 | LLM tier assignment |
 | `tier_thresholds.could_be_interesting` | `config.yaml` | 3.0 | 0-10 | LLM tier assignment |
+
+### Fetch Source
+
+| Source | CLI Flag | Ordering | Scope | Rate Limit |
+|--------|----------|----------|-------|------------|
+| RSS (default) | `--source rss` | Announcement date | Today only | None (single request) |
+| Atom API | `--source api` | Submission date | Multi-day (`--days`) | 3s between requests |
 
 ### Enable/Disable Stages
 
@@ -235,6 +292,8 @@ The deprecated flags are still accepted with warnings and automatically mapped t
 
 | Stage | Time | Notes |
 |-------|------|-------|
+| Fetch (RSS) | ~2s | Single HTTP request for all categories |
+| Fetch (API, 3 categories) | ~10s | 3s delay between categories |
 | Stage 1: Local Filter | <1s | After initial model load (~3s) |
 | Stage 2: LLM Scoring | 5-15 min | Depends on API latency |
 | Stage 3: Summary | 10-20 min | Depends on API latency |
@@ -243,9 +302,24 @@ The deprecated flags are still accepted with warnings and automatically mapped t
 
 ## Testing the Pipeline
 
+### Unit Tests
+```bash
+uv sync --group dev   # Install pytest (one-time)
+uv run pytest tests/ -v
+```
+
 ### Quick Test (5 papers, all stages)
 ```bash
 uv run python src/main.py --use-llm-scoring --limit 5 --mock-llm --debug
+```
+
+### Test RSS vs API Source
+```bash
+# RSS (default, today only)
+uv run python src/main.py --no-summary --debug
+
+# API (multi-day)
+uv run python src/main.py --source api --days 3 --no-summary --debug
 ```
 
 ### Test Local Filter Only

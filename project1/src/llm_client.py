@@ -210,6 +210,20 @@ class MockLLMClient(LLMClient):
         max_tokens: Optional[int] = None
     ) -> LLMResponse:
         """Return a mock response for testing."""
+        # Batch scoring: detect numbered paper blocks
+        if "[Paper 1]" in prompt and "score" in prompt.lower():
+            import re
+            ids = re.findall(r'arxiv_id:\s*(\S+)', prompt)
+            entries = []
+            for arxiv_id in ids:
+                entries.append(
+                    f'{{"arxiv_id": "{arxiv_id}", "score": 6.0, '
+                    f'"matched_topics": ["galaxy formation"], '
+                    f'"reasoning": "Mock batch scoring response"}}'
+                )
+            content = "[" + ", ".join(entries) + "]"
+            return LLMResponse(content=content, model="mock", provider="mock")
+
         if "score" in prompt.lower() and "relevance" in prompt.lower():
             return LLMResponse(
                 content='{"score": 6.0, "matched_topics": ["galaxy formation"], "reasoning": "Mock scoring response"}',

@@ -169,6 +169,12 @@ Modes:
         help="Skip all stages after fetching (fetch only)"
     )
     parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=5,
+        help="Number of papers per LLM scoring call (default: 5, only with --use-llm-scoring)"
+    )
+    parser.add_argument(
         "--mock-llm",
         action="store_true",
         help="Use mock LLM client for testing"
@@ -451,12 +457,14 @@ Modes:
                 llm_client = MockLLMClient(config.llm)
 
         # Score papers with LLM
-        logger.info(f"Scoring {len(papers)} papers with LLM...")
+        batch_sz = args.batch_size
+        logger.info(f"Scoring {len(papers)} papers with LLM (batch_size={batch_sz})...")
         scored_papers = score_papers(
             papers=papers,
             config=config,
             llm_client=llm_client,
             skip_llm=False,
+            batch_size=batch_sz,
         )
 
         # Filter by tier (keep only configured tiers)

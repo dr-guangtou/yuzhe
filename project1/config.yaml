@@ -93,8 +93,9 @@ providers:
 
   kimi:
     api_key_env: "KIMI_API_KEY"
-    base_url: "https://api.moonshot.cn/v1"
-    default_model: "kimi-latest"
+    base_url: "https://api.kimi.com/coding/v1"
+    default_model: "kimi-for-coding"
+    user_agent: "claude-code/1.0"
 
   nvidia:
     api_key_env: "NVIDIA_API_KEY"
@@ -109,7 +110,7 @@ providers:
   glm:
     api_key_env: "GLM_API_KEY"
     base_url: "https://open.bigmodel.cn/api/paas/v4"
-    default_model: "glm-4-flash"
+    default_model: "glm-4.7"
 
   deepseek:
     api_key_env: "DEEPSEEK_API_KEY"

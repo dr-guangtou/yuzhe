@@ -43,6 +43,7 @@ class ProviderConfig:
     base_url: str = ""
     default_model: str = ""
     client_type: str = "openai"  # "openai" or "gemini"
+    user_agent: str = ""  # custom User-Agent (required by some providers)
 
 
 @dataclass
@@ -231,6 +232,7 @@ def load_config(config_path: Path) -> Config:
             base_url=prov_data.get("base_url", ""),
             default_model=prov_data.get("default_model", ""),
             client_type=prov_data.get("client_type", "openai"),
+            user_agent=prov_data.get("user_agent", ""),
         )
 
     # Parse LLM config

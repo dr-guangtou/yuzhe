@@ -64,7 +64,7 @@ def check_provider(provider_name, provider_config, llm_config, timeout):
             provider_config=provider_config,
             model="",
             temperature=llm_config.temperature,
-            max_tokens=50,
+            max_tokens=200,
         )
     except ValueError as e:
         result["status"] = "INIT_FAIL"
@@ -76,7 +76,7 @@ def check_provider(provider_name, provider_config, llm_config, timeout):
     try:
         response = client.generate(
             prompt=PING_PROMPT,
-            max_tokens=50,
+            max_tokens=200,
         )
         elapsed_ms = int((time.monotonic() - start) * 1000)
         content = response.content or ""

@@ -43,7 +43,8 @@ class OpenAICompatibleClient(LLMClient):
         base_url: str,
         provider_name: str,
         temperature: float = 0.3,
-        max_tokens: int = 2000
+        max_tokens: int = 2000,
+        user_agent: str = "",
     ):
         self.api_key = api_key
         self.model = model
@@ -51,6 +52,7 @@ class OpenAICompatibleClient(LLMClient):
         self.provider_name = provider_name
         self.default_temperature = temperature
         self.default_max_tokens = max_tokens
+        self.user_agent = user_agent
 
     def generate(
         self,
@@ -78,13 +80,16 @@ class OpenAICompatibleClient(LLMClient):
         }
 
         url = f"{self.base_url}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        if self.user_agent:
+            headers["User-Agent"] = self.user_agent
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            },
+            headers=headers,
             method="POST"
         )
 
@@ -314,6 +319,7 @@ def create_single_client(
             provider_name=provider_name,
             temperature=temperature,
             max_tokens=max_tokens,
+            user_agent=provider_config.user_agent,
         )
 
 

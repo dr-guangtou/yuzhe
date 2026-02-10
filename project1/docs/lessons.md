@@ -138,3 +138,10 @@ For LLM-based pipelines:
 - RSS includes `replace` and `replace-cross` entries (paper revisions) that must be filtered out.
 - The `announce_type` and abstract are embedded in the `<description>` field as a formatted string, not structured XML — requires regex parsing.
 - Auto-switch: when `--days` is specified with RSS source, automatically switch to API.
+
+### 21. Kimi Coding Plan Uses a Different API Endpoint
+**Problem**: `KIMI_API_KEY` (from the Kimi coding plan) was configured to use `api.moonshot.cn/v1` (the Moonshot platform), causing 401 auth failures. The Kimi coding plan and Moonshot platform are separate services with different API keys and endpoints.
+
+**Solution**: The Kimi coding plan endpoint is `https://api.kimi.com/coding/v1` with model `kimi-for-coding`. It requires a `User-Agent: claude-code/1.0` header (the API restricts access to recognized coding agents). Added `user_agent` field to `ProviderConfig` so this can be set per-provider in `config.yaml`.
+
+**Note**: `kimi-for-coding` is a reasoning model — it uses `reasoning_content` for chain-of-thought and `content` for the final answer. With low `max_tokens` the reasoning may exhaust the budget before producing content.

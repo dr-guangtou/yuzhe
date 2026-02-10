@@ -4,6 +4,7 @@ Automated pipeline that monitors arXiv daily, filters and scores papers locally,
 
 ## Features
 
+- **RSS-First Fetching**: Uses arXiv RSS feeds by default, which list papers by **announcement date** (matching the website's "new listings"). Falls back to the Atom API for multi-day lookback.
 - **3-Stage Architecture** (see `PIPELINE_DESIGN.md` for details):
   1. **Local Filter** (MANDATORY) - Corpus-based embedding filter removes off-topic papers
   2. **Scoring** (MANDATORY, two paths) - Topic-embedding scorer (default) or LLM scorer
@@ -127,7 +128,15 @@ All commands run from the `project1/` directory.
 uv run python src/main.py
 ```
 
-Runs **Stage 1** (corpus filter) + **Stage 2** (topic-embedding scorer) + **Stage 3** (LLM summaries). The scoring is fully local (no LLM tokens spent on scoring). LLM is only used for summary generation. Update mode enabled (skips if no new papers).
+Fetches today's papers via **RSS feed** (announcement-date ordering), runs **Stage 1** (corpus filter) + **Stage 2** (topic-embedding scorer) + **Stage 3** (LLM summaries). The scoring is fully local (no LLM tokens spent on scoring). LLM is only used for summary generation. Update mode enabled (skips if no new papers).
+
+### With API Source (Multi-Day Lookback)
+
+```bash
+uv run python src/main.py --source api --days 3
+```
+
+Uses the arXiv Atom API instead of RSS. Required for multi-day lookback since RSS only contains today's announcements. When `--days` is specified with the default RSS source, it **auto-switches** to the API.
 
 ### With LLM Scoring (Higher Precision)
 
@@ -157,11 +166,12 @@ Skip Stage 3 (summary generation), output abstracts only. Useful for checking ti
 
 | Option | Description |
 |--------|-------------|
+| `--source {rss,api}` | Paper source (default: `rss`). RSS uses announcement date; API uses submission date |
 | `--debug` | Force run without update check |
 | `--use-llm-scoring` | Enable Stage 2 (LLM scoring, default: OFF) |
 | `--no-summary` | Disable Stage 3 (summaries, default: ON) |
 | `--limit N` | Process only the first N papers (testing) |
-| `--days N` | Look back N days instead of 1 |
+| `--days N` | Look back N days instead of 1 (auto-switches to API source) |
 | `--category CAT` | Fetch from a single category (e.g., `astro-ph.GA`) |
 | `--local-filter-threshold T` | Override local filter threshold (0-1, default: 0.5) |
 | `--mock-llm` | Use mock LLM for testing (no API calls) |
@@ -177,6 +187,9 @@ uv run python src/main.py --no-summary --debug
 
 # Run full pipeline (local scoring + LLM summaries)
 uv run python src/main.py --debug
+
+# Use API source with 3-day lookback
+uv run python src/main.py --source api --days 3 --debug
 
 # Run with LLM scoring (replaces local topic scorer with LLM scorer)
 uv run python src/main.py --use-llm-scoring --debug
@@ -204,7 +217,8 @@ Each digest contains:
 ## How the Pipeline Works
 
 ```
-Fetch by CATEGORY
+Fetch (RSS or API)
+    → Dedup against previous digest
     → Stage 1: Corpus Filter (local embeddings, pass/fail gate)
     → Stage 2: Scoring (one of two mutually exclusive paths)
         ├── Default: Topic-Embedding Scorer (local, no LLM tokens)
@@ -212,6 +226,14 @@ Fetch by CATEGORY
     → Stage 3: Summary Generation (optional, LLM)
     → Digest
 ```
+
+### Fetch: RSS (default) vs API
+
+**RSS feed** (`rss.arxiv.org/rss/{categories}`): Lists papers by **announcement date**, matching the website's "new listings" page. A single HTTP GET request returns all categories joined with `+`. Only today's announcements are available, so `--days` is not supported (auto-switches to API). Filters by `announce_type` — keeps `new` and `cross` listings, excludes `replace` and `replace-cross`.
+
+**Atom API** (`export.arxiv.org/api/query`): Sorts by **submission date**, which can differ from announcement date by 1-3 days (weekend batching, indexing lag). Supports multi-day lookback via `--days`. One HTTP request per category with rate limiting (3s between requests).
+
+The RSS feed is the default because it avoids systematic misses caused by the submission-vs-announcement date gap. See `docs/lessons.md` lesson #20 for details.
 
 ### Stage 1: Corpus Filter (always runs)
 
@@ -293,6 +315,7 @@ All tools accept arXiv IDs (e.g., `2602.04962`) or full URLs (e.g., `https://arx
 ```
 project1/
 ├── README.md                # This file
+├── PIPELINE_DESIGN.md       # Detailed pipeline architecture
 ├── PLAN.md                  # Implementation plan
 ├── config.yaml              # Configuration (topics, breakpoints, providers)
 ├── pyproject.toml           # Python dependencies
@@ -301,7 +324,7 @@ project1/
 ├── src/
 │   ├── main.py              # CLI entry point (pipeline orchestrator)
 │   ├── config.py            # Config loader
-│   ├── arxiv_fetcher.py     # arXiv API client
+│   ├── arxiv_fetcher.py     # arXiv RSS + API client
 │   ├── local_scorer.py      # Bridge: ArxivPaper <-> song_db
 │   ├── topic_scorer.py      # Stage 2: topic-embedding scorer (no-LLM path)
 │   ├── scorer.py            # Stage 2: LLM scorer + tier assignment
@@ -311,6 +334,10 @@ project1/
 │   ├── formatter.py         # Markdown output
 │   ├── state.py             # Run state tracking
 │   └── logger.py            # Logging setup
+├── tests/
+│   ├── test_rss_fetcher.py  # RSS fetcher tests
+│   └── fixtures/
+│       └── rss_snapshot.xml # Saved RSS feed for deterministic testing
 ├── song_db/                 # Local interest model (corpus pipeline)
 ├── prompts/                 # LLM prompt templates
 ├── arxiv_digest/
@@ -318,11 +345,19 @@ project1/
 └── logs/                    # Log files
 ```
 
+## Running Tests
+
+```bash
+uv sync --group dev   # Install pytest (one-time)
+uv run pytest tests/ -v
+```
+
 ## Troubleshooting
 
 ### "No papers found"
-- arXiv may be down; try again later
-- Try `--days 3` to widen the date window
+- **RSS source**: arXiv RSS may be down or have no new papers today. Try `--source api --days 1` as fallback.
+- **API source**: arXiv API may be down or rate-limiting. Try again later or use `--source rss`.
+- Try `--days 3` to widen the date window (automatically uses API source)
 - Verify categories in `config.yaml` are valid arXiv category codes
 
 ### LLM errors (401, 429, 400)
@@ -332,7 +367,7 @@ project1/
 - The fallback chain will automatically try the next provider on failure
 
 ### "Already processed papers"
-- Use `--mode debug` to force re-run regardless of state
+- Use `--debug` to force re-run regardless of state
 - Or delete `.state.json` to reset
 
 ## License

@@ -10,4 +10,10 @@ dependencies = [
     "sentence-transformers>=3.0.0",
     "numpy>=1.26.0",
     "scikit-learn>=1.4.0",
+    "feedparser>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
 ]

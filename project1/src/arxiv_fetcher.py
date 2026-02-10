@@ -1,4 +1,4 @@
-"""Fetch papers from arXiv API."""
+"""Fetch papers from arXiv API and RSS feeds."""
 
 import re
 import time
@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
+
+import feedparser
 
 
 # arXiv Atom XML namespaces
@@ -309,4 +311,147 @@ def search_papers(
         if paper:
             papers.append(paper)
 
+    return papers
+
+
+# ---------------------------------------------------------------------------
+# RSS-based fetching (announcement-date ordering)
+# ---------------------------------------------------------------------------
+
+ARXIV_RSS_BASE = "https://rss.arxiv.org/rss"
+
+# Pattern: "arXiv:2602.07109v1 Announce Type: new \nAbstract: ..."
+_RSS_DESC_RE = re.compile(
+    r"arXiv:\S+\s+Announce\s+Type:\s*(\S+)\s+Abstract:\s*(.*)",
+    re.DOTALL,
+)
+
+
+def parse_rss_description(raw_description: str) -> tuple[str, str]:
+    """Parse the RSS <description> field.
+
+    Returns:
+        (announce_type, abstract) where announce_type is one of
+        'new', 'cross', 'replace', 'replace-cross'.
+    """
+    match = _RSS_DESC_RE.search(raw_description)
+    if not match:
+        return ("unknown", "")
+    announce_type = match.group(1).strip().lower()
+    abstract = clean_text(match.group(2))
+    return (announce_type, abstract)
+
+
+def parse_rss_entry(entry) -> Optional[tuple[ArxivPaper, str]]:
+    """Convert one feedparser entry to (ArxivPaper, announce_type).
+
+    Returns None if the entry cannot be parsed.
+    """
+    try:
+        link = entry.get("link", "")
+        arxiv_id = extract_arxiv_id(link)
+        if not arxiv_id:
+            return None
+
+        title = clean_text(entry.get("title", ""))
+
+        # Authors: comma-separated string
+        raw_author = entry.get("author", "")
+        authors = [a.strip() for a in raw_author.split(",") if a.strip()]
+
+        # Categories from tags
+        tags = entry.get("tags", [])
+        categories = [t["term"] for t in tags if t.get("term")]
+        primary_category = categories[0] if categories else ""
+
+        # Abstract and announce type from description
+        announce_type, abstract = parse_rss_description(
+            entry.get("description", "")
+        )
+
+        # Construct URLs
+        pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+        html_url = f"https://arxiv.org/abs/{arxiv_id}"
+
+        # Published date from the RSS feed (announcement date)
+        published_parsed = entry.get("published_parsed")
+        if published_parsed:
+            published = datetime(*published_parsed[:6])
+        else:
+            published = datetime.now()
+
+        paper = ArxivPaper(
+            arxiv_id=arxiv_id,
+            title=title,
+            authors=authors,
+            abstract=abstract,
+            categories=categories,
+            primary_category=primary_category,
+            pdf_url=pdf_url,
+            html_url=html_url,
+            published=published,
+            updated=published,  # RSS only has announcement date
+        )
+        return (paper, announce_type)
+    except Exception as e:
+        print(f"Warning: Failed to parse RSS entry: {e}")
+        return None
+
+
+def fetch_papers_from_rss(
+    categories: list[str],
+    keep_types: tuple[str, ...] = ("new", "cross"),
+) -> list[ArxivPaper]:
+    """Fetch today's papers from arXiv RSS feed.
+
+    The RSS feed returns papers by announcement date, matching the
+    website's "new listings" page. A single HTTP request fetches all
+    categories at once.
+
+    Args:
+        categories: arXiv categories (e.g. ["astro-ph.GA", "astro-ph.CO"])
+        keep_types: announce_type values to keep (default: new + cross)
+
+    Returns:
+        Deduplicated list of ArxivPaper objects, sorted by published date
+    """
+    url = f"{ARXIV_RSS_BASE}/{'+'.join(categories)}"
+    print(f"Fetching RSS feed: {url}")
+
+    feed = feedparser.parse(url)
+
+    if feed.bozo and not feed.entries:
+        print(f"Error fetching RSS feed: {feed.bozo_exception}")
+        return []
+
+    category_set = set(categories)
+    seen_ids: set[str] = set()
+    papers: list[ArxivPaper] = []
+
+    for entry in feed.entries:
+        result = parse_rss_entry(entry)
+        if result is None:
+            continue
+
+        paper, announce_type = result
+
+        # Filter by announce type
+        if announce_type not in keep_types:
+            continue
+
+        # Deduplicate
+        if paper.arxiv_id in seen_ids:
+            continue
+        seen_ids.add(paper.arxiv_id)
+
+        # Keep only papers whose primary category is in our set
+        if paper.primary_category not in category_set:
+            continue
+
+        papers.append(paper)
+
+    print(f"RSS feed: {len(feed.entries)} entries, {len(papers)} papers after filtering")
+
+    # Sort by published date (newest first)
+    papers.sort(key=lambda p: p.published, reverse=True)
     return papers

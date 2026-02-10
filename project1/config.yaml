@@ -129,16 +129,16 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "openai"
+  provider: "kimi"
   model: ""  # empty = use provider default_model
   temperature: 0.3
   max_tokens: 5000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
-  - moonshot
   - nvidia
-  - gemini
+  - openai
+  - moonshot 
 
 # Pipeline Configuration
 # The pipeline runs in 3 stages:

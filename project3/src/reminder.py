@@ -108,16 +108,12 @@ def _format_entry(scored_paper) -> str:
     """Format a single scored paper as a Markdown list item."""
     paper = scored_paper.paper
     score = scored_paper.score
-    tier = scored_paper.tier.value
 
-    # Get title and DOI/URL
     title = paper.title if hasattr(paper, "title") else str(paper)
     doi = getattr(paper, "doi", "")
     url = getattr(paper, "url", "")
     journal = getattr(paper, "journal", "")
-    published = getattr(paper, "published", "")
 
-    # Build link
     if doi:
         link = f"[{title}](https://doi.org/{doi})"
     elif url:
@@ -125,24 +121,8 @@ def _format_entry(scored_paper) -> str:
     else:
         link = title
 
-    # Matched topics
-    topics = scored_paper.matched_topics
-    topics_str = ", ".join(topics[:3]) if topics else ""
-
-    parts = [f"- {link}"]
-    meta = []
-    if journal:
-        meta.append(journal.upper())
-    if published:
-        meta.append(published[:10])
-    meta.append(f"score={score:.1f}")
-    if topics_str:
-        meta.append(topics_str)
-
-    if meta:
-        parts.append(f"  ({'; '.join(meta)})")
-
-    return "".join(parts)
+    journal_str = journal.upper() if journal else ""
+    return f"- {link} ({journal_str}, {score:.1f})"
 
 
 def _write_reminder(filepath: Path, new_entries: dict[str, list[str]], month_str: str) -> None:

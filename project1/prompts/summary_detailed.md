@@ -15,20 +15,26 @@ You are an expert astronomy research assistant. Generate a detailed summary of t
 **Abstract:**
 {abstract}
 
+## Style guidelines:
+
+- Use professional but accessible language; Be concise, be direct.
+- Include specific numbers (redshifts, masses, timescales) when given
+- Flag any claims that seem overstated or need verification
+
 ## Summary Format
 
 Please provide a detailed summary following this exact structure:
 
-### 1. ONE-SENTENCE SUMMARY
+#### 1. ONE-SENTENCE SUMMARY
 What is the single most important finding? (1 sentence, plain language)
 
-### 2. KEY FINDINGS (3-4 bullet points)
+#### 2. KEY FINDINGS (3-4 bullet points)
 - Main result with specific numbers/values if given
 - Methodology highlight (data used, sample size, redshift range)
 - Unexpected or surprising result (if any)
 - Connection to broader field (how does this change what we know?)
 
-### 3. KEY TECHNICAL DETAILS
+#### 3. KEY TECHNICAL DETAILS
 
 Identify the paper type and provide appropriate details:
 
@@ -55,19 +61,15 @@ Identify the paper type and provide appropriate details:
 - Does it derive analytic expressions?
 - Does it build a theoretical model/picture?
 
-### 4. DATASETS AND TOOLS
+#### 4. DATASETS AND TOOLS
 - List any URLs to databases or datasets mentioned
 - List any software/GitHub repos referenced
 - Format as a bullet list
 
-### 5. KNOWLEDGE BASE FROM INTRODUCTION
-- 1-3 bullet points summarizing the main topics from the Introduction
-- Be concise - these will be used as indices for future queries
+#### 5. KNOWLEDGE BASE FROM INTRODUCTION
+- 1-3 bullet points summarizing the main topics from the Introduction.
+- This is aiming for experts in the field. You can ignore the most obvious background information, but focus on distilling the essential arguments or questions mentioned in the introduction.
+- Be concise - these will be used as indices for future queries.
 
 ---
 
-**Style guidelines:**
-- Use professional but accessible language
-- Include specific numbers (redshifts, masses, timescales) when given
-- Flag any claims that seem overstated or need verification
-- Highlight connections to galaxy-halo connection work if applicable

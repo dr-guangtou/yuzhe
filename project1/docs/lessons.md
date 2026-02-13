@@ -20,10 +20,11 @@ The arXiv API silently redirects HTTP to HTTPS. Use HTTPS directly:
 ARXIV_API_BASE = "https://export.arxiv.org/api/query"
 ```
 
-### 3. Python String Format vs JSON
+### 3. Python String Format vs JSON — Double Braces Are Intentional
 Prompt templates containing JSON examples need escaped braces:
 - Use `{{` and `}}` in templates that will be processed with `.format()`
 - Or use a different templating approach (Jinja2, etc.)
+- **Critical**: Do not "fix" double braces to single braces in prompt templates — they render as single braces after `.format()`. Removing them causes `KeyError` with the JSON key as the missing format variable.
 
 ### 4. LLM Rate Limits Need Graceful Fallback
 When LLM scoring fails (rate limits, timeouts), fall back to prefilter scoring with neutral values rather than failing the entire pipeline.
@@ -145,3 +146,18 @@ For LLM-based pipelines:
 **Solution**: The Kimi coding plan endpoint is `https://api.kimi.com/coding/v1` with model `kimi-for-coding`. It requires a `User-Agent: claude-code/1.0` header (the API restricts access to recognized coding agents). Added `user_agent` field to `ProviderConfig` so this can be set per-provider in `config.yaml`.
 
 **Note**: `kimi-for-coding` is a reasoning model — it uses `reasoning_content` for chain-of-thought and `content` for the final answer. With low `max_tokens` the reasoning may exhaust the budget before producing content.
+
+### 22. Greedy Regex Fails for JSON Extraction from LLM Responses
+**Problem**: Using `re.search(r'\[.*\]', content, re.DOTALL)` to extract a JSON array from an LLM response is unreliable. The greedy `.*` matches from the first `[` to the **last** `]` in the entire text, including brackets inside string values, reasoning text, or markdown formatting.
+
+**Solution**: Use a bracket-counting parser that tracks string boundaries (`"..."`) and escape sequences (`\"`). This correctly finds the matching `]` for the outermost `[`. Try extracting from markdown code blocks (`` ```json ``` ``) first as a fast path.
+
+### 23. FallbackLLMClient Only Retries on API Failures, Not Content Failures
+**Problem**: `FallbackLLMClient` tries the next provider when an API call raises an exception (network error, auth failure, rate limit). But when a provider returns an empty or malformed response (API call succeeds, content is unusable), it is treated as success and no fallback is triggered.
+
+**Solution**: For batch scoring, extract individual clients from `FallbackLLMClient` and try each provider explicitly at the application level. This allows retrying with a different provider when the *parsed content* is invalid, not just when the API call fails. Implement a multi-level fallback chain: batch per-provider → individual scoring → local scorer.
+
+### 24. LLMs Intermittently Return Empty Responses
+**Problem**: Some LLM providers occasionally return empty content (no error, just blank). This passes all API-level checks but fails JSON parsing downstream.
+
+**Solution**: Check for empty/whitespace-only content immediately after receiving the response, before any extraction logic. Raise early with a clear message so the fallback chain can try the next provider.

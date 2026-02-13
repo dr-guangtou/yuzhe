@@ -17,7 +17,7 @@ from typing import Optional
 
 from arxiv_fetcher import ArxivPaper
 from config import Config
-from llm_client import LLMClient, retry_with_backoff
+from llm_client import LLMClient, FallbackLLMClient, retry_with_backoff
 
 
 class Tier(Enum):
@@ -263,13 +263,71 @@ def score_papers_batch_llm(
     )
 
     content = response.content
-    # Extract JSON array from markdown code blocks if present
-    array_match = re.search(r'\[.*\]', content, re.DOTALL)
-    if array_match:
-        content = array_match.group(0)
+    if not content or not content.strip():
+        raise ValueError("LLM returned empty response")
 
-    results = json.loads(content)
+    original_content = content  # Save for debug output
+    extraction_method = "none"
+
+    # Try multiple extraction strategies
+    # Strategy 1: Extract from markdown code block
+    code_block_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', content, re.DOTALL)
+    if code_block_match:
+        content = code_block_match.group(1)
+        extraction_method = "markdown code block"
+    else:
+        # Strategy 2: Find a balanced JSON array (first [ to its matching ])
+        start_idx = content.find('[')
+        if start_idx >= 0:
+            bracket_count = 0
+            in_string = False
+            escape_next = False
+            found_end = False
+
+            for i in range(start_idx, len(content)):
+                char = content[i]
+
+                if escape_next:
+                    escape_next = False
+                    continue
+
+                if char == '\\':
+                    escape_next = True
+                    continue
+
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+
+                if not in_string:
+                    if char == '[':
+                        bracket_count += 1
+                    elif char == ']':
+                        bracket_count -= 1
+                        if bracket_count == 0:
+                            content = content[start_idx:i+1]
+                            extraction_method = "bracket counting"
+                            found_end = True
+                            break
+
+            if not found_end:
+                extraction_method = "bracket counting failed (unbalanced)"
+        else:
+            extraction_method = "no extraction (no [ found)"
+
+    try:
+        results = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"JSON parse failed ({extraction_method}): {e}. "
+            f"Response starts with: {original_content[:200]!r}"
+        ) from e
+
     if not isinstance(results, list):
+        print(f"\n=== Type Error ===")
+        print(f"Expected list, got {type(results).__name__}")
+        print(f"Results: {results}")
+        print(f"==================\n")
         raise ValueError(f"Expected JSON array, got {type(results).__name__}")
 
     scores_map: dict[str, tuple[float, list[str], str]] = {}
@@ -519,8 +577,17 @@ def _score_papers_batch(
 
     print(f"Batch scoring: {len(llm_eligible)} papers eligible for LLM (batch_size={batch_size})")
 
-    # Batch LLM scoring
+    # Batch LLM scoring with fallback chain:
+    # 1. Try batch mode with each provider individually
+    # 2. Fall back to individual scoring (with full fallback client)
+    # 3. Fall back to local scorer if individual scoring also fails
     llm_scores: dict[str, tuple[float, list[str], str]] = {}
+
+    # Extract individual clients for per-provider batch retry
+    if isinstance(llm_client, FallbackLLMClient):
+        individual_clients = llm_client.clients
+    else:
+        individual_clients = [llm_client]
 
     for batch_start in range(0, len(llm_eligible), batch_size):
         batch = llm_eligible[batch_start:batch_start + batch_size]
@@ -528,19 +595,40 @@ def _score_papers_batch(
         total_batches = (len(llm_eligible) + batch_size - 1) // batch_size
         print(f"Scoring batch {batch_num}/{total_batches} ({len(batch)} papers)...")
 
-        try:
-            batch_results = score_papers_batch_llm(
-                batch, config, llm_client, batch_prompt_template
-            )
-            llm_scores.update(batch_results)
-        except Exception as e:
-            # Fallback: retry papers individually
-            print(f"Warning: Batch {batch_num} failed ({e}), falling back to individual scoring")
-            for paper in batch:
-                score, matched_topics, reasoning = score_paper_with_llm(
-                    paper, config, llm_client, single_prompt_template
+        # Step 1: Try batch mode with each provider
+        batch_scored = False
+        for client in individual_clients:
+            provider_name = getattr(client, 'provider_name', type(client).__name__)
+            try:
+                batch_results = score_papers_batch_llm(
+                    batch, config, client, batch_prompt_template
                 )
-                llm_scores[paper.arxiv_id] = (score, matched_topics, reasoning)
+                llm_scores.update(batch_results)
+                batch_scored = True
+                break
+            except Exception as e:
+                print(f"  Provider '{provider_name}' failed batch ({e})")
+                continue
+
+        if batch_scored:
+            continue
+
+        # Step 2: Fall back to individual scoring (with full fallback client)
+        print(f"  All providers failed batch mode, trying individual scoring...")
+        for paper in batch:
+            score, matched_topics, reasoning = score_paper_with_llm(
+                paper, config, llm_client, single_prompt_template
+            )
+
+            # Step 3: If individual scoring also failed, use local scorer
+            if "failed" in reasoning.lower() and paper.arxiv_id in local_scores_map:
+                from local_scorer import local_score_to_llm_scale
+                local_val = local_scores_map[paper.arxiv_id]
+                score = local_score_to_llm_scale(local_val)
+                matched_topics = []
+                reasoning = f"LLM unavailable, local scorer ({local_val:.4f})"
+
+            llm_scores[paper.arxiv_id] = (score, matched_topics, reasoning)
 
     # Pass 2: assemble ScoredPaper objects
     for paper in papers:

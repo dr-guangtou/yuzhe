@@ -21,9 +21,8 @@ def format_paper_header(paper: ArxivPaper, score: float = None) -> str:
     """
     lines = []
 
-    # Title with abs link + HTML link
-    html_render_url = f"https://arxiv.org/html/{paper.arxiv_id}"
-    lines.append(f"### [{paper.title}](https://arxiv.org/abs/{paper.arxiv_id}) [[HTML]]({html_render_url})")
+    # Title with abs link
+    lines.append(f"### [{paper.title}](https://arxiv.org/abs/{paper.arxiv_id})")
     lines.append("")
 
     # Metadata (compact)

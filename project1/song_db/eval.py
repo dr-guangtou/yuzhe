@@ -282,7 +282,7 @@ def run_evaluation(
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
-    print(f"\nEvaluation results:")
+    print("\nEvaluation results:")
     print(f"  ROC-AUC:          {metrics['roc_auc']:.4f}")
     print(f"  Pos mean/median:  {metrics['pos_score_mean']:.4f} / {metrics['pos_score_median']:.4f}")
     print(f"  Neg mean/median:  {metrics['neg_score_mean']:.4f} / {metrics['neg_score_median']:.4f}")

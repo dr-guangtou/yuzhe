@@ -359,6 +359,7 @@ project1/
 
 ```bash
 uv sync --group dev   # Install pytest (one-time)
+uv run ruff check .   # Lint check
 uv run pytest tests/ -v
 ```
 

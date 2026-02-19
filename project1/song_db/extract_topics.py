@@ -11,7 +11,6 @@ Usage:
 
 import json
 import os
-import sys
 import time
 import urllib.request
 from pathlib import Path
@@ -136,9 +135,6 @@ def main():
     print(f"  Shape: {embeddings.shape}")
 
     assert len(records) == len(ids) == embeddings.shape[0], "Data alignment mismatch"
-
-    # Build ID -> record index for fast lookup
-    id_to_idx = {rec["arxiv_id"]: i for i, rec in enumerate(records)}
 
     # Run KMeans
     print(f"\nRunning KMeans with k={N_CLUSTERS}...")

@@ -102,6 +102,19 @@ def build_prompt(template: str, paper: dict, config) -> str:
     )
 
 
+def get_provider_candidates(config, explicit_provider: str | None) -> list[str]:
+    """Build provider resolution order for get_llm_score.
+
+    - If provider is explicitly passed, only that provider is used.
+    - Otherwise, try primary first, then fallbacks.
+    """
+    if explicit_provider:
+        return [explicit_provider]
+    primary = config.llm.provider
+    fallback = config.llm_fallback if config.llm_fallback else []
+    return [primary] + [name for name in fallback if name != primary]
+
+
 def parse_llm_response(content: str) -> dict:
     """Extract score, matched_topics, and reasoning from the LLM response."""
     # Try JSON extraction
@@ -218,7 +231,7 @@ def main():
         "--provider",
         type=str,
         default=None,
-        help="LLM provider name from config.yaml (default: first available in fallback chain)",
+        help="LLM provider name from config.yaml (default: primary provider, then fallback chain)",
     )
     parser.add_argument(
         "--prompt",
@@ -257,25 +270,31 @@ def main():
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
     # Create LLM client
-    if args.provider:
-        provider_name = args.provider
-    else:
-        # Use first available from fallback chain, or primary
-        provider_name = (config.llm_fallback or [config.llm.provider])[0]
+    provider_candidates = get_provider_candidates(config, args.provider)
+    llm_client = None
+    provider_name = ""
+    provider_errors = []
 
-    prov_config = config.get_provider(provider_name)
-    model = config.llm.model if provider_name == config.llm.provider else ""
+    for candidate in provider_candidates:
+        prov_config = config.get_provider(candidate)
+        model = config.llm.model if candidate == config.llm.provider else ""
+        try:
+            llm_client = create_single_client(
+                provider_name=candidate,
+                provider_config=prov_config,
+                model=model,
+                temperature=config.llm.temperature,
+                max_tokens=config.llm.max_tokens,
+            )
+            provider_name = candidate
+            break
+        except ValueError as e:
+            provider_errors.append(f"{candidate}: {e}")
 
-    try:
-        llm_client = create_single_client(
-            provider_name=provider_name,
-            provider_config=prov_config,
-            model=model,
-            temperature=config.llm.temperature,
-            max_tokens=config.llm.max_tokens,
-        )
-    except ValueError as e:
-        print(f"Error creating LLM client '{provider_name}': {e}", file=sys.stderr)
+    if llm_client is None:
+        print("Error: could not initialize any provider", file=sys.stderr)
+        for error in provider_errors:
+            print(f"  - {error}", file=sys.stderr)
         sys.exit(1)
 
     print(f"Provider: {provider_name}  |  Prompt: {prompt_path.name}")

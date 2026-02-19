@@ -9,13 +9,12 @@ This replaces the crude `local_score * 10.0` linear mapping with a
 semantically meaningful, topic-aware scoring that mirrors the LLM prompt logic.
 """
 
-import re
 from dataclasses import dataclass, field
 
 import numpy as np
 
 from arxiv_fetcher import ArxivPaper
-from config import Config, TopicScorerConfig
+from config import Config
 from scorer import ScoredPaper, Tier, assign_tier, check_project_match
 
 

@@ -185,24 +185,24 @@ When you have an updated corpus:
 
 The local filter integrates into `src/scorer.py` via `src/local_scorer.py`:
 
-### Three modes:
+### Current modes
 
-1. **Backward compatible** (no local filter):
+1. **Default (recommended): local scoring + summaries**
    ```bash
-   uv run python src/main.py --skip-llm
-   # Uses category-based heuristic
+   uv run python src/main.py
+   # Stage 1 local filter + Stage 2 topic-embedding scoring + Stage 3 summaries
    ```
 
-2. **Local-only** (replace LLM with embeddings):
+2. **Enable LLM scoring path**
    ```bash
-   uv run python src/main.py --skip-llm --use-local-filter
-   # Uses embedding scores, maps [0,1] → [0,10] scale
+   uv run python src/main.py --use-llm-scoring
+   # Stage 2 switches to LLM scoring (primary + fallback providers)
    ```
 
-3. **Hybrid** (local pre-filter + LLM):
+3. **No-summary scoring run**
    ```bash
-   uv run python src/main.py --use-local-filter --local-filter-threshold 0.3
-   # Papers with local_score < 0.3 skip LLM, saving API costs
+   uv run python src/main.py --no-summary
+   # Keeps scoring, skips Stage 3 summary generation
    ```
 
 ### Configuration
@@ -210,14 +210,21 @@ The local filter integrates into `src/scorer.py` via `src/local_scorer.py`:
 Edit `config.yaml`:
 ```yaml
 local_filter:
-  enabled: true  # or false
   interest_model: "song_db/artifacts/interest_model.json"
-  threshold: 0.3  # pre-filter cutoff
+  threshold: 0.5
   weights:
     w_topic: 0.60
     w_global: 0.30
     w_category: 0.10
+
+llm_scoring:
+  enabled: false  # enable with --use-llm-scoring
+
+summary:
+  enabled: true
 ```
+
+Deprecated flags such as `--skip-llm` and `--use-local-filter` are accepted for backward compatibility only.
 
 ## Performance Notes
 

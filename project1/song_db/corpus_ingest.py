@@ -121,7 +121,7 @@ def ingest_corpus(input_path: Path, output_path: Path) -> list[PaperRecord]:
             }
             f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
-    print(f"Corpus ingestion complete:")
+    print("Corpus ingestion complete:")
     print(f"  Total lines read:   {total_lines}")
     print(f"  Skipped (invalid):  {skipped}")
     print(f"  Unique papers:      {len(records)}")

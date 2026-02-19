@@ -6,20 +6,21 @@ conversion between ArxivPaper and PaperRecord types.
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 # Add song_db parent to path so imports work from src/
 _project_root = Path(__file__).parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from song_db.models import LocalScore, PaperRecord
+if TYPE_CHECKING:
+    from song_db.models import LocalScore, PaperRecord
 
 # Singleton state
 _ranker_instance = None
 
 
-def arxiv_paper_to_record(paper) -> PaperRecord:
+def arxiv_paper_to_record(paper) -> "PaperRecord":
     """Convert an ArxivPaper to a PaperRecord for local scoring.
 
     Handles the type mismatch between ArxivPaper (datetime fields)
@@ -38,6 +39,8 @@ def arxiv_paper_to_record(paper) -> PaperRecord:
             updated = paper.updated.isoformat()
         except AttributeError:
             updated = str(paper.updated)
+
+    from song_db.models import PaperRecord
 
     return PaperRecord(
         arxiv_id=paper.arxiv_id,
@@ -76,7 +79,11 @@ def load_local_ranker(interest_model_path: str | Path):
     return _ranker_instance
 
 
-def local_score_paper(paper, ranker=None, interest_model_path: Optional[str] = None) -> LocalScore:
+def local_score_paper(
+    paper,
+    ranker=None,
+    interest_model_path: Optional[str] = None,
+) -> "LocalScore":
     """Score a single ArxivPaper using the local ranker."""
     if ranker is None:
         if interest_model_path is None:
@@ -88,7 +95,11 @@ def local_score_paper(paper, ranker=None, interest_model_path: Optional[str] = N
     return scores[0]
 
 
-def local_score_papers(papers: list, ranker=None, interest_model_path: Optional[str] = None) -> list[LocalScore]:
+def local_score_papers(
+    papers: list,
+    ranker=None,
+    interest_model_path: Optional[str] = None,
+) -> list["LocalScore"]:
     """Score a batch of ArxivPaper objects using the local ranker."""
     if ranker is None:
         if interest_model_path is None:

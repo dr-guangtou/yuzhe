@@ -13,7 +13,6 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from arxiv_fetcher import ArxivPaper
 from config import Config
@@ -324,10 +323,10 @@ def score_papers_batch_llm(
         ) from e
 
     if not isinstance(results, list):
-        print(f"\n=== Type Error ===")
+        print("\n=== Type Error ===")
         print(f"Expected list, got {type(results).__name__}")
         print(f"Results: {results}")
-        print(f"==================\n")
+        print("==================\n")
         raise ValueError(f"Expected JSON array, got {type(results).__name__}")
 
     scores_map: dict[str, tuple[float, list[str], str]] = {}
@@ -422,7 +421,7 @@ def score_papers(
     local_scores_map: dict[str, float] = {}
     if local_ranker is not None:
         try:
-            from local_scorer import arxiv_paper_to_record, local_score_to_llm_scale
+            from local_scorer import arxiv_paper_to_record
             records = [arxiv_paper_to_record(p) for p in papers]
             local_results = local_ranker.score_papers(records)
             for paper, ls in zip(papers, local_results):
@@ -614,7 +613,7 @@ def _score_papers_batch(
             continue
 
         # Step 2: Fall back to individual scoring (with full fallback client)
-        print(f"  All providers failed batch mode, trying individual scoring...")
+        print("  All providers failed batch mode, trying individual scoring...")
         for paper in batch:
             score, matched_topics, reasoning = score_paper_with_llm(
                 paper, config, llm_client, single_prompt_template

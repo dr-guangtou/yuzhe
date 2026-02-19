@@ -27,7 +27,8 @@ class LLMClient(ABC):
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ) -> LLMResponse:
         """Generate a response from the LLM."""
         pass
@@ -45,6 +46,7 @@ class OpenAICompatibleClient(LLMClient):
         temperature: float = 0.3,
         max_tokens: int = 2000,
         user_agent: str = "",
+        request_timeout: float = 120.0,
     ):
         self.api_key = api_key
         self.model = model
@@ -53,19 +55,24 @@ class OpenAICompatibleClient(LLMClient):
         self.default_temperature = temperature
         self.default_max_tokens = max_tokens
         self.user_agent = user_agent
+        self.default_request_timeout = request_timeout
 
     def generate(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ) -> LLMResponse:
         """Generate using OpenAI-compatible API."""
         import urllib.request
 
         temp = temperature if temperature is not None else self.default_temperature
         tokens = max_tokens if max_tokens is not None else self.default_max_tokens
+        timeout_seconds = (
+            request_timeout if request_timeout is not None else self.default_request_timeout
+        )
 
         messages = []
         if system_prompt:
@@ -94,7 +101,7 @@ class OpenAICompatibleClient(LLMClient):
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=120) as response:
+            with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
                 result = json.loads(response.read().decode("utf-8"))
         except Exception as e:
             raise RuntimeError(f"{self.provider_name} API request failed: {e}")
@@ -122,25 +129,31 @@ class GeminiAPIClient(LLMClient):
         api_key: str,
         model: str,
         temperature: float = 0.3,
-        max_tokens: int = 2000
+        max_tokens: int = 2000,
+        request_timeout: float = 120.0,
     ):
         self.api_key = api_key
         self.model = model
         self.default_temperature = temperature
         self.default_max_tokens = max_tokens
+        self.default_request_timeout = request_timeout
 
     def generate(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ) -> LLMResponse:
         """Generate using Gemini API."""
         import urllib.request
 
         temp = temperature if temperature is not None else self.default_temperature
         tokens = max_tokens if max_tokens is not None else self.default_max_tokens
+        timeout_seconds = (
+            request_timeout if request_timeout is not None else self.default_request_timeout
+        )
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
 
@@ -176,7 +189,7 @@ class GeminiAPIClient(LLMClient):
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=120) as response:
+            with urllib.request.urlopen(req, timeout=timeout_seconds) as response:
                 result = json.loads(response.read().decode("utf-8"))
         except Exception as e:
             raise RuntimeError(f"Gemini API request failed: {e}")
@@ -207,7 +220,8 @@ class MockLLMClient(LLMClient):
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ) -> LLMResponse:
         """Return a mock response for testing."""
         # Batch scoring: detect numbered paper blocks
@@ -264,7 +278,8 @@ class FallbackLLMClient(LLMClient):
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        request_timeout: Optional[float] = None,
     ) -> LLMResponse:
         """Try each client in sequence until one succeeds."""
         errors = []
@@ -275,7 +290,8 @@ class FallbackLLMClient(LLMClient):
                     prompt=prompt,
                     system_prompt=system_prompt,
                     temperature=temperature,
-                    max_tokens=max_tokens
+                    max_tokens=max_tokens,
+                    request_timeout=request_timeout,
                 )
                 # Remember which client worked
                 self.current_client_index = i
@@ -293,7 +309,8 @@ def create_single_client(
     provider_config: ProviderConfig,
     model: str = "",
     temperature: float = 0.3,
-    max_tokens: int = 2000
+    max_tokens: int = 2000,
+    request_timeout: float = 120.0,
 ) -> LLMClient:
     """Create a single LLM client from a ProviderConfig.
 
@@ -324,6 +341,7 @@ def create_single_client(
             model=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
+            request_timeout=request_timeout,
         )
     else:
         return OpenAICompatibleClient(
@@ -334,6 +352,7 @@ def create_single_client(
             temperature=temperature,
             max_tokens=max_tokens,
             user_agent=provider_config.user_agent,
+            request_timeout=request_timeout,
         )
 
 

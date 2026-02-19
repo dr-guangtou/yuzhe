@@ -40,3 +40,14 @@ Reviewed repository structure, core pipeline modules, support scripts, documenta
 - Completed items 3 and 4 together:
   - Dedup now reads IDs from all existing digest files instead of only the latest file.
   - Latest digest discovery now scans across all archive years instead of current year only.
+- Completed medium-priority items 5, 6, 7, and 8 together:
+  - Item 5: `get_llm_score` now resolves providers with primary-first order, then fallback providers.
+  - Item 6: `--timeout` in `check_llm_apis.py` is now passed through to client calls and actual HTTP request timeout handling.
+  - Item 7: Entry point and docs drift reduced:
+    - Root `main.py` is now a compatibility wrapper that executes `src/main.py`.
+    - Stale integration flags in `song_db/README.md` were replaced with current pipeline modes.
+    - Removed legacy backup file `src/main_old.py`.
+  - Item 8: Added CI quality gates and aligned lint status:
+    - Added `.github/workflows/ci.yml` to run `ruff` and `pytest`.
+    - Added `ruff` to dev dependencies.
+    - Resolved existing lint violations so `uv run ruff check .` now passes.

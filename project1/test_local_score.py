@@ -15,7 +15,6 @@ Usage:
 import argparse
 import re
 import sys
-import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET

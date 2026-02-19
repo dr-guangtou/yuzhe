@@ -15,7 +15,6 @@ from arxiv_fetcher import (
     parse_rss_entry,
     fetch_papers_from_rss,
     ArxivPaper,
-    ARXIV_RSS_BASE,
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "rss_snapshot.xml"
@@ -122,12 +121,6 @@ def test_parse_rss_entry_all_parseable(rss_feed):
 
 def test_fetch_filters_announce_type(all_parsed_entries):
     """Only 'new' and 'cross' entries should pass the type filter."""
-    keep_types = ("new", "cross")
-    for paper, announce_type in all_parsed_entries:
-        if announce_type in ("replace", "replace-cross"):
-            # These should be excluded by fetch_papers_from_rss
-            pass  # We verify via the negative test below
-
     # Count types in the full set
     type_counts = {}
     for _, atype in all_parsed_entries:

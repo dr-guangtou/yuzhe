@@ -65,6 +65,7 @@ def check_provider(provider_name, provider_config, llm_config, timeout):
             model="",
             temperature=llm_config.temperature,
             max_tokens=200,
+            request_timeout=float(timeout),
         )
     except ValueError as e:
         result["status"] = "INIT_FAIL"
@@ -77,6 +78,7 @@ def check_provider(provider_name, provider_config, llm_config, timeout):
         response = client.generate(
             prompt=PING_PROMPT,
             max_tokens=200,
+            request_timeout=float(timeout),
         )
         elapsed_ms = int((time.monotonic() - start) * 1000)
         content = response.content or ""
@@ -171,7 +173,7 @@ def main():
     # Header
     primary = config.llm.provider
     fallback = config.llm_fallback or []
-    print(f"LLM API Health Check")
+    print("LLM API Health Check")
     print(f"Primary: {primary} | Fallback: {', '.join(fallback) if fallback else 'none'}")
     print(f"Testing {len(provider_names)} provider(s)...")
     print()
@@ -213,7 +215,7 @@ def main():
             ok_count += 1
 
     print("-" * 90)
-    print(f"  * = primary, F = fallback")
+    print("  * = primary, F = fallback")
     print(f"  {ok_count}/{len(results)} providers available")
 
     # Exit code: 0 if primary or at least one fallback is OK
@@ -222,7 +224,7 @@ def main():
         r["status"] == "OK" for r in results if r["provider"] in active_names
     )
     if not active_ok:
-        print(f"\nWARNING: No active provider (primary + fallback) is available!")
+        print("\nWARNING: No active provider (primary + fallback) is available!")
         sys.exit(1)
 
 

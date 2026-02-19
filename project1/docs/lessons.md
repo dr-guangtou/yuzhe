@@ -161,3 +161,23 @@ For LLM-based pipelines:
 **Problem**: Some LLM providers occasionally return empty content (no error, just blank). This passes all API-level checks but fails JSON parsing downstream.
 
 **Solution**: Check for empty/whitespace-only content immediately after receiving the response, before any extraction logic. Raise early with a clear message so the fallback chain can try the next provider.
+
+### 25. Single-File Scorers Should Use Primary-First Provider Resolution
+**Problem**: Utility scripts can accidentally default to fallback providers before the primary provider, creating behavior that differs from the main pipeline.
+
+**Solution**: Build provider candidates as `[primary] + fallback_without_duplicates`, and only use explicit provider override when the user passes `--provider`.
+
+### 26. CLI Timeout Flags Must Reach Real Network Calls
+**Problem**: A `--timeout` flag that is only parsed but never passed to HTTP requests gives a false sense of control.
+
+**Solution**: Thread timeout through client interfaces and pass it to the underlying `urlopen(..., timeout=...)` call (or equivalent transport layer timeout), then add tests that assert propagation.
+
+### 27. Keep Entry Points Canonical to Avoid Script Drift
+**Problem**: Placeholder or legacy entry points (`main.py`, `main_old.py`) drift from the real runtime path and confuse users and tests.
+
+**Solution**: Keep one canonical runtime (`src/main.py`), use a thin compatibility wrapper at project root if needed, and delete legacy backup entrypoints once migration is complete.
+
+### 28. CI Quality Gates Need a Passing Baseline
+**Problem**: Adding lint gates without fixing existing lint debt causes permanent red CI and gate bypass pressure.
+
+**Solution**: First auto-fix and manually resolve current lint violations, then enforce `ruff` and `pytest` in CI so new debt is blocked.

@@ -8,7 +8,6 @@ Usage:
 """
 
 import argparse
-import json
 import re
 import sys
 import urllib.parse
@@ -160,7 +159,7 @@ def print_results(paper: dict, score: float, score_obj, ranker):
 
     # Top 3 topics
     if score_obj.topic_scores_top3:
-        print(f"\nTop 3 topic matches:")
+        print("\nTop 3 topic matches:")
         for topic_id, topic_score in score_obj.topic_scores_top3:
             topic = ranker.model.topic_clusters[topic_id]
             kw_short = ", ".join(topic.top_keywords[:5])
@@ -187,15 +186,15 @@ def print_results(paper: dict, score: float, score_obj, ranker):
     threshold = 0.3  # default from config
     llm_scale = score * 10  # [0,1] -> [0,10]
 
-    print(f"Skip-LLM + Local Filter mode:")
+    print("Skip-LLM + Local Filter mode:")
     print(f"  → Would assign score: {llm_scale:.1f}/10")
 
     if score >= threshold:
         print(f"\nHybrid mode (threshold={threshold}):")
-        print(f"  → Would send to LLM for full scoring")
+        print("  → Would send to LLM for full scoring")
     else:
         print(f"\nHybrid mode (threshold={threshold}):")
-        print(f"  → Would skip LLM (below threshold), use embedding score only")
+        print("  → Would skip LLM (below threshold), use embedding score only")
 
     print("\n" + "=" * 80 + "\n")
 
@@ -232,20 +231,20 @@ Examples:
     interest_path = Path(args.interest)
     if not interest_path.exists():
         print(f"Error: Interest model not found at {interest_path}", file=sys.stderr)
-        print(f"\nRun the following to create it:", file=sys.stderr)
+        print("\nRun the following to create it:", file=sys.stderr)
         print(f"  uv run python -m song_db distill --corpus song_db/artifacts/corpus_clean.jsonl --embeddings song_db/artifacts/embeddings.npy --ids song_db/artifacts/ids.json --output {interest_path}", file=sys.stderr)
         return 1
 
     # Fetch paper
-    print(f"Fetching paper from arXiv API...")
+    print("Fetching paper from arXiv API...")
     paper = fetch_paper_from_arxiv(arxiv_id)
     if paper is None:
         print(f"Error: Could not fetch paper {arxiv_id} from arXiv", file=sys.stderr)
-        print(f"Check that the arXiv ID is valid and the paper exists.", file=sys.stderr)
+        print("Check that the arXiv ID is valid and the paper exists.", file=sys.stderr)
         return 1
 
     # Score paper
-    print(f"Loading interest model and computing score...")
+    print("Loading interest model and computing score...")
     try:
         score, score_obj, ranker = load_and_score(paper, interest_path)
     except Exception as e:

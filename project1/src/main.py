@@ -16,11 +16,11 @@ from pathlib import Path
 from config import load_config, get_default_config_path
 from arxiv_fetcher import fetch_papers, fetch_papers_from_rss
 from llm_client import create_fallback_client, MockLLMClient
-from scorer import score_papers, group_by_tier, filter_by_tier, Tier
+from scorer import score_papers, group_by_tier, Tier
 from summarizer import generate_summaries
 from formatter import format_digest, save_digest, copy_to_obsidian
 from state import StateManager, get_default_state_path
-from logger import setup_logging, get_logger
+from logger import setup_logging
 
 
 def parse_digest_date_from_path(path: Path) -> datetime | None:
@@ -353,7 +353,7 @@ Modes:
     source = args.source
     if args.days is not None and source == "rss":
         source = "api"
-        logger.info(f"--days specified, auto-switching source from rss to api")
+        logger.info("--days specified, auto-switching source from rss to api")
 
     logger.info(f"Fetching papers from {len(categories)} categories (source: {source})...")
     if source == "api":
@@ -436,7 +436,7 @@ Modes:
             if local_score.score_total >= threshold:
                 papers_stage1.append(paper)
 
-        logger.info(f"Local filter results:")
+        logger.info("Local filter results:")
         logger.info(f"  Input: {len(papers)} papers")
         logger.info(f"  Passed threshold: {len(papers_stage1)} papers")
         logger.info(f"  Filtered out: {len(papers) - len(papers_stage1)} papers")
@@ -501,7 +501,7 @@ Modes:
             if sp.tier in keep_tiers:
                 papers_stage2.append(sp)
 
-        logger.info(f"LLM scoring results:")
+        logger.info("LLM scoring results:")
         logger.info(f"  Input: {len(scored_papers)} papers")
         logger.info(f"  Keep tiers: {', '.join(keep_tiers_str)}")
         logger.info(f"  Kept: {len(papers_stage2)} papers")
@@ -509,7 +509,7 @@ Modes:
 
         # Detailed tier breakdown
         groups = group_by_tier(scored_papers)
-        logger.info(f"  Tier breakdown:")
+        logger.info("  Tier breakdown:")
         logger.info(f"    Most Relevant: {len(groups[Tier.MOST_RELEVANT])}")
         logger.info(f"    Somewhat Relevant: {len(groups[Tier.SOMEWHAT_RELEVANT])}")
         logger.info(f"    Could Be Interesting: {len(groups[Tier.COULD_BE_INTERESTING])}")
@@ -656,14 +656,14 @@ Modes:
     print(f"Papers fetched: {len(papers)} (after Stage 1 filter)")
     if config.llm_scoring.enabled:
         print(f"Papers after LLM scoring: {len(scored_papers)}")
-    print(f"\nTier Distribution:")
+    print("\nTier Distribution:")
     print(f"  Most Relevant: {len(groups[Tier.MOST_RELEVANT])}")
     print(f"  Somewhat Relevant: {len(groups[Tier.SOMEWHAT_RELEVANT])}")
     print(f"  Could Be Interesting: {len(groups[Tier.COULD_BE_INTERESTING])}")
     if config.summary.enabled:
         print(f"\nSummaries generated: {len(summaries)}")
     else:
-        print(f"\nSummaries: disabled (abstracts only)")
+        print("\nSummaries: disabled (abstracts only)")
     print(f"\nDigest saved to: {output_path}")
 
 

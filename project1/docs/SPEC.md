@@ -35,6 +35,9 @@ The runtime is a three-stage pipeline with explicit optional paths:
 5. Digest output:
 - Render Markdown grouped by tiers.
 - Persist under `arxiv_digest/archive/YYYY/arxiv-YYYY-MM-DD.md`.
+- Output location can be overridden by CLI:
+  - `--output PATH` for an explicit file path.
+  - `--output-dir DIR` or `--dir DIR` to keep default naming in a custom directory.
 
 ## Key Modules
 
@@ -97,4 +100,3 @@ Primary configuration file: `config.yaml`
 - This file (`docs/SPEC.md`) is the canonical architecture reference.
 - Work planning and verification tracking are maintained in `docs/todo.md`.
 - Review/audit context and findings are logged in `docs/journal/`.
-

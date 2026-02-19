@@ -98,6 +98,11 @@ def get_previous_digest_ids(
     return ids, len(dated_files)
 
 
+def build_dated_output_path(output_dir: Path, date: datetime) -> Path:
+    """Build default digest filename in a user-specified directory."""
+    return output_dir / f"arxiv-{date.strftime('%Y-%m-%d')}.md"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Daily arXiv Summary - Monitor arXiv for relevant papers",
@@ -207,11 +212,20 @@ Modes:
         default=None,
         help="Limit number of papers to process (for testing)"
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "--output",
         type=Path,
         default=None,
-        help="Override output path for digest"
+        help="Write digest to an explicit file path"
+    )
+    output_group.add_argument(
+        "--output-dir",
+        "--dir",
+        dest="output_dir",
+        type=Path,
+        default=None,
+        help="Write digest to this directory with default filename (arxiv-YYYY-MM-DD.md)"
     )
     parser.add_argument(
         "--verbose", "-v",
@@ -624,6 +638,10 @@ Modes:
     # Save digest
     if args.output:
         output_path = args.output
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(digest_content, encoding="utf-8")
+    elif args.output_dir:
+        output_path = build_dated_output_path(args.output_dir, today)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(digest_content, encoding="utf-8")
     else:

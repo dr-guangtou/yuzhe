@@ -97,3 +97,18 @@ def test_get_previous_digest_ids_reads_multiple_files_in_window(tmp_path):
 
     assert count == 1
     assert ids == {"2602.00002"}
+
+
+def test_build_dated_output_path_uses_default_filename_in_custom_directory():
+    """Custom output directory should keep the standard dated filename format."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    output_path = module.build_dated_output_path(
+        Path("custom/digests"),
+        datetime(2026, 2, 19),
+    )
+
+    assert output_path == Path("custom/digests/arxiv-2026-02-19.md")

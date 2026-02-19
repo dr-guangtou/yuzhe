@@ -1,6 +1,6 @@
 # Daily arXiv Pipeline Design (3-Stage Architecture)
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-19
 
 ## Overview
 
@@ -212,6 +212,20 @@ uv run python src/main.py --no-summary
 
 ---
 
+### Custom Output Location
+
+```bash
+# Explicit output file path
+uv run python src/main.py --output outputs/digests/my-run.md
+
+# Custom directory with default filename (arxiv-YYYY-MM-DD.md)
+uv run python src/main.py --dir outputs/digests
+```
+
+`--output` and `--output-dir`/`--dir` are mutually exclusive.
+
+---
+
 ## Update Mode
 
 **Default Behavior** (when `--debug` is NOT used):
@@ -257,6 +271,14 @@ uv run python src/main.py --no-summary
 | Stage 1: Local Filter | (always on) | - | ON |
 | Stage 2: LLM Scoring | `llm_scoring.enabled` | `--use-llm-scoring` | OFF |
 | Stage 3: Summary | `summary.enabled` | `--no-summary` | ON |
+
+### Output Controls
+
+| Output Mode | CLI Flag | Result |
+|------------|----------|--------|
+| Default archive path | (none) | `arxiv_digest/archive/YYYY/arxiv-YYYY-MM-DD.md` |
+| Explicit file path | `--output PATH` | Writes digest to exactly `PATH` |
+| Custom directory + default name | `--output-dir DIR` or `--dir DIR` | Writes to `DIR/arxiv-YYYY-MM-DD.md` |
 
 ---
 

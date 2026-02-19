@@ -175,7 +175,8 @@ Skip Stage 3 (summary generation), output abstracts only. Useful for checking ti
 | `--category CAT` | Fetch from a single category (e.g., `astro-ph.GA`) |
 | `--local-filter-threshold T` | Override local filter threshold (0-1, default: 0.5) |
 | `--mock-llm` | Use mock LLM for testing (no API calls) |
-| `--output PATH` | Write digest to a custom path |
+| `--output PATH` | Write digest to an explicit file path |
+| `--output-dir DIR`, `--dir DIR` | Write digest to a custom directory using `arxiv-YYYY-MM-DD.md` |
 | `-v` | Verbose output (debug-level logging) |
 | `--no-log-file` | Don't write to the log file |
 
@@ -194,6 +195,9 @@ uv run python src/main.py --source api --days 3 --debug
 # Run with LLM scoring (replaces local topic scorer with LLM scorer)
 uv run python src/main.py --use-llm-scoring --debug
 
+# Keep default filename but write into a custom directory
+uv run python src/main.py --debug --dir outputs/digests
+
 # Test individual paper: corpus filter (Stage 1) only
 uv run python test_local_filter.py --id 2301.07136
 
@@ -207,6 +211,11 @@ uv run python src/get_llm_score.py 2602.04962
 ## Output
 
 Daily digests are saved to `arxiv_digest/archive/YYYY/arxiv-YYYY-MM-DD.md`.
+
+Output location overrides:
+- `--output PATH`: write to an explicit file path.
+- `--output-dir DIR` or `--dir DIR`: keep default filename and write to a custom directory (`DIR/arxiv-YYYY-MM-DD.md`).
+- `--output` and `--output-dir`/`--dir` are mutually exclusive.
 
 Each digest contains:
 - **Summary** with paper counts per tier and categories monitored

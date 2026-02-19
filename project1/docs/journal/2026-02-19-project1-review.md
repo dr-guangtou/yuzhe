@@ -31,3 +31,9 @@ Reviewed repository structure, core pipeline modules, support scripts, documenta
 3. Harden update/dedup logic across date windows and years.
 4. Remove/mark stale entrypoints and align docs with actual CLI behavior.
 5. Add CI checks for `ruff`, `pytest`, and basic CLI smoke tests.
+
+## Progress Update (2026-02-19)
+
+- Completed item 1: `src/get_llm_score.py` now reads thresholds from `config.llm_scoring.tier_thresholds`.
+- Completed item 2: Stage 3 now fast-paths summary fallback when no LLM client is available, avoiding retry/backoff delays.
+- Status note: item 2 is marked done per user confirmation after implementation and test coverage update.

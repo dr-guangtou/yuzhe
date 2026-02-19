@@ -558,6 +558,7 @@ Modes:
         logger.info("=" * 60)
         logger.info("STAGE 3: Summary Generation")
         logger.info("=" * 60)
+        summary_skip_llm = False
 
         # Create LLM client if not already created
         if not config.llm_scoring.enabled:
@@ -578,9 +579,16 @@ Modes:
                     if config.summary.fallback_to_abstract:
                         logger.warning("Will use abstracts as fallback")
                         llm_client = None
+                        summary_skip_llm = True
                     else:
                         logger.error("Summary generation requires LLM client")
                         sys.exit(1)
+
+        if llm_client is None:
+            summary_skip_llm = True
+
+        if summary_skip_llm:
+            logger.info("Summary LLM unavailable, using direct fallback summaries (no retries)")
 
         logger.info(f"Generating summaries for {len(scored_papers)} papers...")
 
@@ -589,7 +597,7 @@ Modes:
                 scored_papers=scored_papers,
                 llm_client=llm_client,
                 config=config,
-                skip_llm=False
+                skip_llm=summary_skip_llm
             )
             logger.info(f"Generated {len(summaries)} summaries")
         except Exception as e:

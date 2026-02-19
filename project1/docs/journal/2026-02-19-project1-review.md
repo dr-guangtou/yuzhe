@@ -37,3 +37,6 @@ Reviewed repository structure, core pipeline modules, support scripts, documenta
 - Completed item 1: `src/get_llm_score.py` now reads thresholds from `config.llm_scoring.tier_thresholds`.
 - Completed item 2: Stage 3 now fast-paths summary fallback when no LLM client is available, avoiding retry/backoff delays.
 - Status note: item 2 is marked done per user confirmation after implementation and test coverage update.
+- Completed items 3 and 4 together:
+  - Dedup now reads IDs from all existing digest files instead of only the latest file.
+  - Latest digest discovery now scans across all archive years instead of current year only.

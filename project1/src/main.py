@@ -39,29 +39,34 @@ def parse_digest_date_from_path(path: Path) -> datetime | None:
     return None
 
 
+def get_dated_digest_files(config) -> list[tuple[datetime, float, Path]]:
+    """Collect digest files with parsed dates across all archive years."""
+    if config.config_path:
+        base_dir = config.config_path.parent
+    else:
+        base_dir = Path(".")
+
+    archive_root = base_dir / config.output.digest_dir / config.output.archive_subdir
+    if not archive_root.exists():
+        return []
+
+    dated_files: list[tuple[datetime, float, Path]] = []
+    for digest_file in archive_root.rglob("*.md"):
+        parsed_date = parse_digest_date_from_path(digest_file)
+        if parsed_date is None:
+            continue
+        dated_files.append((parsed_date, digest_file.stat().st_mtime, digest_file))
+
+    return dated_files
+
+
 def get_latest_digest_date(config) -> datetime | None:
     """Get the date of the most recent digest file.
 
     Returns:
         datetime of latest digest, or None if no digests exist
     """
-    current_year = datetime.now().year
-    digest_path = config.get_digest_path(current_year)
-
-    if not digest_path.exists():
-        return None
-
-    digest_files = list(digest_path.glob("*.md"))
-    if not digest_files:
-        return None
-
-    dated_files: list[tuple[datetime, float, Path]] = []
-    for digest_file in digest_files:
-        parsed_date = parse_digest_date_from_path(digest_file)
-        if parsed_date is None:
-            continue
-        dated_files.append((parsed_date, digest_file.stat().st_mtime, digest_file))
-
+    dated_files = get_dated_digest_files(config)
     if not dated_files:
         return None
 
@@ -69,41 +74,28 @@ def get_latest_digest_date(config) -> datetime | None:
     return latest_date
 
 
-def get_previous_digest_ids(config) -> set[str]:
-    """Extract arxiv IDs from the latest digest file.
+def get_previous_digest_ids(
+    config,
+    since_date: datetime | None = None,
+) -> tuple[set[str], int]:
+    """Extract arXiv IDs from existing digest files.
 
-    Reads the most recent digest Markdown and extracts all arxiv IDs
-    from both detailed sections (arXiv: [ID](url)) and title-only
-    sections ([title](arxiv.org/abs/ID)).
+    Reads digest Markdown files and extracts arXiv IDs from links.
+    Supports deduping against a date window by using `since_date`.
 
     Returns:
-        Set of arxiv ID strings, or empty set if no digest exists
+        Tuple of (set_of_ids, number_of_files_scanned).
     """
-    current_year = datetime.now().year
-    digest_path = config.get_digest_path(current_year)
+    dated_files = get_dated_digest_files(config)
+    if since_date is not None:
+        dated_files = [item for item in dated_files if item[0] >= since_date]
 
-    if not digest_path.exists():
-        return set()
+    ids: set[str] = set()
+    for _, _, digest_file in dated_files:
+        content = digest_file.read_text(encoding="utf-8")
+        ids.update(re.findall(r"arxiv\.org/abs/(\d{4}\.\d{4,5})", content))
 
-    digest_files = list(digest_path.glob("*.md"))
-    if not digest_files:
-        return set()
-
-    dated_files: list[tuple[datetime, float, Path]] = []
-    for digest_file in digest_files:
-        parsed_date = parse_digest_date_from_path(digest_file)
-        if parsed_date is None:
-            continue
-        dated_files.append((parsed_date, digest_file.stat().st_mtime, digest_file))
-
-    if not dated_files:
-        return set()
-
-    _, _, latest_file = max(dated_files, key=lambda item: (item[0], item[1]))
-    content = latest_file.read_text(encoding="utf-8")
-
-    ids = set(re.findall(r"arxiv\.org/abs/(\d{4}\.\d{4,5})", content))
-    return ids
+    return ids, len(dated_files)
 
 
 def main():
@@ -386,11 +378,14 @@ Modes:
     logger.info(f"Total papers fetched: {len(papers)}")
 
     # Deduplicate against previous digest
-    previous_ids = get_previous_digest_ids(config)
+    previous_ids, digest_file_count = get_previous_digest_ids(config)
     if previous_ids:
         before = len(papers)
         papers = [p for p in papers if p.arxiv_id not in previous_ids]
-        logger.info(f"Dedup against previous digest: {before} -> {len(papers)} ({before - len(papers)} already in previous digest)")
+        logger.info(
+            f"Dedup against {digest_file_count} previous digest file(s): "
+            f"{before} -> {len(papers)} ({before - len(papers)} already processed)"
+        )
 
     if not papers:
         logger.warning("No papers found.")

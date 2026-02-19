@@ -39,3 +39,61 @@ def test_save_digest_uses_arxiv_prefix(tmp_path):
 
     assert output_path.name == "arxiv-2026-02-19.md"
     assert output_path.exists()
+
+
+def test_get_latest_digest_date_scans_across_years(tmp_path):
+    """Latest digest discovery should not be limited to current year."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    config = load_config(Path("config.yaml"))
+    config.config_path = tmp_path / "config.yaml"
+    config.output.digest_dir = "arxiv_digest"
+    config.output.archive_subdir = "archive"
+
+    digest_2025 = tmp_path / "arxiv_digest" / "archive" / "2025" / "arxiv-2025-12-31.md"
+    digest_2026 = tmp_path / "arxiv_digest" / "archive" / "2026" / "arxiv-2026-01-01.md"
+    digest_2025.parent.mkdir(parents=True, exist_ok=True)
+    digest_2026.parent.mkdir(parents=True, exist_ok=True)
+    digest_2025.write_text("# older", encoding="utf-8")
+    digest_2026.write_text("# newer", encoding="utf-8")
+
+    latest = module.get_latest_digest_date(config)
+
+    assert latest is not None
+    assert latest.strftime("%Y-%m-%d") == "2026-01-01"
+
+
+def test_get_previous_digest_ids_reads_multiple_files_in_window(tmp_path):
+    """Dedup ID extraction should include all digest files in the date window."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    config = load_config(Path("config.yaml"))
+    config.config_path = tmp_path / "config.yaml"
+    config.output.digest_dir = "arxiv_digest"
+    config.output.archive_subdir = "archive"
+
+    file_old = tmp_path / "arxiv_digest" / "archive" / "2026" / "arxiv-2026-02-10.md"
+    file_new = tmp_path / "arxiv_digest" / "archive" / "2026" / "arxiv-2026-02-12.md"
+    file_old.parent.mkdir(parents=True, exist_ok=True)
+    file_old.write_text(
+        "[old](https://arxiv.org/abs/2602.00001)\n",
+        encoding="utf-8",
+    )
+    file_new.write_text(
+        "[new](https://arxiv.org/abs/2602.00002)\n",
+        encoding="utf-8",
+    )
+
+    ids, count = module.get_previous_digest_ids(
+        config,
+        since_date=datetime(2026, 2, 11),
+    )
+
+    assert count == 1
+    assert ids == {"2602.00002"}

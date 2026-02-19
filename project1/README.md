@@ -5,7 +5,7 @@ Automated pipeline that monitors arXiv daily, filters and scores papers locally,
 ## Features
 
 - **RSS-First Fetching**: Uses arXiv RSS feeds by default, which list papers by **announcement date** (matching the website's "new listings"). Falls back to the Atom API for multi-day lookback.
-- **3-Stage Architecture** (see `PIPELINE_DESIGN.md` for details):
+- **3-Stage Architecture** (see `docs/pipeline-architecture.md` for details):
   1. **Local Filter** (MANDATORY) - Corpus-based embedding filter removes off-topic papers
   2. **Scoring** (MANDATORY, two paths) - Topic-embedding scorer (default) or LLM scorer
   3. **Summary Generation** (OPTIONAL) - LLM summaries with graceful fallback to abstracts
@@ -118,7 +118,7 @@ scoring:
 
 ## Usage
 
-**For complete pipeline documentation, see `PIPELINE_DESIGN.md`**
+**For complete pipeline documentation, see `docs/pipeline-architecture.md`**
 
 All commands run from the `project1/` directory.
 
@@ -324,7 +324,8 @@ uv run python src/check_llm_apis.py kimi glm      # Test specific providers
 ```
 project1/
 ├── README.md                # This file
-├── PIPELINE_DESIGN.md       # Detailed pipeline architecture
+├── docs/
+│   └── pipeline-architecture.md  # Detailed pipeline architecture
 ├── PLAN.md                  # Implementation plan
 ├── config.yaml              # Configuration (topics, breakpoints, providers)
 ├── pyproject.toml           # Python dependencies

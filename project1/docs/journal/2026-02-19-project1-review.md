@@ -51,3 +51,10 @@ Reviewed repository structure, core pipeline modules, support scripts, documenta
     - Added `.github/workflows/ci.yml` to run `ruff` and `pytest`.
     - Added `ruff` to dev dependencies.
     - Resolved existing lint violations so `uv run ruff check .` now passes.
+- Completed item 9 (governance/documentation gap):
+  - Added `docs/SPEC.md` as the canonical architecture and design-decision reference.
+  - Added `docs/todo.md` with explicit governance closure tasks and verification checklist.
+  - Final confidence checks completed:
+    - `uv run python src/main.py --debug --use-llm-scoring --limit 3 --no-summary` succeeded.
+    - `uv run ruff check .` passed.
+    - `uv run pytest -q` passed (`30 passed`).

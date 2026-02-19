@@ -40,7 +40,7 @@ Identify the paper type and provide appropriate details:
 
 **If observational:**
 - Brief summary of key methodologies: targets, observables measured/inferred, any modeling done
-- Quick reference table:
+- Quick reference table (Below is just a suggestion; come up with new important items if necessary):
 
 | Property | Value |
 |----------|-------|

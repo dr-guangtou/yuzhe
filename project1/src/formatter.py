@@ -203,7 +203,7 @@ def save_digest(
     output_dir = base_dir / config.output.digest_dir / config.output.archive_subdir / str(year)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    output_path = output_dir / f"{date_str}.md"
+    output_path = output_dir / f"arxiv-{date_str}.md"
 
     # Write atomically
     temp_path = output_path.with_suffix(".tmp")

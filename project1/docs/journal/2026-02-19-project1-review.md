@@ -1,0 +1,33 @@
+# Project 1 Review Summary (Structure, Code, Documentation)
+
+Date: 2026-02-19
+Branch: `fix/get-llm-score-thresholds`
+
+## Scope
+
+Reviewed repository structure, core pipeline modules, support scripts, documentation, and test/lint status.
+
+## Verification Snapshot
+
+- `uv run pytest -q` passed: `22 passed`.
+- `uv run ruff check .` failed with `38` findings (quality debt not currently gated).
+
+## Prioritized Findings
+
+1. Critical: `src/get_llm_score.py` uses `config.scoring.*` but thresholds now live under `config.llm_scoring.tier_thresholds`; this can raise runtime `AttributeError`.
+2. High: Summary fallback path can be slow when no LLM client exists because it still enters retry/backoff code before falling back.
+3. High: Dedup checks only the latest digest file, which can re-include older papers in recovery windows.
+4. High: Latest digest date lookup is year-limited and can break at year boundaries.
+5. Medium: `get_llm_score` default provider order prefers fallback over primary.
+6. Medium: `src/check_llm_apis.py --timeout` is accepted but not wired into actual HTTP timeout usage.
+7. Medium: Documentation and entrypoint drift (`main.py` placeholder, stale usage text in `song_db/README.md`, legacy `src/main_old.py` still present).
+8. Medium: Lint issues are not enforced in CI quality gates.
+9. Documentation governance gap: missing `docs/SPEC.md` and task-tracking doc alignment.
+
+## Recommended Remediation Order
+
+1. Fix `src/get_llm_score.py` threshold schema usage.
+2. Fast-path summary fallback when LLM client is unavailable.
+3. Harden update/dedup logic across date windows and years.
+4. Remove/mark stale entrypoints and align docs with actual CLI behavior.
+5. Add CI checks for `ruff`, `pytest`, and basic CLI smoke tests.

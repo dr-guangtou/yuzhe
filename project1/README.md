@@ -206,7 +206,7 @@ uv run python src/get_llm_score.py 2602.04962
 
 ## Output
 
-Daily digests are saved to `arxiv_digest/archive/YYYY/YYYY-MM-DD.md`.
+Daily digests are saved to `arxiv_digest/archive/YYYY/arxiv-YYYY-MM-DD.md`.
 
 Each digest contains:
 - **Summary** with paper counts per tier and categories monitored
@@ -351,7 +351,7 @@ project1/
 ├── song_db/                 # Local interest model (corpus pipeline)
 ├── prompts/                 # LLM prompt templates
 ├── arxiv_digest/
-│   └── archive/             # Daily outputs (YYYY/YYYY-MM-DD.md)
+│   └── archive/             # Daily outputs (YYYY/arxiv-YYYY-MM-DD.md)
 └── logs/                    # Log files
 ```
 

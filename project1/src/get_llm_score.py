@@ -154,12 +154,12 @@ def score_one_paper(paper: dict, config, llm_client, prompt_template: str) -> di
 
     # Determine tier
     score = result["score"]
-    thresholds = config.scoring
-    if score >= thresholds.most_relevant_threshold:
+    thresholds = config.llm_scoring.tier_thresholds
+    if score >= thresholds.most_relevant:
         result["tier"] = "Most Relevant"
-    elif score >= thresholds.somewhat_relevant_threshold:
+    elif score >= thresholds.somewhat_relevant:
         result["tier"] = "Somewhat Relevant"
-    elif score >= thresholds.could_be_interesting_threshold:
+    elif score >= thresholds.could_be_interesting:
         result["tier"] = "Could Be Interesting"
     else:
         result["tier"] = "Not Relevant"
@@ -279,9 +279,10 @@ def main():
         sys.exit(1)
 
     print(f"Provider: {provider_name}  |  Prompt: {prompt_path.name}")
-    print(f"Thresholds: most_relevant >= {config.scoring.most_relevant_threshold}, "
-          f"somewhat >= {config.scoring.somewhat_relevant_threshold}, "
-          f"interesting >= {config.scoring.could_be_interesting_threshold}")
+    thresholds = config.llm_scoring.tier_thresholds
+    print(f"Thresholds: most_relevant >= {thresholds.most_relevant}, "
+          f"somewhat >= {thresholds.somewhat_relevant}, "
+          f"interesting >= {thresholds.could_be_interesting}")
 
     # Process each paper
     scored = []  # list of (paper, result) tuples

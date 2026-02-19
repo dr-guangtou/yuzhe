@@ -23,6 +23,22 @@ from state import StateManager, get_default_state_path
 from logger import setup_logging, get_logger
 
 
+def parse_digest_date_from_path(path: Path) -> datetime | None:
+    """Parse digest date from filename stem.
+
+    Supports both legacy and new naming:
+    - YYYY-MM-DD.md
+    - arxiv-YYYY-MM-DD.md
+    """
+    stem = path.stem
+    for fmt in ("%Y-%m-%d", "arxiv-%Y-%m-%d"):
+        try:
+            return datetime.strptime(stem, fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def get_latest_digest_date(config) -> datetime | None:
     """Get the date of the most recent digest file.
 
@@ -35,18 +51,22 @@ def get_latest_digest_date(config) -> datetime | None:
     if not digest_path.exists():
         return None
 
-    # Find all markdown files in current year's digest
-    digest_files = sorted(digest_path.glob("*.md"))
+    digest_files = list(digest_path.glob("*.md"))
     if not digest_files:
         return None
 
-    # Parse date from filename (format: YYYY-MM-DD.md)
-    latest_file = digest_files[-1]
-    try:
-        date_str = latest_file.stem  # "2026-02-07"
-        return datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
+    dated_files: list[tuple[datetime, float, Path]] = []
+    for digest_file in digest_files:
+        parsed_date = parse_digest_date_from_path(digest_file)
+        if parsed_date is None:
+            continue
+        dated_files.append((parsed_date, digest_file.stat().st_mtime, digest_file))
+
+    if not dated_files:
         return None
+
+    latest_date, _, _ = max(dated_files, key=lambda item: (item[0], item[1]))
+    return latest_date
 
 
 def get_previous_digest_ids(config) -> set[str]:
@@ -65,11 +85,21 @@ def get_previous_digest_ids(config) -> set[str]:
     if not digest_path.exists():
         return set()
 
-    digest_files = sorted(digest_path.glob("*.md"))
+    digest_files = list(digest_path.glob("*.md"))
     if not digest_files:
         return set()
 
-    latest_file = digest_files[-1]
+    dated_files: list[tuple[datetime, float, Path]] = []
+    for digest_file in digest_files:
+        parsed_date = parse_digest_date_from_path(digest_file)
+        if parsed_date is None:
+            continue
+        dated_files.append((parsed_date, digest_file.stat().st_mtime, digest_file))
+
+    if not dated_files:
+        return set()
+
+    _, _, latest_file = max(dated_files, key=lambda item: (item[0], item[1]))
     content = latest_file.read_text(encoding="utf-8")
 
     ids = set(re.findall(r"arxiv\.org/abs/(\d{4}\.\d{4,5})", content))

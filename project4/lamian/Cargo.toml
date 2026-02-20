@@ -1,0 +1,15 @@
+[package]
+name = "lamian"
+version = "0.1.0"
+edition = "2024"
+description = "LaMian CLI core"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.5.53", features = ["derive"] }
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+thiserror = "2.0.17"
+
+[dev-dependencies]
+tempfile = "3.23.0"
+

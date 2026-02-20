@@ -5,6 +5,7 @@ use crate::db;
 use crate::error::LamianError;
 use crate::inject::{InjectRequest, inject_figure};
 use crate::link::{AddLinkRequest, RemoveLinkRequest, add_link, remove_link};
+use crate::search::{SearchRequest, search_figures};
 use crate::tag::{
     AddTagRequest, RemoveTagRequest, RenameTagRequest, add_tag_to_figure, remove_tag_from_figure,
     rename_tag,
@@ -136,7 +137,29 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 }
             }
         }
-        Command::Search { .. } => Err(LamianError::NotImplemented { command: "search" }),
+        Command::Search {
+            tag,
+            source_key,
+            text,
+        } => {
+            let vault_path = require_vault(cli.vault, "search")?;
+            let result = search_figures(SearchRequest {
+                vault_root: vault_path,
+                tag,
+                source_key,
+                text,
+            })?;
+
+            println!("Search results: {}", result.figures.len());
+            if result.figures.is_empty() {
+                println!("No figures matched.");
+            } else {
+                for figure in result.figures {
+                    println!("{} | {}", figure.figure_id, figure.display_name);
+                }
+            }
+            Ok(())
+        }
         Command::Export { .. } => Err(LamianError::NotImplemented { command: "export" }),
     }
 }

@@ -5,7 +5,7 @@
 This guide explains:
 
 - how the current LaMian CLI works
-- the core algorithms behind `init`, `inject`, `tag`, and `link`
+- the core algorithms behind `init`, `inject`, `tag`, `link`, and `search`
 - how to run the implemented workflows end-to-end
 
 ## Current Command Coverage
@@ -19,11 +19,11 @@ Implemented:
 - `tag rename`
 - `link add`
 - `link remove`
+- `search`
 
 Not implemented yet:
 
 - `update`
-- `search`
 - `export`
 
 ## Core Algorithms
@@ -151,6 +151,19 @@ Behavior:
 - removes all relations for that directed pair (not filtered by relation type)
 - fails if no links exist for that pair
 
+## 5. Search (`search`)
+
+`lamian search [--tag <tag>] [--source-key <source_key>] [--text <text>] --vault <path>`
+
+Behavior:
+
+- accepts independent optional filters and combines them with logical `AND`
+- `--tag` is normalized to lowercase and uses the same hierarchy validation rules as tag commands
+- `--source-key` matches case-insensitively against source records
+- `--text` performs case-insensitive substring matching against figure display name, source fields, notes, and tag names
+- output is deterministic: first line prints count, followed by rows sorted by `figure_id`
+- when no rows match, prints `Search results: 0` and `No figures matched.`
+
 ## Practical CLI Usage
 
 ## 1. Initialize Vault
@@ -195,6 +208,14 @@ cargo run -- --vault "$PWD/.demo_vault" tag rename "jwst" "observatory"
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" link add <from_figure_id> <to_figure_id> --relation related
 cargo run -- --vault "$PWD/.demo_vault" link remove <from_figure_id> <to_figure_id>
+```
+
+## 5. Search Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" search --tag "observatory:jwst"
+cargo run -- --vault "$PWD/.demo_vault" search --source-key "10.1126/science.ady9404"
+cargo run -- --vault "$PWD/.demo_vault" search --text "elliptical_galaxy"
 ```
 
 ## Verification

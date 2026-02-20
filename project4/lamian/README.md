@@ -6,8 +6,8 @@ This repository contains the Rust implementation for LaMian.
 
 - `init` command is implemented.
 - Database schema initialization and migrations are implemented.
-- `inject`, `tag` (`add`/`remove`/`rename`), and `link` (`add`/`remove`) are implemented.
-- `update`, `search`, and `export` remain pending.
+- `inject`, `tag` (`add`/`remove`/`rename`), `link` (`add`/`remove`), and `search` are implemented.
+- `update` and `export` remain pending.
 
 ## Quick Start
 

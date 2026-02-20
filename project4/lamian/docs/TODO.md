@@ -7,8 +7,8 @@
 | L-101 | Initialize Rust CLI crate | Done | `init` command available |
 | L-102 | Add SQLite migration framework | Done | v1 schema and migration table implemented |
 | L-103 | Implement `inject` with strict provenance validation | Done | shared ingest core added with typed validation, copy/reference handling, and transactional persistence |
-| L-104 | Implement `update`, `tag`, `link`, `search`, `export` logic | In Progress | full `tag` actions and `link add/remove` implemented with typed validation; `update/search/export` pending |
-| L-105 | Add integration tests for CLI workflow | In Progress | real-fixture CLI tests now cover `inject`, tag operations, and link operations with success/failure paths; full workflow still pending |
+| L-104 | Implement `update`, `tag`, `link`, `search`, `export` logic | In Progress | `tag` actions, `link add/remove`, and `search` (tag/source/text filters) implemented with typed validation; `update/export` pending |
+| L-105 | Add integration tests for CLI workflow | In Progress | real-fixture CLI tests now cover `inject`, tag operations, link operations, and search filter/empty-result paths; full workflow still pending |
 
 ## Phase 2: Domain and Validation
 

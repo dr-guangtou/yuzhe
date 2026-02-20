@@ -4,6 +4,7 @@ mod db;
 mod error;
 mod inject;
 mod link;
+mod search;
 mod tag;
 
 use clap::Parser;

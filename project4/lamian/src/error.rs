@@ -78,4 +78,14 @@ pub enum LamianError {
         from_figure_id: String,
         to_figure_id: String,
     },
+
+    #[error("missing required search field: {field}")]
+    MissingSearchField { field: &'static str },
+
+    #[error("invalid search value for {field}: {reason}; received: {value}")]
+    InvalidSearchValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
 }

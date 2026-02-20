@@ -107,7 +107,7 @@ pub fn initialize_vault(vault_root: &Path) -> Result<VaultPaths, LamianError> {
     Ok(paths)
 }
 
-fn resolve_vault_paths(vault_root: &Path) -> VaultPaths {
+pub(crate) fn resolve_vault_paths(vault_root: &Path) -> VaultPaths {
     let normalized_root = vault_root.to_path_buf();
     let lamian_root = normalized_root.join(LAMIAN_DIR_NAME);
     let database_path = lamian_root.join(DATABASE_FILE_NAME);

@@ -6,9 +6,9 @@
 | --- | --- | --- | --- |
 | L-101 | Initialize Rust CLI crate | Done | `init` command available |
 | L-102 | Add SQLite migration framework | Done | v1 schema and migration table implemented |
-| L-103 | Implement `inject` with strict provenance validation | Pending | requires file mode and source validation |
+| L-103 | Implement `inject` with strict provenance validation | Done | shared ingest core added with typed validation, copy/reference handling, and transactional persistence |
 | L-104 | Implement `update`, `tag`, `link`, `search`, `export` logic | In Progress | command definitions exist; handlers pending |
-| L-105 | Add integration tests for CLI workflow | Pending | init -> inject -> tag -> search path |
+| L-105 | Add integration tests for CLI workflow | In Progress | real-fixture CLI inject tests added (success + wrong-format failure); full init->inject->tag->search path still pending |
 
 ## Phase 2: Domain and Validation
 
@@ -24,4 +24,3 @@
 | --- | --- | --- | --- |
 | L-301 | Select Rust GUI approach | Pending | `egui`, `Iced`, or `Tauri` decision |
 | L-302 | Build vault browser and figure detail editor | Pending | prioritize functionality over styling |
-

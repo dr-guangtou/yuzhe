@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
 
+use crate::inject::{CopyMode, SourceType};
+
 #[derive(Debug, Parser)]
 #[command(name = "lamian")]
 #[command(about = "LaMian CLI")]
@@ -93,20 +95,6 @@ pub enum LinkAction {
         from_figure_id: String,
         to_figure_id: String,
     },
-}
-
-#[derive(Debug, Clone, Copy, ValueEnum)]
-pub enum SourceType {
-    Doi,
-    Url,
-    Local,
-    Manual,
-}
-
-#[derive(Debug, Clone, Copy, ValueEnum)]
-pub enum CopyMode {
-    Copy,
-    Reference,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

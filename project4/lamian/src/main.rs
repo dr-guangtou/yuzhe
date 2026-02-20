@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod db;
 mod error;
+mod inject;
 
 use clap::Parser;
 use cli::Cli;

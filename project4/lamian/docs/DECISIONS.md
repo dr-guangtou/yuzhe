@@ -36,3 +36,10 @@
   - simple permissive open-source licensing
   - matches crate metadata in `Cargo.toml`
 
+## D-006: Shared Ingest Core Across CLI and GUI
+
+- Status: accepted
+- Why:
+  - avoid duplicated ingest logic
+  - ensure strict provenance validation is enforced identically in all frontends
+  - make drag-and-drop a UI trigger over existing core behavior

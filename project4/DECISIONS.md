@@ -62,3 +62,16 @@
   - Clear separation of planning vs coding artifacts.
   - Requires discipline to avoid file drift.
 
+## ADR-006: Single Ingest Core for CLI and GUI
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - GUI drag-and-drop ingestion is planned.
+  - Duplicate ingest implementations would create behavior drift and validation inconsistencies.
+- Decision:
+  - Keep one ingest core service in the domain layer.
+  - CLI and GUI are frontends that call the same ingest core.
+- Consequences:
+  - Better consistency in provenance validation and persistence behavior.
+  - GUI drag-and-drop implementation is faster once CLI ingest core is stable.

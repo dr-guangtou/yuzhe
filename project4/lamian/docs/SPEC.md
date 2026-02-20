@@ -14,6 +14,14 @@ Build a local-only visual knowledge base for research figures with reliable meta
 6. Search and filtering
 7. Metadata export (`yaml` or `json`)
 
+## Ingest Architecture Rule
+
+- There is one shared ingest core service.
+- CLI `inject` and GUI drag-and-drop both call the same ingest core service.
+- GUI drag-and-drop is an input method, not a separate ingest implementation.
+- If source provenance fields are missing at drop time, GUI prompts user metadata before final ingest commit.
+- Ingest core must accept one or many file paths to support drag-and-drop batches.
+
 ## Non-Functional Scope
 
 1. Local-first and offline-capable
@@ -54,4 +62,4 @@ lamian export [--format yaml|json] [--target <path>]
 2. Schema migrations apply safely.
 3. CLI and DB behavior is covered by tests.
 4. Provenance validation blocks incomplete ingest operations.
-
+5. GUI drag-and-drop path produces equivalent persisted records as CLI ingest.

@@ -30,6 +30,8 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
   - Register an existing local image file into vault metadata
   - Copy or reference mode for source file handling
   - Compute and persist file hash
+  - Use a single shared ingest core service for all frontends (CLI and GUI)
+  - Support both single-file ingest and multi-file ingest inputs
 
 - FR-003 Provenance enforcement
   - Require source type and source key on ingest
@@ -59,6 +61,8 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
   - Figure detail view and metadata editor
   - Search and tag filtering
   - Trigger core operations available in CLI
+  - Provide drag-and-drop entry point ("Drop the Figure Here") that calls the same ingest core as CLI
+  - If required provenance fields are missing, GUI must prompt for metadata before final commit
 
 ### 4.2 Non-Functional Requirements
 
@@ -98,6 +102,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - `domain_core`
   - figure, source, tag, link, note models
   - validation and invariants
+  - shared ingest service used by CLI and GUI frontends
 - `persistence`
   - SQLite schema, migrations, repository traits
 - `cli_app`
@@ -211,6 +216,8 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - inspect figure details
 - edit metadata
 - apply tag filters
+- drag-and-drop one file and verify same ingest result as CLI inject
+- drag-and-drop multiple files and verify each file is validated and persisted independently
 
 ### 11.4 Acceptance
 
@@ -223,4 +230,3 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - Preferred GUI framework for Rust in final implementation phase
 - Final sidecar format default (`yaml` vs `json`)
 - Figure deduplication policy when same hash appears with different filenames
-

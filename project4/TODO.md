@@ -22,6 +22,7 @@
 | P4-104 | Implement CLI commands (`init`, `inject`, `tag`, `link`, `search`, `export`) | agent | [ ] In Progress | `init` implemented, others are typed stubs |
 | P4-105 | Add integration tests for end-to-end CLI workflow | agent | [ ] Pending | include failure modes |
 | P4-106 | Prepare `lamian/` for standalone repository extraction | agent | [x] Done | local docs, license, toolchain pin, and migration checklist added |
+| P4-107 | Define shared ingest-core rule for CLI and GUI drag-and-drop | agent | [x] Done | captured in spec and decision logs |
 
 ## Verification Plan
 
@@ -38,3 +39,4 @@
 - 2026-02-19: Cross-file consistency verified across planning and governance docs.
 - 2026-02-19: Phase 1 bootstrap started in `project4/lamian/` with working `init` command and schema migrations.
 - 2026-02-20: Extraction-readiness pass completed for `project4/lamian/`.
+- 2026-02-20: Ingest architecture locked: GUI drag-and-drop must call the same core ingest service as CLI.

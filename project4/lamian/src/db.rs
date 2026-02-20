@@ -15,9 +15,10 @@ struct Migration {
     sql: &'static str,
 }
 
-const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    sql: r#"
+const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        sql: r#"
 CREATE TABLE IF NOT EXISTS figures (
     figure_id TEXT PRIMARY KEY,
     display_name TEXT NOT NULL,
@@ -77,7 +78,14 @@ CREATE INDEX IF NOT EXISTS idx_figure_tags_tag_id ON figure_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_links_from_figure_id ON links(from_figure_id);
 CREATE INDEX IF NOT EXISTS idx_links_to_figure_id ON links(to_figure_id);
 "#,
-}];
+    },
+    Migration {
+        version: 2,
+        sql: r#"
+ALTER TABLE figures ADD COLUMN caption TEXT;
+"#,
+    },
+];
 
 #[derive(Debug, Clone)]
 pub struct VaultPaths {
@@ -184,7 +192,7 @@ mod tests {
     use rusqlite::Connection;
     use tempfile::TempDir;
 
-    use super::initialize_vault;
+    use super::{initialize_vault, latest_migration_version};
 
     #[test]
     fn initialize_vault_creates_database_and_config() {
@@ -206,6 +214,7 @@ mod tests {
         assert!(table_exists(&connection, "figure_tags"));
         assert!(table_exists(&connection, "links"));
         assert!(table_exists(&connection, "notes"));
+        assert!(column_exists(&connection, "figures", "caption"));
     }
 
     #[test]
@@ -225,7 +234,7 @@ mod tests {
             })
             .expect("migration count");
 
-        assert_eq!(migration_count, 1);
+        assert_eq!(migration_count, latest_migration_version());
     }
 
     fn table_exists(connection: &Connection, table_name: &str) -> bool {
@@ -234,5 +243,20 @@ mod tests {
             .query_row(query, [table_name], |row| row.get(0))
             .expect("table exists query");
         exists == 1
+    }
+
+    fn column_exists(connection: &Connection, table_name: &str, column_name: &str) -> bool {
+        let pragma = format!("PRAGMA table_info({table_name})");
+        let mut statement = connection.prepare(&pragma).expect("prepare table info");
+        let mut rows = statement.query([]).expect("query table info");
+
+        while let Some(row) = rows.next().expect("iterate table info") {
+            let existing_column_name: String = row.get(1).expect("column name");
+            if existing_column_name == column_name {
+                return true;
+            }
+        }
+
+        false
     }
 }

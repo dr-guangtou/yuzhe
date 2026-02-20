@@ -97,6 +97,7 @@ AND (?2 IS NULL OR EXISTS (
 ))
 AND (?3 IS NULL OR (
     LOWER(figures.display_name) LIKE ?3 ESCAPE '\'
+    OR LOWER(COALESCE(figures.caption, '')) LIKE ?3 ESCAPE '\'
     OR EXISTS (
         SELECT 1
         FROM sources

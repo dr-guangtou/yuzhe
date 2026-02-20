@@ -43,3 +43,11 @@
   - avoid duplicated ingest logic
   - ensure strict provenance validation is enforced identically in all frontends
   - make drag-and-drop a UI trigger over existing core behavior
+
+## D-007: Store Caption on `figures` Instead of `sources`
+
+- Status: accepted
+- Why:
+  - caption is figure-level metadata, not provenance metadata
+  - avoids ambiguity when a figure has multiple source rows
+  - keeps update/search/export behavior aligned to domain intent

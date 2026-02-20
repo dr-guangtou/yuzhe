@@ -10,6 +10,7 @@ use crate::tag::{
     AddTagRequest, RemoveTagRequest, RenameTagRequest, add_tag_to_figure, remove_tag_from_figure,
     rename_tag,
 };
+use crate::update::{UpdateRequest, update_figure};
 
 pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
     match cli.command {
@@ -38,7 +39,25 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             println!("Injected figure: {}", result.figure_id);
             Ok(())
         }
-        Command::Update { .. } => Err(LamianError::NotImplemented { command: "update" }),
+        Command::Update {
+            figure_id,
+            name,
+            caption,
+            note_file,
+        } => {
+            let vault_path = require_vault(cli.vault, "update")?;
+            let result = update_figure(UpdateRequest {
+                vault_root: vault_path,
+                figure_id,
+                name,
+                caption,
+                note_file,
+            })?;
+
+            println!("Updated figure: {}", result.figure_id);
+            println!("Updated fields: {}", result.updated_fields.join(", "));
+            Ok(())
+        }
         Command::Tag { action } => {
             let vault_path = require_vault(cli.vault, "tag")?;
             match action {

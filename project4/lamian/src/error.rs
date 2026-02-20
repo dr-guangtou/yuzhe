@@ -88,4 +88,17 @@ pub enum LamianError {
         reason: &'static str,
         value: String,
     },
+
+    #[error("missing required update field: {field}")]
+    MissingUpdateField { field: &'static str },
+
+    #[error("missing update payload: provide at least one of --name, --caption, or --note-file")]
+    MissingUpdatePayload,
+
+    #[error("invalid update value for {field}: {reason}; received: {value}")]
+    InvalidUpdateValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
 }

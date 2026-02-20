@@ -48,7 +48,7 @@ lamian export [--format yaml|json] [--target <path>]
 
 ## Core Tables
 
-- `figures`
+- `figures` (includes `display_name` and optional `caption`)
 - `sources`
 - `tags`
 - `figure_tags`

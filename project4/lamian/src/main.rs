@@ -6,6 +6,7 @@ mod inject;
 mod link;
 mod search;
 mod tag;
+mod update;
 
 use clap::Parser;
 use cli::Cli;

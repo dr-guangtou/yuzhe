@@ -5,7 +5,7 @@
 This guide explains:
 
 - how the current LaMian CLI works
-- the core algorithms behind `init`, `inject`, `tag`, `link`, and `search`
+- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, and `search`
 - how to run the implemented workflows end-to-end
 
 ## Current Command Coverage
@@ -14,6 +14,7 @@ Implemented:
 
 - `init`
 - `inject`
+- `update`
 - `tag add`
 - `tag remove`
 - `tag rename`
@@ -23,7 +24,6 @@ Implemented:
 
 Not implemented yet:
 
-- `update`
 - `export`
 
 ## Core Algorithms
@@ -72,7 +72,27 @@ Properties:
 - transactional metadata writes
 - typed, actionable errors on validation/IO/DB failures
 
-## 3. Tag Management (`tag`)
+## 3. Metadata Update (`update`)
+
+`lamian update <figure_id> [--name <value>] [--caption <value>] [--note-file <path>] --vault <path>`
+
+Behavior:
+
+- requires `figure_id` to exist
+- requires at least one update payload flag: `--name`, `--caption`, or `--note-file`
+- `--name` updates `figures.display_name`
+- `--caption` updates `figures.caption`
+- `--note-file` reads UTF-8 markdown text and upserts into `notes.note_markdown`
+- all selected updates are committed transactionally
+
+Failures:
+
+- unknown figure ID
+- missing payload (no update flags)
+- missing/non-file note path
+- non-UTF-8 note file content
+
+## 4. Tag Management (`tag`)
 
 ## 3.1 `tag add`
 
@@ -123,11 +143,11 @@ Behavior:
 - updates `tag_parent` values accordingly
 - rejects rename when target tag or target descendant already exists
 
-## 4. Link Management (`link`)
+## 5. Link Management (`link`)
 
 Links are directed: `A -> B` is different from `B -> A`.
 
-## 4.1 `link add`
+## 5.1 `link add`
 
 `lamian link add <from_figure_id> <to_figure_id> [--relation <value>] --vault <path>`
 
@@ -142,7 +162,7 @@ Property:
 
 - idempotent for exact triple `(from_figure_id, to_figure_id, relation_type)`
 
-## 4.2 `link remove`
+## 5.2 `link remove`
 
 `lamian link remove <from_figure_id> <to_figure_id> --vault <path>`
 
@@ -151,7 +171,7 @@ Behavior:
 - removes all relations for that directed pair (not filtered by relation type)
 - fails if no links exist for that pair
 
-## 5. Search (`search`)
+## 6. Search (`search`)
 
 `lamian search [--tag <tag>] [--source-key <source_key>] [--text <text>] --vault <path>`
 
@@ -160,7 +180,7 @@ Behavior:
 - accepts independent optional filters and combines them with logical `AND`
 - `--tag` is normalized to lowercase and uses the same hierarchy validation rules as tag commands
 - `--source-key` matches case-insensitively against source records
-- `--text` performs case-insensitive substring matching against figure display name, source fields, notes, and tag names
+- `--text` performs case-insensitive substring matching against figure display name, figure caption, source fields, notes, and tag names
 - output is deterministic: first line prints count, followed by rows sorted by `figure_id`
 - when no rows match, prints `Search results: 0` and `No figures matched.`
 
@@ -195,7 +215,15 @@ cargo run -- --vault "$PWD/.demo_vault" inject \
   --copy-mode copy
 ```
 
-## 3. Tag Operations
+## 3. Update Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --name "JWST Panel 1"
+cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --caption "NIRCam composite of target field"
+cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --note-file "$PWD/example_note.md"
+```
+
+## 4. Tag Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" tag add <figure_id> "jwst:machine_learning"
@@ -203,14 +231,14 @@ cargo run -- --vault "$PWD/.demo_vault" tag remove <figure_id> "jwst:machine_lea
 cargo run -- --vault "$PWD/.demo_vault" tag rename "jwst" "observatory"
 ```
 
-## 4. Link Operations
+## 5. Link Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" link add <from_figure_id> <to_figure_id> --relation related
 cargo run -- --vault "$PWD/.demo_vault" link remove <from_figure_id> <to_figure_id>
 ```
 
-## 5. Search Operations
+## 6. Search Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" search --tag "observatory:jwst"

@@ -34,7 +34,7 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 
 ## 4. Implementation Phases
 
-## Phase 0: Documentation and Governance (current)
+## Phase 0: Documentation and Governance
 
 - Create and validate planning documents in `project4/`
 - Lock architecture, interfaces, and acceptance criteria
@@ -53,11 +53,26 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - Implement CLI commands for init/inject/tag/link/search/export
 - Add tests for data integrity and command behavior
 
+### Current Progress Snapshot (2026-02-20)
+
+- Completed:
+  - Rust workspace + SQLite migrations
+  - `init`
+  - `inject`
+  - `tag` (`add` / `remove` / `rename`)
+  - `link` (`add` / `remove`)
+  - integration tests for inject/tag/link success and failure paths
+- Pending in Phase 1:
+  - `update`
+  - `search`
+  - `export`
+  - full end-to-end CLI workflow (`init -> inject -> update -> tag -> link -> search -> export`)
+
 ### Gate to Phase 2
 
-- CLI acceptance tests pass
+- CLI acceptance tests pass for full MVP command surface
 - Migration and rollback flow verified
-- Data model is stable for GUI integration
+- Data model is stable for GUI integration (including update/search/export needs)
 
 ## Phase 2: Desktop GUI (Functionality First)
 
@@ -104,3 +119,11 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - `CLAUDE.md`
 - `journal/2026-02-19.md`
 
+## 8. Next Planning Update
+
+Before entering Phase 2 (GUI), complete a final Phase 1 closure pass:
+
+1. Implement `update` with schema support for user metadata fields.
+2. Implement `search` over tags/source/text/time filters.
+3. Implement `export` (`yaml`/`json`) and sidecar target path handling.
+4. Add one integration suite that covers the full CLI workflow in sequence.

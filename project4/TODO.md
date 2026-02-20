@@ -24,6 +24,8 @@
 | P4-106 | Prepare `lamian/` for standalone repository extraction | agent | [x] Done | local docs, license, toolchain pin, and migration checklist added |
 | P4-107 | Define shared ingest-core rule for CLI and GUI drag-and-drop | agent | [x] Done | captured in spec and decision logs |
 | P4-108 | Add context-window and handover rules for multi-session development | agent | [x] Done | rules added to Project 4 and LaMian AGENTS/CLAUDE files |
+| P4-109 | Close remaining Phase 1 command gaps (`update`, `search`, `export`) | agent | [ ] Pending | required before Phase 2 gate |
+| P4-110 | Add full sequential CLI integration test (`init -> inject -> update -> tag -> link -> search -> export`) | agent | [ ] Pending | Phase 1 gate requires full workflow coverage |
 
 ## Verification Plan
 
@@ -47,3 +49,4 @@
 - 2026-02-20: Implemented `tag add` shared core path with tag normalization/idempotent persistence and added `inject -> tag add` integration tests for success, duplicate, and invalid tags.
 - 2026-02-20: Implemented `tag remove` and hierarchy-aware `tag rename` in shared core and added integration tests for remove success/unassigned and rename success/conflict paths.
 - 2026-02-20: Implemented shared `link add/remove` core with typed validation and added integration tests for add/remove success, idempotency, unknown IDs, and self-link rejection.
+- 2026-02-20: Daily review: plan updated to reflect late Phase 1 status and to prioritize `update/search/export` plus a full end-to-end CLI workflow test before Phase 2.

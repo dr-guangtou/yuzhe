@@ -45,6 +45,8 @@ cargo run --bin lamian -- --help
 - Keep planning docs synchronized with implementation changes.
 - Keep dated journal entries under `project4/journal/`.
 - Record architecture changes in `project4/DECISIONS.md`.
+- Keep implementation scope context-window aware: prefer one small, verifiable step per session.
+- When context gets tight, generate handover files in `project4/journal/` with status and next-session prompt.
 
 ## Collaboration Preference (User-Learning Mode)
 

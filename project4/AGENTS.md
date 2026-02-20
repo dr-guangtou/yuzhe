@@ -34,9 +34,25 @@ This file applies to all work under `project4/`.
 - Keep detailed work logs in `project4/journal/` using dated Markdown files.
 - If scope/constraints change, update affected docs in the same change set.
 
+## Context-Window Discipline
+
+- Plan implementation steps in small slices that fit one context window.
+- Prefer changes that complete 1-2 TODO items per session rather than broad partial edits.
+- Before ending a session, update `project4/TODO.md` and add a journal entry in `project4/journal/`.
+- If context is getting tight, create handover artifacts:
+  - `project4/journal/handover-YYYY-MM-DD-HHMM.md`
+  - `project4/journal/next-session-prompt-YYYY-MM-DD-HHMM.md`
+
+## Handover Minimum Content
+
+- Current branch, latest commit hash, and uncommitted status.
+- Completed work, in-progress work, and blockers.
+- Files changed and why they matter.
+- Verification run/not run and exact commands.
+- First 1-3 actions for next session with concrete commands.
+
 ## Verification Standard
 
 - Do not mark tasks complete without verification evidence.
 - For code tasks, include test execution results and known limitations.
 - For planning tasks, include cross-file consistency checks.
-

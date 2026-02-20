@@ -23,6 +23,7 @@
 | P4-105 | Add integration tests for end-to-end CLI workflow | agent | [ ] Pending | include failure modes |
 | P4-106 | Prepare `lamian/` for standalone repository extraction | agent | [x] Done | local docs, license, toolchain pin, and migration checklist added |
 | P4-107 | Define shared ingest-core rule for CLI and GUI drag-and-drop | agent | [x] Done | captured in spec and decision logs |
+| P4-108 | Add context-window and handover rules for multi-session development | agent | [x] Done | rules added to Project 4 and LaMian AGENTS/CLAUDE files |
 
 ## Verification Plan
 
@@ -40,3 +41,4 @@
 - 2026-02-19: Phase 1 bootstrap started in `project4/lamian/` with working `init` command and schema migrations.
 - 2026-02-20: Extraction-readiness pass completed for `project4/lamian/`.
 - 2026-02-20: Ingest architecture locked: GUI drag-and-drop must call the same core ingest service as CLI.
+- 2026-02-20: Added explicit context-window sizing and handover rules to reduce context rot across sessions.

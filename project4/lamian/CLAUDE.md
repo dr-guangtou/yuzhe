@@ -25,6 +25,15 @@ cargo run -- --help
 - `docs/TODO.md`
 - `docs/DECISIONS.md`
 - `docs/MIGRATION.md`
+- `docs/journal/` (standalone mode) or `project4/journal/` (incubator mode)
+
+## Context-Window and Handover Rules
+
+- Keep each implementation step small enough to complete with verification in one context window.
+- If context is getting tight, produce handover artifacts with explicit next commands.
+- Use the handover naming convention:
+  - `handover-YYYY-MM-DD-HHMM.md`
+  - `next-session-prompt-YYYY-MM-DD-HHMM.md`
 
 ## Collaboration Preference (User-Learning Mode)
 

@@ -13,9 +13,6 @@ pub enum LamianError {
     #[error("missing required --vault argument for `{command}` command")]
     MissingVaultArgument { command: &'static str },
 
-    #[error("command not implemented yet: {command}")]
-    NotImplemented { command: &'static str },
-
     #[error("invalid vault path: {path:?}")]
     InvalidVaultPath { path: PathBuf },
 
@@ -100,5 +97,21 @@ pub enum LamianError {
         field: &'static str,
         reason: &'static str,
         value: String,
+    },
+
+    #[error("missing required export field: {field}")]
+    MissingExportField { field: &'static str },
+
+    #[error("invalid export value for {field}: {reason}; received: {value}")]
+    InvalidExportValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("failed to serialize export as {format}: {reason}")]
+    ExportSerializationFailed {
+        format: &'static str,
+        reason: String,
     },
 }

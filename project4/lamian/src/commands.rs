@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::cli::{Cli, Command, LinkAction, TagAction};
 use crate::db;
 use crate::error::LamianError;
+use crate::export::{ExportRequest, export_metadata};
 use crate::inject::{InjectRequest, inject_figure};
 use crate::link::{AddLinkRequest, RemoveLinkRequest, add_link, remove_link};
 use crate::search::{SearchRequest, search_figures};
@@ -179,7 +180,25 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             }
             Ok(())
         }
-        Command::Export { .. } => Err(LamianError::NotImplemented { command: "export" }),
+        Command::Export { format, target } => {
+            let vault_path = require_vault(cli.vault, "export")?;
+            let result = export_metadata(ExportRequest {
+                vault_root: vault_path,
+                format,
+                target,
+            })?;
+
+            if let Some(path) = result.target_path {
+                println!(
+                    "Exported metadata: {} figures -> {}",
+                    result.figure_count,
+                    path.display()
+                );
+            } else if let Some(output) = result.output {
+                print!("{output}");
+            }
+            Ok(())
+        }
     }
 }
 

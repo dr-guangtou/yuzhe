@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod db;
 mod error;
+mod export;
 mod inject;
 mod link;
 mod search;

@@ -5,7 +5,7 @@
 This guide explains:
 
 - how the current LaMian CLI works
-- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, and `search`
+- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, `search`, and `export`
 - how to run the implemented workflows end-to-end
 
 ## Current Command Coverage
@@ -21,9 +21,6 @@ Implemented:
 - `link add`
 - `link remove`
 - `search`
-
-Not implemented yet:
-
 - `export`
 
 ## Core Algorithms
@@ -184,6 +181,21 @@ Behavior:
 - output is deterministic: first line prints count, followed by rows sorted by `figure_id`
 - when no rows match, prints `Search results: 0` and `No figures matched.`
 
+## 7. Export (`export`)
+
+`lamian export [--format yaml|json] [--target <path>] --vault <path>`
+
+Behavior:
+
+- exports full vault metadata snapshot from SQLite canonical store
+- output includes `schema_version` and ordered `figures` with sources/tags/links/note
+- deterministic ordering for stable diffs and automation
+- `--format json|yaml` controls serializer (`yaml` is default)
+- without `--target`, payload is printed to stdout only
+- with `--target`, writes file and prints a concise status line
+- creates parent directories for `--target` automatically
+- rejects `--target` when it points to an existing directory
+
 ## Practical CLI Usage
 
 ## 1. Initialize Vault
@@ -244,6 +256,13 @@ cargo run -- --vault "$PWD/.demo_vault" link remove <from_figure_id> <to_figure_
 cargo run -- --vault "$PWD/.demo_vault" search --tag "observatory:jwst"
 cargo run -- --vault "$PWD/.demo_vault" search --source-key "10.1126/science.ady9404"
 cargo run -- --vault "$PWD/.demo_vault" search --text "elliptical_galaxy"
+```
+
+## 7. Export Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" export --format json
+cargo run -- --vault "$PWD/.demo_vault" export --format yaml --target "$PWD/.demo_vault/.lamian/export.yaml"
 ```
 
 ## Verification

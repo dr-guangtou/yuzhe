@@ -3,6 +3,8 @@ mod commands;
 mod db;
 mod error;
 mod inject;
+mod link;
+mod tag;
 
 use clap::Parser;
 use cli::Cli;

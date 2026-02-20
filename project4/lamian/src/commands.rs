@@ -1,9 +1,14 @@
 use std::path::PathBuf;
 
-use crate::cli::{Cli, Command};
+use crate::cli::{Cli, Command, LinkAction, TagAction};
 use crate::db;
 use crate::error::LamianError;
 use crate::inject::{InjectRequest, inject_figure};
+use crate::link::{AddLinkRequest, RemoveLinkRequest, add_link, remove_link};
+use crate::tag::{
+    AddTagRequest, RemoveTagRequest, RenameTagRequest, add_tag_to_figure, remove_tag_from_figure,
+    rename_tag,
+};
 
 pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
     match cli.command {
@@ -33,8 +38,104 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             Ok(())
         }
         Command::Update { .. } => Err(LamianError::NotImplemented { command: "update" }),
-        Command::Tag { .. } => Err(LamianError::NotImplemented { command: "tag" }),
-        Command::Link { .. } => Err(LamianError::NotImplemented { command: "link" }),
+        Command::Tag { action } => {
+            let vault_path = require_vault(cli.vault, "tag")?;
+            match action {
+                TagAction::Add { figure_id, tag } => {
+                    let result = add_tag_to_figure(AddTagRequest {
+                        vault_root: vault_path,
+                        figure_id,
+                        tag,
+                    })?;
+
+                    if result.created_relation {
+                        println!("Added tag: {}", result.normalized_tag);
+                    } else {
+                        println!("Tag already assigned: {}", result.normalized_tag);
+                    }
+                    Ok(())
+                }
+                TagAction::Remove { figure_id, tag } => {
+                    let result = remove_tag_from_figure(RemoveTagRequest {
+                        vault_root: vault_path,
+                        figure_id,
+                        tag,
+                    })?;
+
+                    if result.removed_relation {
+                        println!("Removed tag: {}", result.normalized_tag);
+                    } else {
+                        println!("Tag not assigned: {}", result.normalized_tag);
+                    }
+                    Ok(())
+                }
+                TagAction::Rename { old_tag, new_tag } => {
+                    let result = rename_tag(RenameTagRequest {
+                        vault_root: vault_path,
+                        old_tag,
+                        new_tag,
+                    })?;
+
+                    if result.renamed_count == 0 {
+                        println!("Tag unchanged: {}", result.normalized_old_tag);
+                    } else {
+                        println!(
+                            "Renamed tag: {} -> {} (affected: {})",
+                            result.normalized_old_tag,
+                            result.normalized_new_tag,
+                            result.renamed_count
+                        );
+                    }
+                    Ok(())
+                }
+            }
+        }
+        Command::Link { action } => {
+            let vault_path = require_vault(cli.vault, "link")?;
+            match action {
+                LinkAction::Add {
+                    from_figure_id,
+                    to_figure_id,
+                    relation,
+                } => {
+                    let result = add_link(AddLinkRequest {
+                        vault_root: vault_path,
+                        from_figure_id,
+                        to_figure_id,
+                        relation,
+                    })?;
+
+                    if result.created_link {
+                        println!(
+                            "Added link: {} -> {} [{}]",
+                            result.from_figure_id, result.to_figure_id, result.normalized_relation
+                        );
+                    } else {
+                        println!(
+                            "Link already exists: {} -> {} [{}]",
+                            result.from_figure_id, result.to_figure_id, result.normalized_relation
+                        );
+                    }
+                    Ok(())
+                }
+                LinkAction::Remove {
+                    from_figure_id,
+                    to_figure_id,
+                } => {
+                    let result = remove_link(RemoveLinkRequest {
+                        vault_root: vault_path,
+                        from_figure_id,
+                        to_figure_id,
+                    })?;
+
+                    println!(
+                        "Removed links: {} -> {} (count: {})",
+                        result.from_figure_id, result.to_figure_id, result.removed_count
+                    );
+                    Ok(())
+                }
+            }
+        }
         Command::Search { .. } => Err(LamianError::NotImplemented { command: "search" }),
         Command::Export { .. } => Err(LamianError::NotImplemented { command: "export" }),
     }

@@ -18,9 +18,9 @@
 | --- | --- | --- | --- | --- |
 | P4-101 | Initialize Rust workspace in `project4/lamian/` | agent | [x] Done | Rust crate initialized with build/test workflow |
 | P4-102 | Add SQLite migration framework | agent | [x] Done | migration table + v1 schema + idempotent init tests |
-| P4-103 | Implement domain models and validation | agent | [ ] In Progress | strict provenance validation implemented in shared `inject` core; remaining domain models pending |
-| P4-104 | Implement CLI commands (`init`, `inject`, `tag`, `link`, `search`, `export`) | agent | [ ] In Progress | `init` and `inject` implemented; others remain typed stubs |
-| P4-105 | Add integration tests for end-to-end CLI workflow | agent | [ ] In Progress | `inject` CLI integration tests added with real fixtures and failure mode; broader workflow coverage pending |
+| P4-103 | Implement domain models and validation | agent | [ ] In Progress | strict provenance and `tag` normalization/validation are implemented in shared core; remaining domain models pending |
+| P4-104 | Implement CLI commands (`init`, `inject`, `tag`, `link`, `search`, `export`) | agent | [ ] In Progress | `init`, `inject`, full `tag`, and `link add/remove` implemented; `search/export/update` remain stubs |
+| P4-105 | Add integration tests for end-to-end CLI workflow | agent | [ ] In Progress | CLI tests now cover `inject`, `tag` operations, and `link` operations with success/failure cases; broader workflow coverage pending |
 | P4-106 | Prepare `lamian/` for standalone repository extraction | agent | [x] Done | local docs, license, toolchain pin, and migration checklist added |
 | P4-107 | Define shared ingest-core rule for CLI and GUI drag-and-drop | agent | [x] Done | captured in spec and decision logs |
 | P4-108 | Add context-window and handover rules for multi-session development | agent | [x] Done | rules added to Project 4 and LaMian AGENTS/CLAUDE files |
@@ -44,3 +44,6 @@
 - 2026-02-20: Added explicit context-window sizing and handover rules to reduce context rot across sessions.
 - 2026-02-20: Implemented shared `inject` core service with typed provenance validation, transactional `figures` + `sources` persistence, and new success/failure tests.
 - 2026-02-20: Added CLI integration tests for real Desktop PNG fixtures and wrong-format negative fixture in `project4/lamian/tests/cli_inject_real.rs`.
+- 2026-02-20: Implemented `tag add` shared core path with tag normalization/idempotent persistence and added `inject -> tag add` integration tests for success, duplicate, and invalid tags.
+- 2026-02-20: Implemented `tag remove` and hierarchy-aware `tag rename` in shared core and added integration tests for remove success/unassigned and rename success/conflict paths.
+- 2026-02-20: Implemented shared `link add/remove` core with typed validation and added integration tests for add/remove success, idempotency, unknown IDs, and self-link rejection.

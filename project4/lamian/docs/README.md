@@ -16,3 +16,4 @@ During incubation in the parent repository:
 - `project4/` remains the planning and PM workspace.
 - `project4/lamian/docs/` is the extraction-ready documentation set for the future standalone repository.
 
+Current documentation baseline includes completed Phase 1 command coverage and the planned Phase 1.5 pre-GUI roadmap.

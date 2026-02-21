@@ -40,5 +40,5 @@ This checklist prepares `project4/lamian/` for extraction into a standalone repo
 ## 5. Current Status
 
 - Local structure is extraction-ready for a basic standalone Rust CLI repository.
-- Remaining work is feature completion (`inject`, tagging, linking, search, export) and CI setup in the new host repository.
-
+- Phase 1 core commands are complete (`init`, `inject`, `update`, `tag`, `link`, `search`, `export`).
+- Remaining implementation work before GUI is Phase 1.5 (`query`, `import`, `doctor`, `collection`, `bundle`) plus CI setup in the standalone host repository.

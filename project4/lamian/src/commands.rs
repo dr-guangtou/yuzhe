@@ -1,11 +1,20 @@
 use std::path::PathBuf;
 
-use crate::cli::{Cli, Command, LinkAction, TagAction};
+use serde::Serialize;
+use serde_json::json;
+
+use crate::cli::{Cli, Command, LinkAction, QueryAction, TagAction};
 use crate::db;
+use crate::doctor::{DoctorRequest, doctor_vault};
 use crate::error::LamianError;
 use crate::export::{ExportRequest, export_metadata};
+use crate::import::{ImportRequest, import_batch};
 use crate::inject::{InjectRequest, inject_figure};
 use crate::link::{AddLinkRequest, RemoveLinkRequest, add_link, remove_link};
+use crate::query::{
+    DeleteQueryRequest, ListQueriesRequest, RunQueryRequest, SaveQueryRequest, delete_query,
+    list_queries, run_query, save_query,
+};
 use crate::search::{SearchRequest, search_figures};
 use crate::tag::{
     AddTagRequest, RemoveTagRequest, RenameTagRequest, add_tag_to_figure, remove_tag_from_figure,
@@ -180,6 +189,142 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             }
             Ok(())
         }
+        Command::Query { action } => {
+            let vault_path = require_vault(cli.vault, "query")?;
+            match action {
+                QueryAction::Save {
+                    name,
+                    tag,
+                    source_key,
+                    text,
+                    sort,
+                    order,
+                    limit,
+                } => {
+                    let result = save_query(SaveQueryRequest {
+                        vault_root: vault_path,
+                        query_name: name,
+                        tag,
+                        source_key,
+                        text,
+                        sort_field: sort,
+                        sort_order: order,
+                        limit,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "query.save",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                QueryAction::Run { name_or_id, detail } => {
+                    let result = run_query(RunQueryRequest {
+                        vault_root: vault_path,
+                        query_reference: name_or_id,
+                        detail,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "query.run",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                QueryAction::List => {
+                    let result = list_queries(ListQueriesRequest {
+                        vault_root: vault_path,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "query.list",
+                        "status": "ok",
+                        "count": result.queries.len(),
+                        "queries": result.queries,
+                    }))?;
+                    Ok(())
+                }
+                QueryAction::Delete { name_or_id } => {
+                    let result = delete_query(DeleteQueryRequest {
+                        vault_root: vault_path,
+                        query_reference: name_or_id,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "query.delete",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+            }
+        }
+        Command::Import {
+            input_path,
+            source_type,
+            source_key_template,
+            copy_mode,
+            recursive,
+            dry_run,
+        } => {
+            let vault_path = require_vault(cli.vault, "import")?;
+            let result = import_batch(ImportRequest {
+                vault_root: vault_path,
+                input_path,
+                source_type,
+                source_key_template,
+                copy_mode,
+                recursive,
+                dry_run,
+            })?;
+
+            let status = if result.has_failures() {
+                "partial_failure"
+            } else {
+                "ok"
+            };
+            let failed_count = result.failed;
+            print_json(&json!({
+                "command": "import",
+                "status": status,
+                "result": result,
+            }))?;
+
+            if failed_count > 0 {
+                return Err(LamianError::ImportCompletedWithFailures { failed_count });
+            }
+
+            Ok(())
+        }
+        Command::Doctor { fix } => {
+            let vault_path = require_vault(cli.vault, "doctor")?;
+            let result = doctor_vault(DoctorRequest {
+                vault_root: vault_path,
+                fix,
+            })?;
+
+            let status = if result.unresolved_count == 0 {
+                "ok"
+            } else {
+                "issues_found"
+            };
+            let unresolved_count = result.unresolved_count;
+            print_json(&json!({
+                "command": "doctor",
+                "status": status,
+                "result": result,
+            }))?;
+
+            if unresolved_count > 0 {
+                return Err(LamianError::DoctorIssuesFound {
+                    issue_count: unresolved_count,
+                });
+            }
+
+            Ok(())
+        }
         Command::Export { format, target } => {
             let vault_path = require_vault(cli.vault, "export")?;
             let result = export_metadata(ExportRequest {
@@ -207,4 +352,14 @@ fn require_vault(
     command: &'static str,
 ) -> Result<PathBuf, LamianError> {
     vault_argument.ok_or(LamianError::MissingVaultArgument { command })
+}
+
+fn print_json<T: Serialize>(value: &T) -> Result<(), LamianError> {
+    let content = serde_json::to_string_pretty(value).map_err(|error| {
+        LamianError::JsonOutputSerializationFailed {
+            reason: error.to_string(),
+        }
+    })?;
+    println!("{content}");
+    Ok(())
 }

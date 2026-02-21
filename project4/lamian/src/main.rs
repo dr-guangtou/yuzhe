@@ -1,10 +1,13 @@
 mod cli;
 mod commands;
 mod db;
+mod doctor;
 mod error;
 mod export;
+mod import;
 mod inject;
 mod link;
+mod query;
 mod search;
 mod tag;
 mod update;

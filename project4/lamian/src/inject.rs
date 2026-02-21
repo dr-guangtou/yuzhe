@@ -49,9 +49,120 @@ pub struct InjectRequest {
 #[derive(Debug, Clone)]
 pub struct InjectResult {
     pub figure_id: String,
+    pub created_new: bool,
+    pub persisted_input_path: PathBuf,
+}
+
+#[derive(Debug, Clone)]
+pub struct InspectInjectRequest {
+    pub vault_root: PathBuf,
+    pub file_path: PathBuf,
+    pub source_type: SourceType,
+    pub source_key: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct InspectInjectResult {
+    pub figure_id: String,
+    pub source_key: String,
+    pub input_file_path: PathBuf,
+    pub display_name: String,
+    pub media_type: String,
+    pub file_size_bytes: u64,
+    pub file_hash_sha256: String,
+    pub duplicate_exists: bool,
 }
 
 pub fn inject_figure(request: InjectRequest) -> Result<InjectResult, LamianError> {
+    let inspection = inspect_inject(InspectInjectRequest {
+        vault_root: request.vault_root.clone(),
+        file_path: request.file_path.clone(),
+        source_type: request.source_type,
+        source_key: request.source_key,
+    })?;
+
+    let vault_paths = db::resolve_vault_paths(&request.vault_root);
+    let mut connection = Connection::open(&vault_paths.database_path)?;
+    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+
+    if inspection.duplicate_exists {
+        return Ok(InjectResult {
+            figure_id: inspection.figure_id,
+            created_new: false,
+            persisted_input_path: inspection.input_file_path,
+        });
+    }
+
+    let persisted_file_path = match request.copy_mode {
+        CopyMode::Reference => inspection.input_file_path.clone(),
+        CopyMode::Copy => copy_file_into_vault(
+            &vault_paths.lamian_root,
+            &inspection.figure_id,
+            &inspection.input_file_path,
+        )?,
+    };
+    let persisted_file_path_string = persisted_file_path.to_string_lossy().into_owned();
+
+    let transaction_result = (|| -> Result<(), LamianError> {
+        let transaction = connection.transaction()?;
+
+        transaction.execute(
+            r#"
+INSERT INTO figures (
+    figure_id,
+    display_name,
+    file_path,
+    file_hash_sha256,
+    media_type,
+    file_size_bytes
+)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+"#,
+            params![
+                &inspection.figure_id,
+                &inspection.display_name,
+                &persisted_file_path_string,
+                &inspection.file_hash_sha256,
+                &inspection.media_type,
+                inspection.file_size_bytes
+            ],
+        )?;
+
+        transaction.execute(
+            r#"
+INSERT INTO sources (
+    figure_id,
+    source_type,
+    source_key
+)
+VALUES (?1, ?2, ?3)
+"#,
+            params![
+                &inspection.figure_id,
+                request.source_type.as_str(),
+                &inspection.source_key
+            ],
+        )?;
+
+        transaction.commit()?;
+        Ok(())
+    })();
+
+    if let Err(error) = transaction_result {
+        if matches!(request.copy_mode, CopyMode::Copy) {
+            let _ = fs::remove_file(persisted_file_path);
+        }
+        return Err(error);
+    }
+
+    Ok(InjectResult {
+        figure_id: inspection.figure_id,
+        created_new: true,
+        persisted_input_path: inspection.input_file_path,
+    })
+}
+
+pub fn inspect_inject(request: InspectInjectRequest) -> Result<InspectInjectResult, LamianError> {
     if request.vault_root.as_os_str().is_empty() {
         return Err(LamianError::InvalidVaultPath {
             path: request.vault_root,
@@ -73,70 +184,20 @@ pub fn inject_figure(request: InjectRequest) -> Result<InjectResult, LamianError
         });
     }
 
-    let mut connection = Connection::open(&vault_paths.database_path)?;
+    let connection = Connection::open(vault_paths.database_path)?;
     connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let duplicate_exists = figure_exists(&connection, &figure_id)?;
 
-    if figure_exists(&connection, &figure_id)? {
-        return Ok(InjectResult { figure_id });
-    }
-
-    let persisted_file_path = match request.copy_mode {
-        CopyMode::Reference => input_file_path.clone(),
-        CopyMode::Copy => {
-            copy_file_into_vault(&vault_paths.lamian_root, &figure_id, &input_file_path)?
-        }
-    };
-    let persisted_file_path_string = persisted_file_path.to_string_lossy().into_owned();
-
-    let transaction_result = (|| -> Result<(), LamianError> {
-        let transaction = connection.transaction()?;
-
-        transaction.execute(
-            r#"
-INSERT INTO figures (
-    figure_id,
-    display_name,
-    file_path,
-    file_hash_sha256,
-    media_type,
-    file_size_bytes
-)
-VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-"#,
-            params![
-                &figure_id,
-                &display_name,
-                &persisted_file_path_string,
-                &file_hash_sha256,
-                &media_type,
-                file_size_bytes
-            ],
-        )?;
-
-        transaction.execute(
-            r#"
-INSERT INTO sources (
-    figure_id,
-    source_type,
-    source_key
-)
-VALUES (?1, ?2, ?3)
-"#,
-            params![&figure_id, request.source_type.as_str(), &source_key],
-        )?;
-
-        transaction.commit()?;
-        Ok(())
-    })();
-
-    if let Err(error) = transaction_result {
-        if matches!(request.copy_mode, CopyMode::Copy) {
-            let _ = fs::remove_file(persisted_file_path);
-        }
-        return Err(error);
-    }
-
-    Ok(InjectResult { figure_id })
+    Ok(InspectInjectResult {
+        figure_id,
+        source_key,
+        input_file_path,
+        display_name,
+        media_type,
+        file_size_bytes,
+        file_hash_sha256,
+        duplicate_exists,
+    })
 }
 
 fn canonicalize_input_file_path(path: &Path) -> Result<PathBuf, LamianError> {

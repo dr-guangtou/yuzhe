@@ -5,22 +5,42 @@
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
 | L-101 | Initialize Rust CLI crate | Done | `init` command available |
-| L-102 | Add SQLite migration framework | Done | v1 schema and migration table implemented |
-| L-103 | Implement `inject` with strict provenance validation | Done | shared ingest core added with typed validation, copy/reference handling, and transactional persistence |
-| L-104 | Implement `update`, `tag`, `link`, `search`, `export` logic | Done | all v1 command cores are implemented with typed validation and deterministic CLI outputs |
-| L-105 | Add integration tests for CLI workflow | Done | real-fixture CLI tests now cover `inject`, `update`, tag operations, link operations, search filters, and export behaviors |
+| L-102 | Add SQLite migration framework | Done | migrations v1/v2 implemented |
+| L-103 | Implement core commands (`inject`, `update`, `tag`, `link`, `search`, `export`) | Done | command cores implemented with typed validation |
+| L-104 | Add command-focused integration tests | Done | tests cover inject/update/tag/link/search/export |
+| L-105 | Add one full sequential workflow integration test | Pending | explicit `init -> inject -> update -> tag -> link -> search -> export` coverage still required |
 
-## Phase 2: Domain and Validation
+## Phase 1.5: Automation and Curation (Pre-GUI)
 
-| ID | Task | Status | Notes |
-| --- | --- | --- | --- |
-| L-201 | Add domain models for figure/source/tag/link | Pending | keep schema and model parity |
-| L-202 | Add tag normalization and hierarchy checks | In Progress | lowercase + delimiter validation and hierarchy-aware rename implemented for `tag`; broader workflows pending |
-| L-203 | Add link parser for `[[figure_id]]` references | Pending | normalize and persist parsed links |
-
-## Phase 3: GUI Baseline
+### Wave A
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-301 | Select Rust GUI approach | Pending | `egui`, `Iced`, or `Tauri` decision |
-| L-302 | Build vault browser and figure detail editor | Pending | prioritize functionality over styling |
+| L-151 | Add migration for `saved_queries` table | Done | migration v3 added with `saved_queries` schema and index |
+| L-152 | Implement `query save|run|list|delete` | Done | JSON-only output implemented with `run --detail ids|full` |
+| L-153 | Implement `import` batch ingest | Done | strict provenance template + continue-on-error summary + duplicate skip/report implemented |
+| L-154 | Implement `doctor` checks and DB-only `--fix` | Done | deterministic checks implemented; `--fix` mutates DB only |
+| L-155 | Add Wave A integration tests | Done | query/import/doctor integration coverage added |
+
+### Wave B
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-161 | Add migration for collections tables | Pending | `collections` + `collection_items` |
+| L-162 | Implement hybrid `collection` command family | Pending | static membership + dynamic query binding |
+| L-163 | Implement `bundle export|import` with `tar.gz` | Pending | metadata + managed files, skip-existing conflict policy |
+| L-164 | Add Wave B integration tests | Pending | collection sync + bundle roundtrip/conflict/corruption |
+
+## Phase 2: GUI Baseline
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-201 | Select Rust GUI approach | Pending | `egui`, `Iced`, or `Tauri` decision |
+| L-202 | Build vault browser and figure detail editor | Pending | prioritize functionality over styling |
+
+## Verification Gate
+
+- `cargo fmt --all`
+- `cargo clippy --all-targets -- -D warnings`
+- `cargo test`
+- migration compatibility checks for new schema versions

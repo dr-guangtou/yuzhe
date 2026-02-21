@@ -75,3 +75,88 @@
 - Consequences:
   - Better consistency in provenance validation and persistence behavior.
   - GUI drag-and-drop implementation is faster once CLI ingest core is stable.
+
+## ADR-007: Phase 1.5 Delivery Uses Two Waves
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Phase 1 commands are complete, but pre-GUI operational tooling is missing.
+  - Implementing all automation features at once raises integration risk.
+- Decision:
+  - Phase 1.5 is split into:
+    - Wave A: `query`, `import`, `doctor`
+    - Wave B: `collection`, `bundle`
+- Consequences:
+  - Earlier usable automation surface.
+  - Clear gate between data operations and portability features.
+
+## ADR-008: New Phase 1.5 Commands Use JSON-Only Output
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Agent-first usage needs structured output contracts.
+  - Existing command output remains human-readable and stable.
+- Decision:
+  - New Phase 1.5 commands emit JSON only.
+  - Existing command output format is unchanged in Phase 1.5.
+- Consequences:
+  - Easier machine consumption for new workflows.
+  - Mixed output styles across old/new commands until broader CLI harmonization.
+
+## ADR-009: Import Requires Explicit Provenance Templates
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Strict provenance is a core invariant.
+  - Batch import must not weaken metadata quality.
+- Decision:
+  - `import` requires explicit `--source-type` and `--source-key-template`.
+  - Duplicate figure IDs are skipped and reported.
+  - Batch import continues on per-item failures and returns non-zero if failures exist.
+- Consequences:
+  - Metadata quality is preserved.
+  - Import summaries become mandatory for operational visibility.
+
+## ADR-010: Doctor Supports DB-Only Safe Auto-Fixes
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Health checks are useful, but automatic file mutations are high risk.
+- Decision:
+  - `doctor --fix` is allowed only for DB-safe fixes in Phase 1.5.
+  - No file move/delete/rewrite actions in this phase.
+- Consequences:
+  - Reduces accidental data loss risk.
+  - Some issues remain report-only and require manual remediation.
+
+## ADR-011: Collections Are Hybrid With Dynamic Binding to Saved Query IDs
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Users need both curated static lists and query-driven smart sets.
+- Decision:
+  - Collections support:
+    - static membership
+    - dynamic mode referencing `saved_queries.query_id`
+- Consequences:
+  - Flexible curation workflows before GUI.
+  - Requires integrity checks for query/collection binding.
+
+## ADR-012: Bundle Format Is Tar.gz With Managed-File Default Payload
+
+- Date: 2026-02-20
+- Status: Accepted
+- Context:
+  - Need portable vault snapshots with deterministic packaging.
+- Decision:
+  - `bundle export|import` uses `tar.gz`.
+  - Default payload includes metadata + managed files under `.lamian/figures`.
+  - Import conflict policy defaults to skip existing figure IDs.
+- Consequences:
+  - Portable, deterministic handoff format.
+  - External reference files remain out of scope by default.

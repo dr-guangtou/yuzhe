@@ -2,7 +2,7 @@
 
 ## 1. Product Definition
 
-LaMian is a local-only visual knowledge base for research figures and screenshots. It helps users collect, organize, search, and connect figures through metadata, tags, notes, and links.
+LaMian is a local-only visual knowledge base for research figures and screenshots. It helps users collect, organize, search, audit, and package figures through metadata, tags, notes, links, saved queries, and curated collections.
 
 ## 2. Target User and Platform
 
@@ -16,217 +16,188 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - CLI-first core, GUI as an operational layer over the same core services
 - Local-first and offline-friendly
 - Strict provenance and metadata quality
+- Deterministic outputs for automation and reproducibility
 - Minimal and elegant scope for MVP
 
-## 4. MVP Scope
+## 4. Scope
 
-### 4.1 Functional Requirements
+## 4.1 Phase 1 (Completed)
+
+- `init`, `inject`, `update`, `tag`, `link`, `search`, `export`
+- migrations v1/v2
+- command-specific integration tests
+
+## 4.2 Phase 1.5 (Current)
+
+### Wave A
+
+- FR-101 Saved queries (`query save|run|list|delete`)
+- FR-102 Batch import (`import`) using strict provenance templates
+- FR-103 Vault diagnostics (`doctor`) with optional DB-only safe fixes
+
+### Wave B
+
+- FR-104 Collections (`collection`) with hybrid static/dynamic mode
+- FR-105 Portable bundles (`bundle export|import`) using `tar.gz`
+
+## 4.3 Phase 2 (Next)
+
+- GUI baseline over the same core services
+
+## 5. Functional Requirements
 
 - FR-001 Vault initialization
-  - Create or open a vault directory
-  - Initialize database and metadata configuration
+- FR-002 Figure ingest (`inject`) with strict provenance
+- FR-003 Metadata update (`update`)
+- FR-004 Hierarchical tags
+- FR-005 Directed links
+- FR-006 Search/filter
+- FR-007 Metadata export (`yaml`/`json`)
+- FR-101 Saved query management
+- FR-102 Batch import with per-item reporting
+- FR-103 Doctor checks and DB-safe fixes
+- FR-104 Hybrid collections
+- FR-105 Bundle portability
 
-- FR-002 Figure ingest (`inject`)
-  - Register an existing local image file into vault metadata
-  - Copy or reference mode for source file handling
-  - Compute and persist file hash
-  - Use a single shared ingest core service for all frontends (CLI and GUI)
-  - Support both single-file ingest and multi-file ingest inputs
+## 6. Non-Functional Requirements
 
-- FR-003 Provenance enforcement
-  - Require source type and source key on ingest
-  - Source types: `doi`, `url`, `local`, `manual`
+- NFR-001 Data durability via SQLite transactions
+- NFR-002 Schema migration safety and compatibility testing
+- NFR-003 Local-only baseline (no required cloud)
+- NFR-004 Clear, actionable errors
+- NFR-005 Deterministic ordering in search/export/query/bundle outputs
+- NFR-006 Performance characteristics validated by measurement, not estimates
 
-- FR-004 Metadata management
-  - Basic metadata: name, media type, size, timestamps
-  - User metadata: caption, Markdown note, custom fields
+## 7. Technical Architecture
 
-- FR-005 Hierarchical tags
-  - Tag format supports hierarchy by colon delimiter (example: `galaxy:elliptical`)
-  - One figure can hold multiple tags
-
-- FR-006 Search and filtering
-  - Query by tags, source fields, caption/note text, and timestamps
-
-- FR-007 Figure linking
-  - Stable `figure_id` for each item
-  - Link syntax baseline in notes: `[[figure_id]]`
-  - Store normalized links in dedicated table
-
-- FR-008 Export
-  - Export metadata to sidecar files (YAML or JSON) for portability
-
-- FR-009 GUI baseline
-  - Vault browser (list/grid)
-  - Figure detail view and metadata editor
-  - Search and tag filtering
-  - Trigger core operations available in CLI
-  - Provide drag-and-drop entry point ("Drop the Figure Here") that calls the same ingest core as CLI
-  - If required provenance fields are missing, GUI must prompt for metadata before final commit
-
-### 4.2 Non-Functional Requirements
-
-- NFR-001 Data durability
-  - Atomic writes for metadata updates
-  - Migration versioning for schema changes
-
-- NFR-002 Privacy
-  - No cloud dependency in MVP
-  - No required telemetry
-
-- NFR-003 Performance
-  - CLI ingest and metadata updates should complete without perceptible delay for single items under normal local IO conditions
-  - Search over medium vaults should remain interactive
-  - Exact thresholds need to be measured during implementation benchmarks
-
-- NFR-004 Reliability
-  - Errors return actionable messages
-  - Failed operations do not corrupt vault metadata
-
-## 5. Out of Scope for MVP
-
-- arXiv mode and publisher automation
-- Screenshot mode automation
-- Built-in LLM caption generation
-- Multi-device sync and collaboration
-
-## 6. Technical Architecture
-
-## 6.1 Language and Runtime
+## 7.1 Language and Runtime
 
 - Core language: Rust
 - Packaging target: local desktop app + CLI binary
 
-## 6.2 Logical Modules
+## 7.2 Logical Modules
 
 - `domain_core`
-  - figure, source, tag, link, note models
+  - figure, source, tag, link, note, query, collection models
   - validation and invariants
-  - shared ingest service used by CLI and GUI frontends
 - `persistence`
-  - SQLite schema, migrations, repository traits
+  - SQLite schema, migrations, repositories
 - `cli_app`
-  - command parsing and output formatting
-- `gui_app`
-  - desktop UI layer invoking domain services
-- `exporter`
-  - sidecar serialization
+  - command parsing and JSON/human output contracts
+- `bundle`
+  - tar manifest, checksum verification, import/export orchestration
 
-## 6.3 Data Store Strategy
+## 7.3 Data Store Strategy
 
 - Canonical store: SQLite
-- Portability: sidecar export files per figure
+- Portability: export and bundle artifacts
 - Source of truth: database wins in conflicts
 
-## 7. Data Model (MVP Draft)
+## 8. Data Model
 
-## 7.1 `figures`
+## 8.1 Existing Tables
 
-- `figure_id` (immutable text ID)
-- `display_name`
-- `file_path`
-- `file_hash_sha256`
-- `media_type`
-- `file_size_bytes`
-- `created_at`
-- `updated_at`
+- `figures` (`caption` included since migration v2)
+- `sources`
+- `tags`
+- `figure_tags`
+- `links`
+- `notes`
+- `schema_migrations`
 
-## 7.2 `sources`
+## 8.2 Planned Phase 1.5 Tables
 
-- `source_id`
-- `figure_id`
-- `source_type` (`doi`, `url`, `local`, `manual`)
-- `source_key` (doi/url/path/ref key)
-- `source_title` (optional)
-- `source_authors` (optional)
-- `source_published_at` (optional)
+- `saved_queries`
+  - `query_id`, `query_name`, `filters_json`, `sort_field`, `sort_order`, `limit_count`, timestamps
+- `collections`
+  - `collection_id`, `collection_name`, `collection_mode` (`static|dynamic`), optional `query_id`, timestamps
+- `collection_items`
+  - `collection_id`, `figure_id`, `added_at`
 
-## 7.3 `tags`
+## 9. CLI Interface (Target After Phase 1.5)
 
-- `tag_id`
-- `tag_name` (normalized lowercase)
-- `tag_parent` (nullable for hierarchy)
+```text
+lamian init --vault <path>
+lamian inject <file_path> --vault <path> --source-type <type> --source-key <value> [--copy-mode copy|reference]
+lamian update <figure_id> [--name ...] [--caption ...] [--note-file ...]
+lamian tag add|remove|rename ...
+lamian link add|remove ...
+lamian search [--tag ...] [--source-key ...] [--text ...]
+lamian export [--format yaml|json] [--target <path>]
 
-## 7.4 `figure_tags`
+lamian query save <name> [--tag ...] [--source-key ...] [--text ...] [--sort ...] [--order ...] [--limit ...]
+lamian query run <name_or_id> [--detail ids|full]
+lamian query list
+lamian query delete <name_or_id>
 
-- `figure_id`
-- `tag_id`
+lamian import <input_path> --source-type <type> --source-key-template <template> [--copy-mode copy|reference] [--recursive] [--dry-run]
+lamian doctor [--fix]
 
-## 7.5 `links`
+lamian collection create <name> [--query-id <id>]
+lamian collection add <collection> <figure_id>
+lamian collection remove <collection> <figure_id>
+lamian collection list [--collection <id_or_name>]
+lamian collection delete <collection>
 
-- `link_id`
-- `from_figure_id`
-- `to_figure_id`
-- `relation_type` (default `related`)
+lamian bundle export --target <path.tar.gz>
+lamian bundle import <path.tar.gz>
+```
 
-## 7.6 `notes`
+## 10. Output Contracts
 
-- `figure_id`
-- `note_markdown`
-- `updated_at`
+- Existing commands retain current human-readable output.
+- New Phase 1.5 commands output JSON only.
+- Batch operations include:
+  - summary counts (`processed`, `succeeded`, `failed`, `skipped`)
+  - per-item result/error records
+- `query run` supports `--detail ids|full`.
 
-## 8. CLI Interface Draft
-
-- `lamian init --vault <path>`
-- `lamian inject <file_path> --vault <path> --source-type <type> --source-key <value> [--copy-mode copy|reference]`
-- `lamian update <figure_id> [--name ...] [--caption ...] [--note-file ...]`
-- `lamian tag add <figure_id> <tag>`
-- `lamian tag remove <figure_id> <tag>`
-- `lamian tag rename <old_tag> <new_tag>`
-- `lamian link add <from_figure_id> <to_figure_id> [--relation related]`
-- `lamian link remove <from_figure_id> <to_figure_id>`
-- `lamian search [--tag ...] [--source-key ...] [--text ...]`
-- `lamian export [--format yaml|json] [--target <path>]`
-
-## 9. Error Handling Contract (MVP)
+## 11. Error Handling Contract
 
 - Validation errors:
-  - missing required provenance fields
-  - malformed tag format
-  - unknown figure IDs
+  - missing provenance fields
+  - malformed tags
+  - invalid query/filter payload
+  - invalid bundle target or manifest
 - IO errors:
-  - unreadable file
-  - vault path unavailable
+  - unreadable files
+  - missing source files
+  - inaccessible vault path
 - Data integrity errors:
-  - duplicate hash collisions handled as explicit duplicates
-  - transaction rollback on failed writes
+  - rollback on failed writes
+  - conflict policy for bundle import is skip-existing by default
 
-## 10. Security and Compliance Baseline
+## 12. Security and Compliance Baseline
 
-- Local-only data processing by default
-- User is responsible for rights and license compliance of stored images
-- LaMian records provenance to improve traceability
+- Local-only processing by default
+- User is responsible for source rights/license compliance
+- Bundle import validates checksums before persistence
 
-## 11. Testing and Acceptance Criteria
+## 13. Testing and Acceptance Criteria
 
-### 11.1 Unit Tests
+## 13.1 Unit Tests
 
-- model validation
-- tag parsing and normalization
-- link parser for `[[figure_id]]`
+- query filter serialization/validation
+- import template rendering
+- doctor issue detection and DB-safe fix routines
+- collection mode invariants
+- bundle manifest/checksum validation
 
-### 11.2 Integration Tests
+## 13.2 Integration Tests
 
-- init -> inject -> update -> tag -> link -> search -> export workflow
-- migration upgrade path
+- existing Phase 1 command suite
+- full sequential workflow
+- query/import/doctor workflows
+- collection static and dynamic workflows
+- bundle export/import roundtrip and conflict handling
+- migration compatibility from v2 to v3/v4
 
-### 11.3 GUI Smoke Tests
+## 13.3 Acceptance Gates
 
-- open vault
-- inspect figure details
-- edit metadata
-- apply tag filters
-- drag-and-drop one file and verify same ingest result as CLI inject
-- drag-and-drop multiple files and verify each file is validated and persisted independently
-
-### 11.4 Acceptance
-
-- All FR items satisfied
-- No schema corruption on interrupted operations
-- CLI and GUI can operate on the same vault without inconsistencies
-
-## 12. Open Questions
-
-- Preferred GUI framework for Rust in final implementation phase
-- Final sidecar format default (`yaml` vs `json`)
-- Figure deduplication policy when same hash appears with different filenames
+- Phase 1.5 Wave A:
+  - `query`, `import`, `doctor` implemented with JSON contracts and tests
+- Phase 1.5 Wave B:
+  - `collection`, `bundle` implemented with tests
+- GUI gate:
+  - all Phase 1.5 tests green
+  - docs synchronized across `project4/` and `project4/lamian/docs/`

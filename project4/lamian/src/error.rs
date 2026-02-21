@@ -114,4 +114,39 @@ pub enum LamianError {
         format: &'static str,
         reason: String,
     },
+
+    #[error("missing required query field: {field}")]
+    MissingQueryField { field: &'static str },
+
+    #[error("invalid query value for {field}: {reason}; received: {value}")]
+    InvalidQueryValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("saved query already exists: {query_name}")]
+    QueryAlreadyExists { query_name: String },
+
+    #[error("saved query not found: {query_reference}")]
+    QueryNotFound { query_reference: String },
+
+    #[error("missing required import field: {field}")]
+    MissingImportField { field: &'static str },
+
+    #[error("invalid import value for {field}: {reason}; received: {value}")]
+    InvalidImportValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("import completed with failures: {failed_count} item(s) failed")]
+    ImportCompletedWithFailures { failed_count: usize },
+
+    #[error("doctor found unresolved issue(s): {issue_count}")]
+    DoctorIssuesFound { issue_count: usize },
+
+    #[error("failed to serialize command output as JSON: {reason}")]
+    JsonOutputSerializationFailed { reason: String },
 }

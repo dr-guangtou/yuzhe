@@ -5,7 +5,7 @@
 This guide explains:
 
 - how the current LaMian CLI works
-- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, `search`, and `export`
+- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, `search`, `export`, and `query`
 - how to run the implemented workflows end-to-end
 
 ## Current Command Coverage
@@ -22,6 +22,14 @@ Implemented:
 - `link remove`
 - `search`
 - `export`
+- `query save|run|list|delete`
+
+Planned for Phase 1.5 (pre-GUI):
+
+- `import`
+- `doctor`
+- `collection create|add|remove|list|delete`
+- `bundle export|import`
 
 ## Core Algorithms
 
@@ -196,6 +204,18 @@ Behavior:
 - creates parent directories for `--target` automatically
 - rejects `--target` when it points to an existing directory
 
+## 8. Saved Queries (`query`)
+
+`lamian query save|run|list|delete ... --vault <path>`
+
+Behavior:
+
+- `save` persists normalized filters (`--tag`, `--source-key`, `--text`) plus sort/order/limit
+- `run` resolves query by ID first, then by name, and supports `--detail ids|full`
+- `list` returns all saved queries ordered by query name
+- `delete` removes query by ID or name
+- output for all `query` subcommands is JSON-only
+
 ## Practical CLI Usage
 
 ## 1. Initialize Vault
@@ -265,6 +285,36 @@ cargo run -- --vault "$PWD/.demo_vault" export --format json
 cargo run -- --vault "$PWD/.demo_vault" export --format yaml --target "$PWD/.demo_vault/.lamian/export.yaml"
 ```
 
+## 8. Query Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" query save "jwst-only" --tag "observatory:jwst" --sort updated-at --order desc --limit 5
+cargo run -- --vault "$PWD/.demo_vault" query run "jwst-only" --detail ids
+cargo run -- --vault "$PWD/.demo_vault" query list
+cargo run -- --vault "$PWD/.demo_vault" query delete "jwst-only"
+```
+
+## 9. Import Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" import "$PWD/import_batch" --source-type local --source-key-template "batch:{relative_path}" --copy-mode reference
+cargo run -- --vault "$PWD/.demo_vault" import "$PWD/import_batch" --source-type local --source-key-template "batch:{relative_path}" --recursive --dry-run
+```
+
+Supported import template placeholders:
+
+- `{file_name}`
+- `{file_stem}`
+- `{extension}`
+- `{relative_path}`
+
+## 10. Doctor Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" doctor
+cargo run -- --vault "$PWD/.demo_vault" doctor --fix
+```
+
 ## Verification
 
 Run the full development gate:
@@ -275,3 +325,12 @@ cargo fmt --all
 cargo clippy --all-targets -- -D warnings
 cargo test
 ```
+
+## Phase 1.5 Contract Preview
+
+The next command wave introduces automation-oriented commands with JSON-only output contracts:
+
+- `collection` and `bundle` will return structured JSON on success.
+- `doctor` already returns JSON with issue summaries and per-issue records.
+- `import` already returns JSON with `processed/succeeded/failed/skipped` summary and per-item records.
+- Existing Phase 1 commands keep their current human-readable output.

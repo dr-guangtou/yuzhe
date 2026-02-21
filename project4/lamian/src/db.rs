@@ -85,6 +85,23 @@ CREATE INDEX IF NOT EXISTS idx_links_to_figure_id ON links(to_figure_id);
 ALTER TABLE figures ADD COLUMN caption TEXT;
 "#,
     },
+    Migration {
+        version: 3,
+        sql: r#"
+CREATE TABLE IF NOT EXISTS saved_queries (
+    query_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_name TEXT NOT NULL UNIQUE,
+    filters_json TEXT NOT NULL,
+    sort_field TEXT NOT NULL CHECK (sort_field IN ('figure_id', 'display_name', 'created_at', 'updated_at')),
+    sort_order TEXT NOT NULL CHECK (sort_order IN ('asc', 'desc')),
+    limit_count INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_saved_queries_name ON saved_queries(query_name);
+"#,
+    },
 ];
 
 #[derive(Debug, Clone)]
@@ -214,6 +231,7 @@ mod tests {
         assert!(table_exists(&connection, "figure_tags"));
         assert!(table_exists(&connection, "links"));
         assert!(table_exists(&connection, "notes"));
+        assert!(table_exists(&connection, "saved_queries"));
         assert!(column_exists(&connection, "figures", "caption"));
     }
 

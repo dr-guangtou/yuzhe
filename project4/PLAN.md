@@ -2,7 +2,7 @@
 
 ## 1. Objective
 
-Build LaMian as a local-only, metadata-rich visual knowledge base for research figures, with a CLI-first core and a lightweight desktop GUI.
+Build LaMian as a local-only, metadata-rich visual knowledge base for research figures, with a CLI-first core and a desktop GUI built over the same core services.
 
 ## 2. Planning Constraints
 
@@ -22,7 +22,8 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - Hierarchical tags
 - Search and filtering
 - Figure-to-figure linking by stable IDs
-- CLI command surface for all core operations
+- Metadata export
+- Automation and curation commands needed before GUI
 - Basic GUI that can drive core operations
 
 ### Out of Scope for MVP
@@ -34,45 +35,50 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 
 ## 4. Implementation Phases
 
-## Phase 0: Documentation and Governance
+## Phase 0: Documentation and Governance (Done)
 
 - Create and validate planning documents in `project4/`
 - Lock architecture, interfaces, and acceptance criteria
 - Initialize project-specific agent instructions
 
-### Gate to Phase 1
-
-- `PLAN.md`, `SPEC.md`, `TODO.md` are complete and internally consistent
-- Risk register and decisions are documented
-- Open questions for MVP are resolved
-
-## Phase 1: CLI Core and Data Model
+## Phase 1: CLI Core and Data Model (Done)
 
 - Initialize Rust workspace under `project4/lamian/`
 - Implement schema migrations and repository layer
-- Implement CLI commands for init/inject/tag/link/search/export
-- Add tests for data integrity and command behavior
+- Implement core CLI commands: `init`, `inject`, `update`, `tag`, `link`, `search`, `export`
+- Add integration coverage for success/failure paths per command family
 
-### Current Progress Snapshot (2026-02-20)
+### Phase 1 Closure Notes
 
-- Completed:
-  - Rust workspace + SQLite migrations
-  - `init`
-  - `inject`
-  - `tag` (`add` / `remove` / `rename`)
-  - `link` (`add` / `remove`)
-  - integration tests for inject/tag/link success and failure paths
-- Pending in Phase 1:
-  - `update`
-  - `search`
-  - `export`
-  - full end-to-end CLI workflow (`init -> inject -> update -> tag -> link -> search -> export`)
+- Phase 1 command surface is complete in code.
+- Project-level planning docs were stale and are now synchronized as part of Phase 1.5 kickoff.
+- Remaining Phase 1 quality gate still required: one full sequential integration scenario (`init -> inject -> update -> tag -> link -> search -> export`) plus migration compatibility fixtures.
 
-### Gate to Phase 2
+## Phase 1.5: Pre-GUI Automation and Curation CLI (In Progress)
 
-- CLI acceptance tests pass for full MVP command surface
-- Migration and rollback flow verified
-- Data model is stable for GUI integration (including update/search/export needs)
+Purpose:
+
+- lock high-leverage operational workflows before GUI
+- prevent GUI-first requirements churn in core contracts
+- provide automation-ready CLI primitives for agent usage
+
+### Wave A (First)
+
+- `query save|run|list|delete`
+- `import` (batch ingest)
+- `doctor` (`check` + `--fix` for DB-only safe fixes)
+
+### Wave B (Second)
+
+- `collection create|add|remove|list|delete` (hybrid static + dynamic)
+- `bundle export|import` (`tar.gz`, metadata + managed files)
+
+### Gate to Phase 2 (GUI)
+
+- Wave A and Wave B command acceptance tests pass
+- backward compatibility and migration upgrade tests pass
+- JSON output contracts for new commands are stable
+- docs under both `project4/` and `project4/lamian/docs/` are aligned
 
 ## Phase 2: Desktop GUI (Functionality First)
 
@@ -94,36 +100,38 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 ## 5. Branching and Delivery Policy
 
 - Never implement features directly on `main`
-- Use dedicated feature branches (first branch: `feature/project4-lamian-docs`)
+- Use dedicated feature branches for each vertical slice
 - Merge only after verification checklist is complete
 
 ## 6. Verification Strategy
 
-- Document verification in planning phase:
+- Planning verification:
   - requirement traceability from `SPEC.md` to `TODO.md`
   - consistency review across all planning docs
-- Implementation verification in coding phase:
+- Implementation verification:
   - unit tests for domain and persistence
   - integration tests for CLI workflows
-  - smoke tests for GUI workflows
+  - migration upgrade compatibility tests
+  - GUI smoke tests once Phase 2 starts
 
-## 7. Deliverables for Current Phase
+## 7. Deliverables for Current Phase (Phase 1.5)
 
-- `README.md`
-- `PLAN.md`
-- `SPEC.md`
-- `TODO.md`
-- `DECISIONS.md`
-- `RISK_REGISTER.md`
-- `AGENTS.md`
-- `CLAUDE.md`
-- `journal/2026-02-19.md`
+- Updated governance docs:
+  - `README.md`
+  - `PLAN.md`
+  - `SPEC.md`
+  - `TODO.md`
+  - `DECISIONS.md`
+  - `RISK_REGISTER.md`
+- Updated standalone docs:
+  - `project4/lamian/docs/SPEC.md`
+  - `project4/lamian/docs/TODO.md`
+  - `project4/lamian/docs/DECISIONS.md`
+  - `project4/lamian/docs/MIGRATION.md`
+- Wave A implementation branches and test evidence
 
-## 8. Next Planning Update
+## 8. Next Execution Step
 
-Before entering Phase 2 (GUI), complete a final Phase 1 closure pass:
-
-1. Implement `update` with schema support for user metadata fields.
-2. Implement `search` over tags/source/text/time filters.
-3. Implement `export` (`yaml`/`json`) and sidecar target path handling.
-4. Add one integration suite that covers the full CLI workflow in sequence.
+1. Implement Wave A migration and core services (`query`, `import`, `doctor`) in small verified slices.
+2. Add JSON output contracts and integration tests.
+3. Re-run full gate: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.

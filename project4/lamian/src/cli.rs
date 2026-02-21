@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand, ValueEnum};
 
 use crate::inject::{CopyMode, SourceType};
+use crate::query::{QueryRunDetail, QuerySortField, QuerySortOrder};
 
 #[derive(Debug, Parser)]
 #[command(name = "lamian")]
@@ -67,12 +68,76 @@ pub enum Command {
         text: Option<String>,
     },
 
+    Query {
+        #[command(subcommand)]
+        action: QueryAction,
+    },
+
+    Doctor {
+        #[arg(long, default_value_t = false)]
+        fix: bool,
+    },
+
+    Import {
+        input_path: PathBuf,
+
+        #[arg(long, value_enum)]
+        source_type: SourceType,
+
+        #[arg(long)]
+        source_key_template: String,
+
+        #[arg(long, value_enum, default_value = "copy")]
+        copy_mode: CopyMode,
+
+        #[arg(long, default_value_t = false)]
+        recursive: bool,
+
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+    },
+
     Export {
         #[arg(long, value_enum, default_value = "yaml")]
         format: ExportFormat,
 
         #[arg(long, value_name = "PATH")]
         target: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum QueryAction {
+    Save {
+        name: String,
+
+        #[arg(long)]
+        tag: Option<String>,
+
+        #[arg(long)]
+        source_key: Option<String>,
+
+        #[arg(long)]
+        text: Option<String>,
+
+        #[arg(long, value_enum, default_value = "figure-id")]
+        sort: QuerySortField,
+
+        #[arg(long, value_enum, default_value = "asc")]
+        order: QuerySortOrder,
+
+        #[arg(long)]
+        limit: Option<u32>,
+    },
+    Run {
+        name_or_id: String,
+
+        #[arg(long, value_enum, default_value = "ids")]
+        detail: QueryRunDetail,
+    },
+    List,
+    Delete {
+        name_or_id: String,
     },
 }
 

@@ -7,9 +7,22 @@ Implementation code lives in `project4/lamian/`.
 
 ## Current Status
 
-- Roadmap state: under planning
-- Current phase: documentation bootstrap
-- Primary goal: lock a decision-complete plan before implementation
+- Roadmap state: active development
+- Current phase: Phase 1.5 planning and implementation kickoff
+- Primary goal: complete pre-GUI automation and curation CLI capabilities
+
+## Phase 1.5 Scope (Pre-GUI)
+
+- `query save|run|list|delete` (saved search rules)
+- `import` (batch ingest with strict provenance templates)
+- `doctor` (read checks + DB-only safe fixes)
+- `collection` (hybrid static and dynamic collections)
+- `bundle export|import` (`tar.gz` for portable snapshots)
+
+Delivery order:
+
+- Wave A: `query`, `import`, `doctor`
+- Wave B: `collection`, `bundle`
 
 ## Document Map
 

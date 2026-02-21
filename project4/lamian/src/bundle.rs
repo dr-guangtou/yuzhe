@@ -3,6 +3,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use flate2::read::GzDecoder;
 use flate2::{Compression, GzBuilder};
@@ -21,6 +22,8 @@ const MANIFEST_ENTRY_PATH: &str = "manifest.json";
 const METADATA_ENTRY_PATH: &str = "metadata.json";
 const MANAGED_FILES_PREFIX: &str = "files/";
 const MANAGED_FIGURES_DIR_NAME: &str = "figures";
+const IMPORT_STAGING_DIR_NAME: &str = "bundle_import_staging";
+const IMPORT_JOURNAL_FILE_NAME: &str = "bundle_import_journal.json";
 
 #[derive(Debug, Clone)]
 pub struct BundleExportRequest {
@@ -129,6 +132,34 @@ struct PendingManagedFileWrite {
     destination_path: PathBuf,
 }
 
+#[derive(Debug, Clone)]
+struct StagedManagedFile {
+    bundle_path: String,
+    staged_path: PathBuf,
+    destination_path: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct BundleImportJournal {
+    status: BundleImportJournalStatus,
+    figure_ids: Vec<String>,
+    staged_files: Vec<BundleImportJournalEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum BundleImportJournalStatus {
+    Staged,
+    Committed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct BundleImportJournalEntry {
+    bundle_path: String,
+    staged_path: String,
+    destination_path: String,
+}
+
 #[derive(Debug)]
 struct PendingLinkInsert {
     from_figure_id: String,
@@ -191,6 +222,7 @@ pub fn bundle_export(request: BundleExportRequest) -> Result<BundleExportResult,
 pub fn bundle_import(request: BundleImportRequest) -> Result<BundleImportResult, LamianError> {
     validate_vault_root(&request.vault_root)?;
     validate_bundle_source_path(&request.bundle_path)?;
+    recover_pending_bundle_import(&request.vault_root)?;
 
     let vault_paths = db::resolve_vault_paths(&request.vault_root);
 
@@ -219,27 +251,27 @@ pub fn bundle_import(request: BundleImportRequest) -> Result<BundleImportResult,
 
     let managed_files_by_figure_id = index_managed_files_by_figure_id(&manifest)?;
     let managed_figure_root = vault_paths.lamian_root.join(MANAGED_FIGURES_DIR_NAME);
+    let import_staging_root = vault_paths.lamian_root.join(IMPORT_STAGING_DIR_NAME);
+    let import_journal_path = vault_paths.lamian_root.join(IMPORT_JOURNAL_FILE_NAME);
     let total_figures = metadata_document.figures.len();
 
     let mut imported_figures = 0_usize;
     let mut skipped_existing_figures = 0_usize;
     let mut managed_files_written = 0_usize;
-    let mut written_paths = Vec::new();
+    let mut imported_figure_ids = Vec::new();
 
-    let transaction_result = (|| -> Result<(), LamianError> {
-        let transaction = connection.transaction()?;
-        let mut pending_file_writes = Vec::new();
-        let mut pending_links = Vec::new();
+    let transaction = connection.transaction()?;
+    let mut pending_file_writes = Vec::new();
+    let mut pending_links = Vec::new();
 
-        for figure in &metadata_document.figures {
-            if figure_exists(&transaction, &figure.figure_id)? {
-                skipped_existing_figures += 1;
-                continue;
-            }
+    for figure in &metadata_document.figures {
+        if figure_exists(&transaction, &figure.figure_id)? {
+            skipped_existing_figures += 1;
+            continue;
+        }
 
-            let persisted_file_path = if let Some(managed_entry) =
-                managed_files_by_figure_id.get(&figure.figure_id)
-            {
+        let persisted_file_path =
+            if let Some(managed_entry) = managed_files_by_figure_id.get(&figure.figure_id) {
                 let destination_path =
                     build_destination_path_for_managed_file(&managed_figure_root, managed_entry)?;
                 if destination_path.exists() {
@@ -255,38 +287,60 @@ pub fn bundle_import(request: BundleImportRequest) -> Result<BundleImportResult,
                 PathBuf::from(&figure.file_path)
             };
 
-            insert_figure_record(&transaction, figure, &persisted_file_path)?;
-            insert_source_records(&transaction, figure)?;
-            insert_tag_records(&transaction, figure)?;
-            insert_note_record(&transaction, figure)?;
+        insert_figure_record(&transaction, figure, &persisted_file_path)?;
+        insert_source_records(&transaction, figure)?;
+        insert_tag_records(&transaction, figure)?;
+        insert_note_record(&transaction, figure)?;
 
-            for outbound_link in &figure.outbound_links {
-                pending_links.push(PendingLinkInsert {
-                    from_figure_id: figure.figure_id.clone(),
-                    to_figure_id: outbound_link.to_figure_id.clone(),
-                    relation_type: outbound_link.relation_type.clone(),
-                    created_at: outbound_link.created_at.clone(),
-                });
-            }
-
-            imported_figures += 1;
+        for outbound_link in &figure.outbound_links {
+            pending_links.push(PendingLinkInsert {
+                from_figure_id: figure.figure_id.clone(),
+                to_figure_id: outbound_link.to_figure_id.clone(),
+                relation_type: outbound_link.relation_type.clone(),
+                created_at: outbound_link.created_at.clone(),
+            });
         }
 
-        insert_link_records(&transaction, &pending_links)?;
-        write_managed_files(
-            &pending_file_writes,
-            &archive_entries.file_entries,
-            &mut written_paths,
-            &mut managed_files_written,
-        )?;
-        transaction.commit()?;
-        Ok(())
-    })();
-
-    if let Err(error) = transaction_result {
-        cleanup_written_files(&written_paths);
-        return Err(error);
+        imported_figures += 1;
+        imported_figure_ids.push(figure.figure_id.clone());
     }
+
+    insert_link_records(&transaction, &pending_links)?;
+
+    let stage_session_root = import_staging_root.join(build_import_session_id());
+    let staged_files = stage_managed_files(
+        &pending_file_writes,
+        &archive_entries.file_entries,
+        &managed_figure_root,
+        &stage_session_root,
+    )?;
+
+    let mut import_journal = if staged_files.is_empty() {
+        None
+    } else {
+        let journal = build_bundle_import_journal(
+            BundleImportJournalStatus::Staged,
+            imported_figure_ids,
+            &staged_files,
+        );
+        write_import_journal(&import_journal_path, &journal)?;
+        Some(journal)
+    };
+
+    if let Err(error) = transaction.commit() {
+        cleanup_staged_files(&staged_files);
+        let _ = remove_import_journal_if_exists(&import_journal_path);
+        let _ = cleanup_empty_import_staging_root(&import_staging_root);
+        return Err(error.into());
+    }
+
+    if let Some(journal) = import_journal.as_mut() {
+        journal.status = BundleImportJournalStatus::Committed;
+        write_import_journal(&import_journal_path, journal)?;
+        promote_staged_managed_files(&staged_files, &mut managed_files_written)?;
+        remove_import_journal_if_exists(&import_journal_path)?;
+    }
+    cleanup_empty_import_staging_root(&import_staging_root)?;
 
     Ok(BundleImportResult {
         bundle_path: request.bundle_path.display().to_string(),
@@ -872,14 +926,25 @@ VALUES (?1, ?2, ?3, ?4)
     Ok(())
 }
 
-fn write_managed_files(
+fn build_import_session_id() -> String {
+    let now_nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    format!("session-{}-{now_nanos}", std::process::id())
+}
+
+fn stage_managed_files(
     pending_file_writes: &[PendingManagedFileWrite],
     archive_file_entries: &BTreeMap<String, Vec<u8>>,
-    written_paths: &mut Vec<PathBuf>,
-    managed_files_written: &mut usize,
-) -> Result<(), LamianError> {
+    managed_figure_root: &Path,
+    stage_session_root: &Path,
+) -> Result<Vec<StagedManagedFile>, LamianError> {
+    let mut staged_files = Vec::new();
+
     for pending_file_write in pending_file_writes {
         let Some(content) = archive_file_entries.get(&pending_file_write.bundle_path) else {
+            cleanup_staged_files(&staged_files);
             return Err(LamianError::InvalidBundleValue {
                 field: "archive",
                 reason: "managed file entry listed in manifest is missing from archive",
@@ -887,20 +952,240 @@ fn write_managed_files(
             });
         };
 
-        if let Some(parent_directory) = pending_file_write.destination_path.parent() {
+        let relative_destination = pending_file_write
+            .destination_path
+            .strip_prefix(managed_figure_root)
+            .map_err(|_| LamianError::InvalidBundleValue {
+                field: "managed_file",
+                reason: "managed file destination must be within .lamian/figures",
+                value: pending_file_write.destination_path.display().to_string(),
+            })?;
+        let staged_path = stage_session_root.join(relative_destination);
+
+        if let Some(parent_directory) = staged_path.parent() {
             fs::create_dir_all(parent_directory)?;
         }
-        fs::write(&pending_file_write.destination_path, content)?;
-        written_paths.push(pending_file_write.destination_path.clone());
+        if let Err(error) = fs::write(&staged_path, content) {
+            cleanup_staged_files(&staged_files);
+            return Err(error.into());
+        }
+
+        staged_files.push(StagedManagedFile {
+            bundle_path: pending_file_write.bundle_path.clone(),
+            staged_path,
+            destination_path: pending_file_write.destination_path.clone(),
+        });
+    }
+
+    Ok(staged_files)
+}
+
+fn promote_staged_managed_files(
+    staged_files: &[StagedManagedFile],
+    managed_files_written: &mut usize,
+) -> Result<(), LamianError> {
+    for staged_file in staged_files {
+        if staged_file.destination_path.exists() {
+            if staged_file.staged_path.exists() {
+                fs::remove_file(&staged_file.staged_path)?;
+            }
+            continue;
+        }
+        if !staged_file.staged_path.exists() {
+            return Err(LamianError::InvalidBundleValue {
+                field: "import_journal",
+                reason: "staged file is missing before promotion to destination",
+                value: staged_file.bundle_path.clone(),
+            });
+        }
+
+        if let Some(parent_directory) = staged_file.destination_path.parent() {
+            fs::create_dir_all(parent_directory)?;
+        }
+        move_file_with_fallback(&staged_file.staged_path, &staged_file.destination_path)?;
         *managed_files_written += 1;
     }
     Ok(())
 }
 
-fn cleanup_written_files(paths: &[PathBuf]) {
-    for path in paths {
-        let _ = fs::remove_file(path);
+fn move_file_with_fallback(source_path: &Path, destination_path: &Path) -> Result<(), LamianError> {
+    if fs::rename(source_path, destination_path).is_ok() {
+        return Ok(());
     }
+    fs::copy(source_path, destination_path)?;
+    fs::remove_file(source_path)?;
+    Ok(())
+}
+
+fn cleanup_staged_files(staged_files: &[StagedManagedFile]) {
+    for staged_file in staged_files {
+        let _ = fs::remove_file(&staged_file.staged_path);
+    }
+}
+
+fn build_bundle_import_journal(
+    status: BundleImportJournalStatus,
+    figure_ids: Vec<String>,
+    staged_files: &[StagedManagedFile],
+) -> BundleImportJournal {
+    BundleImportJournal {
+        status,
+        figure_ids,
+        staged_files: staged_files
+            .iter()
+            .map(|staged_file| BundleImportJournalEntry {
+                bundle_path: staged_file.bundle_path.clone(),
+                staged_path: staged_file.staged_path.display().to_string(),
+                destination_path: staged_file.destination_path.display().to_string(),
+            })
+            .collect(),
+    }
+}
+
+fn write_import_journal(
+    import_journal_path: &Path,
+    journal: &BundleImportJournal,
+) -> Result<(), LamianError> {
+    if let Some(parent_directory) = import_journal_path.parent() {
+        fs::create_dir_all(parent_directory)?;
+    }
+    let mut content =
+        serde_json::to_string_pretty(journal).map_err(|error| LamianError::InvalidBundleValue {
+            field: "import_journal",
+            reason: "failed to serialize import journal",
+            value: error.to_string(),
+        })?;
+    if !content.ends_with('\n') {
+        content.push('\n');
+    }
+    fs::write(import_journal_path, content.into_bytes())?;
+    Ok(())
+}
+
+fn read_import_journal(import_journal_path: &Path) -> Result<BundleImportJournal, LamianError> {
+    let bytes = fs::read(import_journal_path)?;
+    serde_json::from_slice::<BundleImportJournal>(&bytes).map_err(|error| {
+        LamianError::InvalidBundleValue {
+            field: "import_journal",
+            reason: "failed to parse import journal",
+            value: error.to_string(),
+        }
+    })
+}
+
+fn remove_import_journal_if_exists(import_journal_path: &Path) -> Result<(), LamianError> {
+    if import_journal_path.exists() {
+        fs::remove_file(import_journal_path)?;
+    }
+    Ok(())
+}
+
+fn recover_pending_bundle_import(vault_root: &Path) -> Result<(), LamianError> {
+    let vault_paths = db::resolve_vault_paths(vault_root);
+    let import_journal_path = vault_paths.lamian_root.join(IMPORT_JOURNAL_FILE_NAME);
+    let import_staging_root = vault_paths.lamian_root.join(IMPORT_STAGING_DIR_NAME);
+
+    if !import_journal_path.exists() {
+        return Ok(());
+    }
+
+    let journal = read_import_journal(&import_journal_path)?;
+    let should_promote = match journal.status {
+        BundleImportJournalStatus::Committed => true,
+        BundleImportJournalStatus::Staged => {
+            staged_journal_requires_promotion(vault_root, &journal.figure_ids)?
+        }
+    };
+
+    if should_promote {
+        for entry in &journal.staged_files {
+            let staged_path = PathBuf::from(&entry.staged_path);
+            let destination_path = PathBuf::from(&entry.destination_path);
+
+            if destination_path.exists() {
+                if staged_path.exists() {
+                    fs::remove_file(&staged_path)?;
+                }
+                continue;
+            }
+            if !staged_path.exists() {
+                return Err(LamianError::InvalidBundleValue {
+                    field: "import_journal",
+                    reason: "journal references missing staged file for promotion",
+                    value: entry.bundle_path.clone(),
+                });
+            }
+
+            if let Some(parent_directory) = destination_path.parent() {
+                fs::create_dir_all(parent_directory)?;
+            }
+            move_file_with_fallback(&staged_path, &destination_path)?;
+        }
+    } else {
+        for entry in &journal.staged_files {
+            let _ = fs::remove_file(PathBuf::from(&entry.staged_path));
+        }
+    }
+
+    remove_import_journal_if_exists(&import_journal_path)?;
+    cleanup_empty_import_staging_root(&import_staging_root)?;
+    Ok(())
+}
+
+fn staged_journal_requires_promotion(
+    vault_root: &Path,
+    figure_ids: &[String],
+) -> Result<bool, LamianError> {
+    if figure_ids.is_empty() {
+        return Ok(false);
+    }
+
+    let connection = db::open_vault_connection(vault_root)?;
+    let mut existing_figure_count = 0_usize;
+
+    for figure_id in figure_ids {
+        if figure_exists_in_connection(&connection, figure_id)? {
+            existing_figure_count += 1;
+        }
+    }
+
+    if existing_figure_count == 0 {
+        return Ok(false);
+    }
+    if existing_figure_count == figure_ids.len() {
+        return Ok(true);
+    }
+
+    Err(LamianError::InvalidBundleValue {
+        field: "import_journal",
+        reason: "journal indicates partial committed figure set; manual intervention required",
+        value: format!(
+            "{existing_figure_count}/{} figures present",
+            figure_ids.len()
+        ),
+    })
+}
+
+fn cleanup_empty_import_staging_root(import_staging_root: &Path) -> Result<(), LamianError> {
+    if !import_staging_root.exists() {
+        return Ok(());
+    }
+    fs::remove_dir_all(import_staging_root)?;
+    Ok(())
+}
+
+fn figure_exists_in_connection(
+    connection: &rusqlite::Connection,
+    figure_id: &str,
+) -> Result<bool, LamianError> {
+    let existing: Option<String> = connection
+        .query_row(
+            "SELECT figure_id FROM figures WHERE figure_id = ?1",
+            [figure_id],
+            |row| row.get(0),
+        )
+        .optional()?;
+    Ok(existing.is_some())
 }
 
 fn figure_exists(transaction: &Transaction<'_>, figure_id: &str) -> Result<bool, LamianError> {
@@ -927,4 +1212,188 @@ fn sha256_bytes(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     format!("{:x}", hasher.finalize())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::{
+        recover_pending_bundle_import, write_import_journal, BundleImportJournal,
+        BundleImportJournalEntry, BundleImportJournalStatus, IMPORT_JOURNAL_FILE_NAME,
+        IMPORT_STAGING_DIR_NAME,
+    };
+    use crate::db;
+
+    #[test]
+    fn recover_pending_bundle_import_promotes_committed_journal_files() {
+        let temp_dir = tempfile::TempDir::new().expect("temp directory");
+        let vault_root = temp_dir.path().join("vault");
+        let vault_paths = db::initialize_vault(&vault_root).expect("initialize vault");
+
+        let staged_path = vault_paths
+            .lamian_root
+            .join(IMPORT_STAGING_DIR_NAME)
+            .join("session-a")
+            .join("nested")
+            .join("recovered.bin");
+        let destination_path = vault_paths
+            .lamian_root
+            .join("figures")
+            .join("nested")
+            .join("recovered.bin");
+        if let Some(parent_directory) = staged_path.parent() {
+            fs::create_dir_all(parent_directory).expect("create staged parent");
+        }
+        fs::write(&staged_path, [1_u8, 2, 3, 4]).expect("write staged file");
+
+        let journal = BundleImportJournal {
+            status: BundleImportJournalStatus::Committed,
+            figure_ids: Vec::new(),
+            staged_files: vec![BundleImportJournalEntry {
+                bundle_path: "files/nested/recovered.bin".to_string(),
+                staged_path: staged_path.display().to_string(),
+                destination_path: destination_path.display().to_string(),
+            }],
+        };
+        let import_journal_path = vault_paths.lamian_root.join(IMPORT_JOURNAL_FILE_NAME);
+        write_import_journal(&import_journal_path, &journal).expect("write import journal");
+
+        recover_pending_bundle_import(&vault_root).expect("recover import journal");
+
+        assert!(
+            destination_path.exists(),
+            "expected destination file after recovery: {}",
+            destination_path.display()
+        );
+        assert!(
+            !staged_path.exists(),
+            "expected staged file cleanup after recovery: {}",
+            staged_path.display()
+        );
+        assert!(
+            !import_journal_path.exists(),
+            "expected journal cleanup after recovery: {}",
+            import_journal_path.display()
+        );
+    }
+
+    #[test]
+    fn recover_pending_bundle_import_discards_uncommitted_staged_files() {
+        let temp_dir = tempfile::TempDir::new().expect("temp directory");
+        let vault_root = temp_dir.path().join("vault");
+        let vault_paths = db::initialize_vault(&vault_root).expect("initialize vault");
+
+        let staged_path = vault_paths
+            .lamian_root
+            .join(IMPORT_STAGING_DIR_NAME)
+            .join("session-b")
+            .join("discard.bin");
+        let destination_path = vault_paths.lamian_root.join("figures").join("discard.bin");
+        if let Some(parent_directory) = staged_path.parent() {
+            fs::create_dir_all(parent_directory).expect("create staged parent");
+        }
+        fs::write(&staged_path, [9_u8, 8, 7]).expect("write staged file");
+
+        let journal = BundleImportJournal {
+            status: BundleImportJournalStatus::Staged,
+            figure_ids: vec!["missing-figure-id".to_string()],
+            staged_files: vec![BundleImportJournalEntry {
+                bundle_path: "files/discard.bin".to_string(),
+                staged_path: staged_path.display().to_string(),
+                destination_path: destination_path.display().to_string(),
+            }],
+        };
+        let import_journal_path = vault_paths.lamian_root.join(IMPORT_JOURNAL_FILE_NAME);
+        write_import_journal(&import_journal_path, &journal).expect("write import journal");
+
+        recover_pending_bundle_import(&vault_root).expect("recover import journal");
+
+        assert!(
+            !destination_path.exists(),
+            "destination should not be promoted for uncommitted staged journal"
+        );
+        assert!(
+            !staged_path.exists(),
+            "staged file should be removed for uncommitted staged journal"
+        );
+        assert!(
+            !import_journal_path.exists(),
+            "journal should be removed after staged cleanup"
+        );
+    }
+
+    #[test]
+    fn recover_pending_bundle_import_promotes_staged_files_when_figures_exist() {
+        let temp_dir = tempfile::TempDir::new().expect("temp directory");
+        let vault_root = temp_dir.path().join("vault");
+        let vault_paths = db::initialize_vault(&vault_root).expect("initialize vault");
+        let connection = db::open_vault_connection(&vault_root).expect("open vault connection");
+
+        connection
+            .execute(
+                r#"
+INSERT INTO figures (
+    figure_id,
+    display_name,
+    file_path,
+    file_hash_sha256,
+    media_type,
+    file_size_bytes,
+    created_at,
+    updated_at
+)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+"#,
+                rusqlite::params![
+                    "figure-1",
+                    "Existing Figure",
+                    "/tmp/managed.png",
+                    "hash-figure-1",
+                    "image/png",
+                    42_i64,
+                    "2026-02-21T00:00:00Z",
+                    "2026-02-21T00:00:00Z"
+                ],
+            )
+            .expect("insert figure row");
+
+        let staged_path = vault_paths
+            .lamian_root
+            .join(IMPORT_STAGING_DIR_NAME)
+            .join("session-c")
+            .join("promote.bin");
+        let destination_path = vault_paths.lamian_root.join("figures").join("promote.bin");
+        if let Some(parent_directory) = staged_path.parent() {
+            fs::create_dir_all(parent_directory).expect("create staged parent");
+        }
+        fs::write(&staged_path, [5_u8, 4, 3]).expect("write staged file");
+
+        let journal = BundleImportJournal {
+            status: BundleImportJournalStatus::Staged,
+            figure_ids: vec!["figure-1".to_string()],
+            staged_files: vec![BundleImportJournalEntry {
+                bundle_path: "files/promote.bin".to_string(),
+                staged_path: staged_path.display().to_string(),
+                destination_path: destination_path.display().to_string(),
+            }],
+        };
+        let import_journal_path = vault_paths.lamian_root.join(IMPORT_JOURNAL_FILE_NAME);
+        write_import_journal(&import_journal_path, &journal).expect("write import journal");
+
+        recover_pending_bundle_import(&vault_root).expect("recover import journal");
+
+        assert!(
+            destination_path.exists(),
+            "expected destination promotion for staged journal with committed figures"
+        );
+        assert!(
+            !staged_path.exists(),
+            "staged file should be removed after promotion"
+        );
+        assert!(
+            !import_journal_path.exists(),
+            "journal should be removed after promotion"
+        );
+    }
 }

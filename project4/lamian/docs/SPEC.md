@@ -29,18 +29,18 @@ Build a local-only visual knowledge base for research figures with reliable meta
 
 ## Phase 1.8 Decisions (Finalized)
 
-### Wave 1-2 (Implemented)
+### Wave 1-3 (Implemented)
 
 1. Tag rename (`tag rename`) computes a full rename plan before any mutation, then updates by `tag_id` to avoid descendant corruption when prefixes overlap.
 2. `link remove` allows self-link cleanup (`from_figure_id == to_figure_id`) while `link add` continues to reject self-links.
 3. Crate edition policy is pinned to Rust 2021 for broader toolchain compatibility.
 4. Tag normalization and validation are centralized in a shared helper reused by `tag`, `search`, and `query`, preserving existing error semantics while removing duplication.
+5. Bundle import stages managed files under `.lamian/bundle_import_staging`, records promotion metadata in `.lamian/bundle_import_journal.json`, and promotes files after DB commit with startup recovery.
 
 ### Later Waves (Locked Decisions)
 
-1. Bundle import crash consistency uses staged-file writes plus an import journal.
-2. Saved queries support filterless definitions (sort/order/limit-only templates).
-3. Phase 1 command families will gain global `--json` output parity.
+1. Saved queries support filterless definitions (sort/order/limit-only templates).
+2. Phase 1 command families will gain global `--json` output parity.
 
 ## Ingest Architecture Rule
 

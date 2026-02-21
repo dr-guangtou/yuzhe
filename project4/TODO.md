@@ -66,6 +66,15 @@
 | [x] W2-S3 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` (all pass) |
 | [x] W2-S4 | Done | Updated project + standalone TODO trackers and review notes for Wave 2 completion |
 
+## Phase 1.8 Wave 3 Slice Plan (P4-419 / L-189)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] W3-S1 | Done | Added staged managed-file write flow for bundle import to avoid final-path writes before DB commit |
+| [x] W3-S2 | Done | Added bundle import journal + startup recovery path for committed/staged states |
+| [x] W3-S3 | Done | Added bundle journal recovery unit tests covering committed and staged scenarios |
+| [x] W3-S4 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` (all pass) |
+
 ## Verification Plan
 
 - Run for implementation slices:
@@ -97,7 +106,7 @@
 | P4-416 | Caption clear semantics | agent | [x] Done | added `update --clear-caption` with conflict validation against `--caption` and test coverage |
 | P4-417 | Link uniqueness migration | agent | [x] Done | migration v5 dedupes legacy duplicate links and enforces UNIQUE business key via index |
 | P4-418 | Shared tag validation module | agent | [x] Done | shared `tag_validation` module now powers tag/search/query validation with preserved error semantics |
-| P4-419 | Bundle import crash-consistency hardening | agent | [ ] Pending | reduce orphan-file window around file writes/DB commit (from WEAKNESS-10) |
+| P4-419 | Bundle import crash-consistency hardening | agent | [x] Done | implemented staged writes + import journal recovery to reduce orphan-file window around DB commit |
 | P4-420 | Doctor file-path integrity checks | agent | [ ] Pending | detect missing files referenced by figure records (from WEAKNESS-8) |
 
 ## CLI Expansion Backlog (From Independent Review)
@@ -130,3 +139,4 @@
 - 2026-02-21: Added post-milestone hardening backlog from thorough review (bundle import hardening, ambiguity resolution, integrity verification).
 - 2026-02-21: Completed Phase 1.8 Wave 1 (`BUG-2`, `BUG-3`, edition downgrade to 2021) with full gate pass and new regression tests.
 - 2026-02-21: Completed Phase 1.8 Wave 2 (`P4-418`/`L-188`) by extracting shared tag validation and reusing it across tag/search/query with full gate pass.
+- 2026-02-21: Completed Phase 1.8 Wave 3 (`P4-419`/`L-189`) by moving bundle import to staged writes with journaled recovery and full gate pass.

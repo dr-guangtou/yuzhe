@@ -248,6 +248,76 @@ fn cli_tag_rename_rejects_existing_target_tag() {
     );
 }
 
+#[test]
+fn cli_tag_rename_allows_prefix_expansion_without_corruption() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+
+    let figure_id = inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_KEY);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "add",
+        figure_id.as_str(),
+        "jwst",
+    ]);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "add",
+        figure_id.as_str(),
+        "jwst:machine_learning",
+    ]);
+
+    let rename_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "rename",
+        "jwst",
+        "jwst:archive",
+    ]);
+    let rename_stdout = String::from_utf8_lossy(&rename_output.stdout);
+    assert!(
+        rename_stdout.contains("Renamed tag: jwst -> jwst:archive (affected: 2)"),
+        "unexpected rename output:\n{rename_stdout}"
+    );
+
+    let connection = Connection::open(vault_path.join(".lamian").join("lamian.db"))
+        .expect("open sqlite database");
+    let renamed_root_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM tags WHERE tag_name = 'jwst:archive'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("query renamed root tag");
+    assert_eq!(renamed_root_count, 1);
+
+    let renamed_child_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM tags WHERE tag_name = 'jwst:archive:machine_learning'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("query renamed child tag");
+    assert_eq!(renamed_child_count, 1);
+
+    let corruption_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM tags WHERE tag_name = 'jwst:archive:archive'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("query corruption sentinel tag");
+    assert_eq!(corruption_count, 0);
+}
+
 fn inject_fixture_and_get_figure_id(
     vault_path: &Path,
     fixture_path: &Path,

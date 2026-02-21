@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db;
 use crate::error::LamianError;
@@ -41,15 +41,7 @@ pub fn update_figure(request: UpdateRequest) -> Result<UpdateResult, LamianError
         return Err(LamianError::MissingUpdatePayload);
     }
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     require_figure_exists(&connection, &normalized_figure_id)?;
 

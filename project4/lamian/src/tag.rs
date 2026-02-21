@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db;
 use crate::error::LamianError;
@@ -55,15 +55,7 @@ pub fn add_tag_to_figure(request: AddTagRequest) -> Result<AddTagResult, LamianE
     let figure_id = normalize_figure_id(&request.figure_id)?;
     let normalized_tag = normalize_tag(&request.tag)?;
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     if !figure_exists(&connection, &figure_id)? {
         return Err(LamianError::UnknownFigureId { figure_id });
@@ -87,15 +79,7 @@ pub fn remove_tag_from_figure(request: RemoveTagRequest) -> Result<RemoveTagResu
     let figure_id = normalize_figure_id(&request.figure_id)?;
     let normalized_tag = normalize_tag(&request.tag)?;
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     if !figure_exists(&connection, &figure_id)? {
         return Err(LamianError::UnknownFigureId { figure_id });
@@ -119,13 +103,6 @@ pub fn rename_tag(request: RenameTagRequest) -> Result<RenameTagResult, LamianEr
     let normalized_old_tag = normalize_tag(&request.old_tag)?;
     let normalized_new_tag = normalize_tag(&request.new_tag)?;
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
     if normalized_old_tag == normalized_new_tag {
         return Ok(RenameTagResult {
             normalized_old_tag,
@@ -134,8 +111,7 @@ pub fn rename_tag(request: RenameTagRequest) -> Result<RenameTagResult, LamianEr
         });
     }
 
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     let renamed_count =
         rename_tag_assignments(&mut connection, &normalized_old_tag, &normalized_new_tag)?;
@@ -279,74 +255,114 @@ fn rename_tag_assignments(
 ) -> Result<usize, LamianError> {
     let transaction = connection.transaction()?;
 
-    let old_tag_id =
-        find_tag_id(&transaction, old_tag)?.ok_or_else(|| LamianError::TagNotFound {
-            tag: old_tag.to_string(),
-        })?;
+    let rename_plan = build_tag_rename_plan(&transaction, old_tag, new_tag)?;
 
-    if find_tag_id(&transaction, new_tag)?.is_some() {
+    for plan_row in &rename_plan {
+        transaction.execute(
+            "UPDATE tags SET tag_name = ?1, tag_parent = ?2 WHERE tag_id = ?3",
+            params![
+                plan_row.renamed_tag_name.as_str(),
+                plan_row.renamed_tag_parent.as_deref(),
+                plan_row.tag_id
+            ],
+        )?;
+    }
+
+    transaction.commit()?;
+    Ok(rename_plan.len())
+}
+
+fn build_tag_rename_plan(
+    connection: &Connection,
+    old_tag: &str,
+    new_tag: &str,
+) -> Result<Vec<TagRenamePlanRow>, LamianError> {
+    if find_tag_id(connection, old_tag)?.is_none() {
+        return Err(LamianError::TagNotFound {
+            tag: old_tag.to_string(),
+        });
+    }
+
+    let rename_rows = load_tag_rows_for_rename(connection, old_tag)?;
+    if rename_rows.is_empty() {
+        return Err(LamianError::TagNotFound {
+            tag: old_tag.to_string(),
+        });
+    }
+
+    if find_tag_id(connection, new_tag)?.is_some() {
         return Err(LamianError::TagAlreadyExists {
             tag: new_tag.to_string(),
         });
     }
 
-    let descendants = load_descendant_tag_rows(&transaction, old_tag)?;
+    let mut rename_plan_rows = Vec::with_capacity(rename_rows.len());
+    for rename_row in rename_rows {
+        let suffix = rename_row
+            .original_tag_name
+            .strip_prefix(old_tag)
+            .ok_or_else(|| LamianError::InvalidTagValue {
+                reason: "tag rename source is outside rename root",
+                value: rename_row.original_tag_name.clone(),
+            })?;
+        let renamed_tag_name = format!("{new_tag}{suffix}");
+        let renamed_tag_parent = renamed_tag_name
+            .rsplit_once(':')
+            .map(|(parent, _)| parent.to_string());
 
-    for descendant in descendants {
-        let new_descendant_name = format!(
-            "{}{}",
-            new_tag,
-            descendant
-                .strip_prefix(old_tag)
-                .expect("descendant prefix to match old tag")
-        );
-        if descendant != old_tag && find_tag_id(&transaction, &new_descendant_name)?.is_some() {
-            return Err(LamianError::TagAlreadyExists {
-                tag: new_descendant_name,
-            });
+        rename_plan_rows.push(TagRenamePlanRow {
+            tag_id: rename_row.tag_id,
+            original_tag_name: rename_row.original_tag_name,
+            renamed_tag_name,
+            renamed_tag_parent,
+        });
+    }
+
+    for plan_row in &rename_plan_rows {
+        if plan_row.original_tag_name == plan_row.renamed_tag_name {
+            continue;
+        }
+
+        let existing_tag_id = find_tag_id(connection, &plan_row.renamed_tag_name)?;
+        if let Some(existing_tag_id_value) = existing_tag_id {
+            if existing_tag_id_value != plan_row.tag_id {
+                return Err(LamianError::TagAlreadyExists {
+                    tag: plan_row.renamed_tag_name.clone(),
+                });
+            }
         }
     }
 
-    let new_tag_parent = new_tag.rsplit_once(':').map(|(parent, _)| parent);
-    transaction.execute(
-        "UPDATE tags SET tag_name = ?1, tag_parent = ?2 WHERE tag_id = ?3",
-        params![new_tag, new_tag_parent, old_tag_id],
-    )?;
-
-    let descendants = load_descendant_tag_rows(&transaction, old_tag)?;
-    let mut renamed_count: usize = 1;
-
-    for descendant in descendants {
-        let new_descendant_name = format!(
-            "{}{}",
-            new_tag,
-            descendant
-                .strip_prefix(old_tag)
-                .expect("descendant prefix to match old tag")
-        );
-        let new_descendant_parent = new_descendant_name
-            .rsplit_once(':')
-            .map(|(parent, _)| parent);
-        transaction.execute(
-            "UPDATE tags SET tag_name = ?1, tag_parent = ?2 WHERE tag_name = ?3",
-            params![new_descendant_name, new_descendant_parent, descendant],
-        )?;
-        renamed_count += 1;
-    }
-
-    transaction.commit()?;
-    Ok(renamed_count)
+    Ok(rename_plan_rows)
 }
 
-fn load_descendant_tag_rows(
+#[derive(Debug)]
+struct TagRenameRow {
+    tag_id: i64,
+    original_tag_name: String,
+}
+
+#[derive(Debug)]
+struct TagRenamePlanRow {
+    tag_id: i64,
+    original_tag_name: String,
+    renamed_tag_name: String,
+    renamed_tag_parent: Option<String>,
+}
+
+fn load_tag_rows_for_rename(
     connection: &Connection,
-    root_tag: &str,
-) -> Result<Vec<String>, LamianError> {
-    let prefix = format!("{root_tag}:");
+    old_tag: &str,
+) -> Result<Vec<TagRenameRow>, LamianError> {
     let mut statement = connection.prepare(
-        "SELECT tag_name FROM tags WHERE tag_name LIKE ?1 ORDER BY LENGTH(tag_name) ASC, tag_name ASC",
+        "SELECT tag_id, tag_name FROM tags WHERE tag_name = ?1 OR tag_name LIKE ?2 ORDER BY LENGTH(tag_name) ASC, tag_name ASC",
     )?;
-    let rows = statement.query_map([format!("{prefix}%")], |row| row.get::<_, String>(0))?;
+    let rows = statement.query_map(params![old_tag, format!("{old_tag}:%")], |row| {
+        Ok(TagRenameRow {
+            tag_id: row.get(0)?,
+            original_tag_name: row.get(1)?,
+        })
+    })?;
     let mut values = Vec::new();
     for row in rows {
         values.push(row?);

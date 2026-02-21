@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db;
 use crate::error::LamianError;
@@ -52,15 +52,7 @@ pub fn add_link(request: AddLinkRequest) -> Result<AddLinkResult, LamianError> {
         });
     }
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     require_figure_exists(&connection, &from_figure_id)?;
     require_figure_exists(&connection, &to_figure_id)?;
@@ -90,21 +82,7 @@ pub fn remove_link(request: RemoveLinkRequest) -> Result<RemoveLinkResult, Lamia
     let from_figure_id = normalize_link_figure_id("from_figure_id", &request.from_figure_id)?;
     let to_figure_id = normalize_link_figure_id("to_figure_id", &request.to_figure_id)?;
 
-    if from_figure_id == to_figure_id {
-        return Err(LamianError::SelfLinkNotAllowed {
-            figure_id: from_figure_id,
-        });
-    }
-
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     require_figure_exists(&connection, &from_figure_id)?;
     require_figure_exists(&connection, &to_figure_id)?;

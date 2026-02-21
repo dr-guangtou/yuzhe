@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use clap::ValueEnum;
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, params_from_iter, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
 use crate::db;
@@ -177,6 +178,8 @@ struct FigureRow {
     updated_at: String,
 }
 
+const SQLITE_BIND_LIMIT_SAFE: usize = 900;
+
 pub fn save_query(request: SaveQueryRequest) -> Result<SaveQueryResult, LamianError> {
     if request.vault_root.as_os_str().is_empty() {
         return Err(LamianError::InvalidVaultPath {
@@ -188,15 +191,7 @@ pub fn save_query(request: SaveQueryRequest) -> Result<SaveQueryResult, LamianEr
     let filters = normalize_filters(request.tag, request.source_key, request.text)?;
     let limit = normalize_limit(request.limit)?;
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
 
     if query_name_exists(&connection, &query_name)? {
         return Err(LamianError::QueryAlreadyExists { query_name });
@@ -244,15 +239,7 @@ pub fn list_queries(request: ListQueriesRequest) -> Result<ListQueriesResult, La
         });
     }
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
 
     let mut statement = connection.prepare(
         r#"
@@ -299,35 +286,36 @@ pub fn run_query(request: RunQueryRequest) -> Result<RunQueryResult, LamianError
     }
 
     let query_reference = normalize_query_reference(&request.query_reference)?;
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
 
     let stored_query = resolve_stored_query(&connection, &query_reference)?;
     let figure_rows = execute_stored_query(&connection, &stored_query)?;
+    let figure_ids = figure_rows
+        .iter()
+        .map(|row| row.figure_id.clone())
+        .collect::<Vec<_>>();
 
-    let mut figure_ids = Vec::with_capacity(figure_rows.len());
-    let mut figures = Vec::new();
+    let figures = if matches!(request.detail, QueryRunDetail::Full) {
+        let mut tags_by_figure_id = load_tags_for_figures(&connection, &figure_ids)?;
+        let mut source_keys_by_figure_id = load_source_keys_for_figures(&connection, &figure_ids)?;
+        let mut figure_details = Vec::with_capacity(figure_rows.len());
 
-    for row in figure_rows {
-        figure_ids.push(row.figure_id.clone());
-        if matches!(request.detail, QueryRunDetail::Full) {
-            figures.push(QueryFigureDetail {
-                figure_id: row.figure_id.clone(),
+        for row in figure_rows {
+            figure_details.push(QueryFigureDetail {
+                tags: tags_by_figure_id.remove(&row.figure_id).unwrap_or_default(),
+                source_keys: source_keys_by_figure_id
+                    .remove(&row.figure_id)
+                    .unwrap_or_default(),
+                figure_id: row.figure_id,
                 display_name: row.display_name,
                 caption: row.caption,
                 updated_at: row.updated_at,
-                tags: load_tags_for_figure(&connection, &row.figure_id)?,
-                source_keys: load_source_keys_for_figure(&connection, &row.figure_id)?,
             });
         }
-    }
+        figure_details
+    } else {
+        Vec::new()
+    };
 
     let total_matches = figure_ids.len();
     Ok(RunQueryResult {
@@ -348,15 +336,7 @@ pub fn delete_query(request: DeleteQueryRequest) -> Result<DeleteQueryResult, La
     }
 
     let query_reference = normalize_query_reference(&request.query_reference)?;
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
 
     let stored_query = resolve_stored_query(&connection, &query_reference)?;
     connection.execute(
@@ -494,10 +474,10 @@ fn resolve_stored_query(
     connection: &Connection,
     query_reference: &str,
 ) -> Result<StoredQuery, LamianError> {
-    if let Ok(query_id) = query_reference.parse::<i64>()
-        && let Some(query) = load_stored_query_by_id(connection, query_id)?
-    {
-        return Ok(query);
+    if let Ok(query_id) = query_reference.parse::<i64>() {
+        if let Some(query) = load_stored_query_by_id(connection, query_id)? {
+            return Ok(query);
+        }
     }
 
     let query = load_stored_query_by_name(connection, query_reference)?.ok_or_else(|| {
@@ -699,49 +679,87 @@ ORDER BY figures.{sort_field_sql} {sort_order_sql}, figures.figure_id ASC
     Ok(results)
 }
 
-fn load_tags_for_figure(
+fn load_tags_for_figures(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Vec<String>, LamianError> {
-    let mut statement = connection.prepare(
-        r#"
-SELECT tags.tag_name
+    figure_ids: &[String],
+) -> Result<HashMap<String, Vec<String>>, LamianError> {
+    let mut tags_by_figure_id = HashMap::new();
+    if figure_ids.is_empty() {
+        return Ok(tags_by_figure_id);
+    }
+
+    for figure_id_chunk in figure_ids.chunks(SQLITE_BIND_LIMIT_SAFE) {
+        let in_clause = build_in_clause(figure_id_chunk.len());
+        let query_sql = format!(
+            r#"
+SELECT figure_tags.figure_id, tags.tag_name
 FROM figure_tags
 JOIN tags ON tags.tag_id = figure_tags.tag_id
-WHERE figure_tags.figure_id = ?1
-ORDER BY tags.tag_name ASC
-"#,
-    )?;
-    let mut rows = statement.query([figure_id])?;
-    let mut tags = Vec::new();
+WHERE figure_tags.figure_id IN ({in_clause})
+ORDER BY figure_tags.figure_id ASC, tags.tag_name ASC
+"#
+        );
 
-    while let Some(row) = rows.next()? {
-        tags.push(row.get(0)?);
+        let mut statement = connection.prepare(&query_sql)?;
+        let mut rows = statement.query(params_from_iter(
+            figure_id_chunk.iter().map(|figure_id| figure_id.as_str()),
+        ))?;
+
+        while let Some(row) = rows.next()? {
+            let figure_id: String = row.get(0)?;
+            let tag_name: String = row.get(1)?;
+            tags_by_figure_id
+                .entry(figure_id)
+                .or_insert_with(Vec::new)
+                .push(tag_name);
+        }
     }
 
-    Ok(tags)
+    Ok(tags_by_figure_id)
 }
 
-fn load_source_keys_for_figure(
+fn load_source_keys_for_figures(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Vec<String>, LamianError> {
-    let mut statement = connection.prepare(
-        r#"
-SELECT source_key
-FROM sources
-WHERE figure_id = ?1
-ORDER BY source_id ASC
-"#,
-    )?;
-    let mut rows = statement.query([figure_id])?;
-    let mut source_keys = Vec::new();
-
-    while let Some(row) = rows.next()? {
-        source_keys.push(row.get(0)?);
+    figure_ids: &[String],
+) -> Result<HashMap<String, Vec<String>>, LamianError> {
+    let mut source_keys_by_figure_id = HashMap::new();
+    if figure_ids.is_empty() {
+        return Ok(source_keys_by_figure_id);
     }
 
-    Ok(source_keys)
+    for figure_id_chunk in figure_ids.chunks(SQLITE_BIND_LIMIT_SAFE) {
+        let in_clause = build_in_clause(figure_id_chunk.len());
+        let query_sql = format!(
+            r#"
+SELECT figure_id, source_key
+FROM sources
+WHERE figure_id IN ({in_clause})
+ORDER BY figure_id ASC, source_id ASC
+"#
+        );
+
+        let mut statement = connection.prepare(&query_sql)?;
+        let mut rows = statement.query(params_from_iter(
+            figure_id_chunk.iter().map(|figure_id| figure_id.as_str()),
+        ))?;
+
+        while let Some(row) = rows.next()? {
+            let figure_id: String = row.get(0)?;
+            let source_key: String = row.get(1)?;
+            source_keys_by_figure_id
+                .entry(figure_id)
+                .or_insert_with(Vec::new)
+                .push(source_key);
+        }
+    }
+
+    Ok(source_keys_by_figure_id)
+}
+
+fn build_in_clause(parameter_count: usize) -> String {
+    std::iter::repeat_n("?", parameter_count)
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn build_like_pattern(value: &str) -> String {

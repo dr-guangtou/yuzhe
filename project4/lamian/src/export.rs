@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use rusqlite::{Connection, OptionalExtension};
+use rusqlite::Connection;
 use serde::Serialize;
 
 use crate::cli::ExportFormat;
@@ -68,6 +69,19 @@ struct ExportNote {
     updated_at: String,
 }
 
+#[derive(Debug)]
+struct ExportFigureBase {
+    figure_id: String,
+    display_name: String,
+    caption: Option<String>,
+    file_path: String,
+    file_hash_sha256: String,
+    media_type: String,
+    file_size_bytes: u64,
+    created_at: String,
+    updated_at: String,
+}
+
 pub fn export_metadata(request: ExportRequest) -> Result<ExportResult, LamianError> {
     if request.vault_root.as_os_str().is_empty() {
         return Err(LamianError::InvalidVaultPath {
@@ -77,15 +91,7 @@ pub fn export_metadata(request: ExportRequest) -> Result<ExportResult, LamianErr
 
     let target_path = normalize_target_path(request.target)?;
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     let export_document = load_export_document(&mut connection)?;
     let figure_count = export_document.figures.len();
@@ -123,10 +129,10 @@ fn normalize_target_path(target: Option<PathBuf>) -> Result<Option<PathBuf>, Lam
                 });
             }
 
-            if let Some(parent_directory) = path.parent()
-                && !parent_directory.as_os_str().is_empty()
-            {
-                fs::create_dir_all(parent_directory)?;
+            if let Some(parent_directory) = path.parent() {
+                if !parent_directory.as_os_str().is_empty() {
+                    fs::create_dir_all(parent_directory)?;
+                }
             }
 
             Ok(Some(path))
@@ -197,7 +203,7 @@ ORDER BY figure_id ASC
 "#,
     )?;
     let mut rows = statement.query([])?;
-    let mut figures = Vec::new();
+    let mut figure_rows = Vec::new();
 
     while let Some(row) = rows.next()? {
         let figure_id: String = row.get(0)?;
@@ -210,8 +216,8 @@ ORDER BY figure_id ASC
                 value: file_size_bytes_i64.to_string(),
             })?;
 
-        figures.push(ExportFigure {
-            figure_id: figure_id.clone(),
+        figure_rows.push(ExportFigureBase {
+            figure_id,
             display_name: row.get(1)?,
             caption: row.get(2)?,
             file_path: row.get(3)?,
@@ -220,23 +226,53 @@ ORDER BY figure_id ASC
             file_size_bytes,
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
-            sources: load_sources_for_figure(connection, &figure_id)?,
-            tags: load_tags_for_figure(connection, &figure_id)?,
-            outbound_links: load_links_for_figure(connection, &figure_id)?,
-            note: load_note_for_figure(connection, &figure_id)?,
+        });
+    }
+
+    if figure_rows.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut sources_by_figure_id = load_sources_by_figure(connection)?;
+    let mut tags_by_figure_id = load_tags_by_figure(connection)?;
+    let mut outbound_links_by_figure_id = load_outbound_links_by_figure(connection)?;
+    let mut notes_by_figure_id = load_notes_by_figure(connection)?;
+
+    let mut figures = Vec::with_capacity(figure_rows.len());
+    for figure_row in figure_rows {
+        figures.push(ExportFigure {
+            sources: sources_by_figure_id
+                .remove(&figure_row.figure_id)
+                .unwrap_or_default(),
+            tags: tags_by_figure_id
+                .remove(&figure_row.figure_id)
+                .unwrap_or_default(),
+            outbound_links: outbound_links_by_figure_id
+                .remove(&figure_row.figure_id)
+                .unwrap_or_default(),
+            note: notes_by_figure_id.remove(&figure_row.figure_id),
+            figure_id: figure_row.figure_id,
+            display_name: figure_row.display_name,
+            caption: figure_row.caption,
+            file_path: figure_row.file_path,
+            file_hash_sha256: figure_row.file_hash_sha256,
+            media_type: figure_row.media_type,
+            file_size_bytes: figure_row.file_size_bytes,
+            created_at: figure_row.created_at,
+            updated_at: figure_row.updated_at,
         });
     }
 
     Ok(figures)
 }
 
-fn load_sources_for_figure(
+fn load_sources_by_figure(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Vec<ExportSource>, LamianError> {
+) -> Result<HashMap<String, Vec<ExportSource>>, LamianError> {
     let mut statement = connection.prepare(
         r#"
 SELECT
+    figure_id,
     source_type,
     source_key,
     source_title,
@@ -244,92 +280,107 @@ SELECT
     source_published_at,
     created_at
 FROM sources
-WHERE figure_id = ?1
-ORDER BY source_id ASC
+ORDER BY figure_id ASC, source_id ASC
 "#,
     )?;
-    let mut rows = statement.query([figure_id])?;
-    let mut sources = Vec::new();
+    let mut rows = statement.query([])?;
+    let mut sources_by_figure_id = HashMap::new();
 
     while let Some(row) = rows.next()? {
-        sources.push(ExportSource {
-            source_type: row.get(0)?,
-            source_key: row.get(1)?,
-            source_title: row.get(2)?,
-            source_authors: row.get(3)?,
-            source_published_at: row.get(4)?,
-            created_at: row.get(5)?,
-        });
+        let figure_id: String = row.get(0)?;
+        let source = ExportSource {
+            source_type: row.get(1)?,
+            source_key: row.get(2)?,
+            source_title: row.get(3)?,
+            source_authors: row.get(4)?,
+            source_published_at: row.get(5)?,
+            created_at: row.get(6)?,
+        };
+        sources_by_figure_id
+            .entry(figure_id)
+            .or_insert_with(Vec::new)
+            .push(source);
     }
 
-    Ok(sources)
+    Ok(sources_by_figure_id)
 }
 
-fn load_tags_for_figure(
+fn load_tags_by_figure(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Vec<String>, LamianError> {
+) -> Result<HashMap<String, Vec<String>>, LamianError> {
     let mut statement = connection.prepare(
         r#"
-SELECT tags.tag_name
+SELECT figure_tags.figure_id, tags.tag_name
 FROM figure_tags
 JOIN tags ON tags.tag_id = figure_tags.tag_id
-WHERE figure_tags.figure_id = ?1
-ORDER BY tags.tag_name ASC
+ORDER BY figure_tags.figure_id ASC, tags.tag_name ASC
 "#,
     )?;
-    let mut rows = statement.query([figure_id])?;
-    let mut tags = Vec::new();
+    let mut rows = statement.query([])?;
+    let mut tags_by_figure_id = HashMap::new();
 
     while let Some(row) = rows.next()? {
-        tags.push(row.get(0)?);
+        let figure_id: String = row.get(0)?;
+        let tag_name: String = row.get(1)?;
+        tags_by_figure_id
+            .entry(figure_id)
+            .or_insert_with(Vec::new)
+            .push(tag_name);
     }
 
-    Ok(tags)
+    Ok(tags_by_figure_id)
 }
 
-fn load_links_for_figure(
+fn load_outbound_links_by_figure(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Vec<ExportLink>, LamianError> {
+) -> Result<HashMap<String, Vec<ExportLink>>, LamianError> {
     let mut statement = connection.prepare(
         r#"
-SELECT to_figure_id, relation_type, created_at
+SELECT from_figure_id, to_figure_id, relation_type, created_at
 FROM links
-WHERE from_figure_id = ?1
-ORDER BY to_figure_id ASC, relation_type ASC, created_at ASC
+ORDER BY from_figure_id ASC, to_figure_id ASC, relation_type ASC, created_at ASC
 "#,
     )?;
-    let mut rows = statement.query([figure_id])?;
-    let mut links = Vec::new();
+    let mut rows = statement.query([])?;
+    let mut outbound_links_by_figure_id = HashMap::new();
 
     while let Some(row) = rows.next()? {
-        links.push(ExportLink {
-            to_figure_id: row.get(0)?,
-            relation_type: row.get(1)?,
-            created_at: row.get(2)?,
-        });
+        let from_figure_id: String = row.get(0)?;
+        let outbound_link = ExportLink {
+            to_figure_id: row.get(1)?,
+            relation_type: row.get(2)?,
+            created_at: row.get(3)?,
+        };
+        outbound_links_by_figure_id
+            .entry(from_figure_id)
+            .or_insert_with(Vec::new)
+            .push(outbound_link);
     }
 
-    Ok(links)
+    Ok(outbound_links_by_figure_id)
 }
 
-fn load_note_for_figure(
+fn load_notes_by_figure(
     connection: &Connection,
-    figure_id: &str,
-) -> Result<Option<ExportNote>, LamianError> {
-    let note = connection
-        .query_row(
-            "SELECT note_markdown, updated_at FROM notes WHERE figure_id = ?1",
-            [figure_id],
-            |row| {
-                Ok(ExportNote {
-                    note_markdown: row.get(0)?,
-                    updated_at: row.get(1)?,
-                })
-            },
-        )
-        .optional()?;
+) -> Result<HashMap<String, ExportNote>, LamianError> {
+    let mut statement = connection.prepare(
+        r#"
+SELECT figure_id, note_markdown, updated_at
+FROM notes
+ORDER BY figure_id ASC
+"#,
+    )?;
+    let mut rows = statement.query([])?;
+    let mut notes_by_figure_id = HashMap::new();
 
-    Ok(note)
+    while let Some(row) = rows.next()? {
+        let figure_id: String = row.get(0)?;
+        let note = ExportNote {
+            note_markdown: row.get(1)?,
+            updated_at: row.get(2)?,
+        };
+        notes_by_figure_id.insert(figure_id, note);
+    }
+
+    Ok(notes_by_figure_id)
 }

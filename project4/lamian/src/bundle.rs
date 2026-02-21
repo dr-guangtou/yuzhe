@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use flate2::read::GzDecoder;
 use flate2::{Compression, GzBuilder};
-use rusqlite::{Connection, OptionalExtension, Transaction, params};
+use rusqlite::{params, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tar::{Archive, Builder, Header, HeaderMode};
@@ -14,7 +14,7 @@ use tar::{Archive, Builder, Header, HeaderMode};
 use crate::cli::ExportFormat;
 use crate::db;
 use crate::error::LamianError;
-use crate::export::{ExportRequest, export_metadata};
+use crate::export::{export_metadata, ExportRequest};
 
 const BUNDLE_VERSION: u32 = 1;
 const MANIFEST_ENTRY_PATH: &str = "manifest.json";
@@ -193,11 +193,6 @@ pub fn bundle_import(request: BundleImportRequest) -> Result<BundleImportResult,
     validate_bundle_source_path(&request.bundle_path)?;
 
     let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
 
     let archive_entries = read_bundle_archive(&request.bundle_path)?;
     let manifest_bytes = archive_entries
@@ -220,8 +215,7 @@ pub fn bundle_import(request: BundleImportRequest) -> Result<BundleImportResult,
     verify_manifest_against_metadata(&manifest, &metadata_bytes, &metadata_document)?;
     verify_managed_file_entries(&manifest, &metadata_document, &archive_entries.file_entries)?;
 
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     let managed_files_by_figure_id = index_managed_files_by_figure_id(&manifest)?;
     let managed_figure_root = vault_paths.lamian_root.join(MANAGED_FIGURES_DIR_NAME);
@@ -326,10 +320,10 @@ fn normalize_bundle_target_path(path: &Path) -> Result<PathBuf, LamianError> {
         });
     }
 
-    if let Some(parent_directory) = path.parent()
-        && !parent_directory.as_os_str().is_empty()
-    {
-        fs::create_dir_all(parent_directory)?;
+    if let Some(parent_directory) = path.parent() {
+        if !parent_directory.as_os_str().is_empty() {
+            fs::create_dir_all(parent_directory)?;
+        }
     }
 
     Ok(path.to_path_buf())

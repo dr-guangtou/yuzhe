@@ -27,6 +27,20 @@ Build a local-only visual knowledge base for research figures with reliable meta
 1. Collections (`collection`) with static and dynamic modes
 2. Portable bundles (`bundle export|import`) via `tar.gz`
 
+## Phase 1.8 Decisions (Finalized)
+
+### Wave 1 (Implemented)
+
+1. Tag rename (`tag rename`) computes a full rename plan before any mutation, then updates by `tag_id` to avoid descendant corruption when prefixes overlap.
+2. `link remove` allows self-link cleanup (`from_figure_id == to_figure_id`) while `link add` continues to reject self-links.
+3. Crate edition policy is pinned to Rust 2021 for broader toolchain compatibility.
+
+### Later Waves (Locked Decisions)
+
+1. Bundle import crash consistency uses staged-file writes plus an import journal.
+2. Saved queries support filterless definitions (sort/order/limit-only templates).
+3. Phase 1 command families will gain global `--json` output parity.
+
 ## Ingest Architecture Rule
 
 - There is one shared ingest core service.
@@ -79,24 +93,23 @@ lamian bundle import <path.tar.gz>
 
 ## Core Tables
 
-- Existing:
-  - `figures`
-  - `sources`
-  - `tags`
-  - `figure_tags`
-  - `links`
-  - `notes`
-  - `schema_migrations`
-- Planned in Phase 1.5:
-  - `saved_queries`
-  - `collections`
-  - `collection_items`
+- `figures`
+- `sources`
+- `tags`
+- `figure_tags`
+- `links`
+- `notes`
+- `schema_migrations`
+- `saved_queries`
+- `collections`
+- `collection_items`
 
 ## Output Contract
 
 - Existing Phase 1 commands keep current human-readable output.
 - New Phase 1.5 commands use JSON-only output.
 - `query run` supports `--detail ids|full`.
+- Phase 1.8 keeps global `--json` for legacy command families as a locked follow-up decision.
 
 ## Acceptance Baseline
 

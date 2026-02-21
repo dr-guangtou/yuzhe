@@ -171,6 +171,51 @@ fn cli_link_remove_deletes_all_relations_for_pair() {
 }
 
 #[test]
+fn cli_link_remove_allows_self_link_cleanup() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let figure_id = inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_KEY);
+
+    let connection = Connection::open(vault_path.join(".lamian").join("lamian.db"))
+        .expect("open sqlite database");
+    connection
+        .execute(
+            "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+            [figure_id.as_str(), figure_id.as_str(), "legacy"],
+        )
+        .expect("insert legacy self-link");
+
+    let remove_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "link",
+        "remove",
+        figure_id.as_str(),
+        figure_id.as_str(),
+    ]);
+    let remove_stdout = String::from_utf8_lossy(&remove_output.stdout);
+    assert!(
+        remove_stdout.contains(&format!(
+            "Removed links: {} -> {} (count: 1)",
+            figure_id, figure_id
+        )),
+        "unexpected remove output for self-link cleanup:\n{remove_stdout}"
+    );
+
+    let remaining_count: i64 = connection
+        .query_row(
+            "SELECT COUNT(*) FROM links WHERE from_figure_id = ?1 AND to_figure_id = ?2",
+            [figure_id.as_str(), figure_id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("query remaining self-links");
+    assert_eq!(remaining_count, 0);
+}
+
+#[test]
 fn cli_link_add_rejects_unknown_figure_id() {
     let fixture_path = repository_fixture_path("2602.17205_1.png");
     let temp_dir = TempDir::new().expect("temp directory");

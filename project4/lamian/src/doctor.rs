@@ -67,15 +67,7 @@ pub fn doctor_vault(request: DoctorRequest) -> Result<DoctorResult, LamianError>
         });
     }
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     let issues_before_fix_records = collect_issues(&connection)?;
     let mut fixed_count = 0_usize;
@@ -252,7 +244,11 @@ fn apply_fix(transaction: &Transaction, issue: &IssueRecord) -> Result<usize, La
         IssueRecord::FigureWithoutSource { .. } => 0,
     };
 
-    if affected_rows > 0 { Ok(1) } else { Ok(0) }
+    if affected_rows > 0 {
+        Ok(1)
+    } else {
+        Ok(0)
+    }
 }
 
 fn issue_record_to_output(issue: &IssueRecord) -> DoctorIssue {

@@ -80,6 +80,19 @@ Purpose:
 - JSON output contracts for new commands are stable
 - docs under both `project4/` and `project4/lamian/docs/` are aligned
 
+### Post-Phase 1.5 Hardening Wave (Before/Alongside Early Phase 2)
+
+- Harden bundle import portability and structural validation.
+- Reuse domain normalization rules during bundle import to keep invariants consistent with CLI ingest flows.
+- Add visibility and policy controls for dropped links and figure conflicts during bundle import.
+- Add stream-based bundle processing for large files.
+- Add explicit reference disambiguation for numeric query/collection identifiers.
+- Add vault integrity verification CLI (`verify`) and bundle preflight (`bundle inspect`, `bundle import --dry-run`).
+- Complete documentation synchronization for implemented Phase 1.5 command coverage.
+- Resolve critical correctness bugs from independent review (`BUG-2` tag rename corruption and `BUG-3` self-link cleanup path).
+- Add schema and service hardening from independent review (link uniqueness migration, shared DB connection helper, tag validation deduplication, query/export batching).
+- Evaluate and prioritize CLI expansion items (`MISS-1` to `MISS-10`) after hardening triage.
+
 ## Phase 2: Desktop GUI (Functionality First)
 
 - Add minimal GUI wrapper over core services

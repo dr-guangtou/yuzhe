@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use rusqlite::{Connection, params};
+use rusqlite::{params, Connection};
 
 use crate::db;
 use crate::error::LamianError;
@@ -41,15 +41,7 @@ pub fn search_figures(request: SearchRequest) -> Result<SearchResult, LamianErro
 
     let filters = SearchFilters::from_request(request)?;
 
-    let vault_paths = db::resolve_vault_paths(&filters.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: filters.vault_root,
-        });
-    }
-
-    let mut connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&filters.vault_root)?;
 
     let figures = search_rows(&mut connection, &filters)?;
     Ok(SearchResult { figures })

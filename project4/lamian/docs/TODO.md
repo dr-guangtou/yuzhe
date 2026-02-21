@@ -38,6 +38,46 @@
 | L-201 | Select Rust GUI approach | Pending | `egui`, `Iced`, or `Tauri` decision |
 | L-202 | Build vault browser and figure detail editor | Pending | prioritize functionality over styling |
 
+## Phase 1.x Hardening (Post-Phase 1.5 Review)
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-171 | Harden bundle import path portability | Pending | detect and report non-portable reference-mode file paths imported from bundles |
+| L-172 | Reuse domain validation in bundle import | Pending | apply inject/tag/link validation rules to imported metadata records |
+| L-173 | Add link-loss visibility in bundle import | Pending | report dropped outbound links and optionally fail when link targets are missing |
+| L-174 | Stream bundle export/import IO | Pending | avoid full-file buffering for large managed files and archive entries |
+| L-175 | Tighten archive structural validation | Pending | reject duplicate/ambiguous manifest or metadata entries and unexpected archive records |
+| L-176 | Resolve numeric ID/name ambiguity | Pending | add explicit reference mode for `query` and `collection` operations (`id` vs `name`) |
+| L-177 | Add vault integrity verification command | Pending | implement `verify` command for filesystem-vs-DB checks (missing files, hash drift, size drift) |
+| L-178 | Add bundle preflight planning | Pending | implement `bundle inspect` and `bundle import --dry-run` summaries before mutation |
+| L-179 | Add explicit bundle conflict policies | Pending | implement `bundle import --on-conflict skip|error|replace` |
+| L-180 | Refresh user docs for implemented scope | Pending | align `README.md`, `USAGE.md`, and command coverage text with current state |
+| L-181 | Fix tag rename descendant corruption path | Done | rename computes full plan before mutation and applies updates by `tag_id`; panic-prone assumption removed |
+| L-182 | Allow self-link cleanup via `link remove` | Done | removed self-link guard from removal path; add path still blocks self-links |
+| L-183 | Define Rust toolchain compatibility policy | Done | crate edition downgraded to 2021 and incompatible let-chains rewritten for Rust 2021 |
+| L-184 | Centralize vault DB connection opening | Done | introduced shared `db::open_vault_connection` and migrated command services to use one canonical open path |
+| L-185 | Reduce N+1 query patterns in export/query-full | Done | query full detail and export now batch-load grouped related records instead of per-figure round trips |
+| L-186 | Add caption clearing semantics | Pending | support explicit caption removal (`--clear-caption` or nullable set semantics) (from WEAKNESS-6) |
+| L-187 | Enforce link uniqueness at schema level | Pending | migration adds UNIQUE(from_figure_id,to_figure_id,relation_type) and dedupes legacy rows (from WEAKNESS-7) |
+| L-188 | Deduplicate tag validation logic | Pending | extract shared tag normalization/validation used by tag/search/query (from WEAKNESS-9) |
+| L-189 | Improve bundle import crash consistency | Pending | reduce orphan-file risk around DB commit and file writes via staged writes/journaling (from WEAKNESS-10) |
+| L-190 | Extend doctor for file-path integrity | Pending | add checks for missing/broken figure file paths (partially overlaps L-177; from WEAKNESS-8) |
+
+## Phase 1.x CLI Expansion Backlog (Post-Review)
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-191 | Add `show`/`info` command for single figure detail | Pending | return full metadata for one figure ID (from MISS-1) |
+| L-192 | Add `list`/`ls` command for figures | Pending | browse all figures with optional limit/sort (from MISS-2) |
+| L-193 | Add figure delete command | Pending | safe remove flow with dependency cleanup policy (from MISS-3) |
+| L-194 | Add `open` command for figure file | Pending | open resolved file path in OS viewer (from MISS-4) |
+| L-195 | Add hierarchical tag-prefix search mode | Pending | support prefix matching for tag trees (from MISS-5) |
+| L-196 | Add source metadata update command | Pending | update `source_title`/`source_authors`/`source_published_at` after ingest (from MISS-6) |
+| L-197 | Allow filterless saved queries | Pending | support sort+limit-only query definitions (from MISS-7) |
+| L-198 | Add JSON output mode to Phase 1 commands | Pending | optional `--json` for inject/update/tag/link/search/export (from MISS-8) |
+| L-199 | Add `tag list` command | Pending | enumerate vault tags without full export (from MISS-9) |
+| L-200 | Add collection update command | Pending | rename collection and/or retarget dynamic query binding (from MISS-10) |
+
 ## Verification Gate
 
 - `cargo fmt --all`

@@ -18,7 +18,7 @@
 | P4-102 | Add SQLite migration framework | agent | [x] Done | migrations v1/v2 implemented |
 | P4-103 | Implement core CLI commands (`init`, `inject`, `update`, `tag`, `link`, `search`, `export`) | agent | [x] Done | full Phase 1 command surface implemented |
 | P4-104 | Add command-focused integration coverage | agent | [x] Done | tests for inject/update/tag/link/search/export behaviors |
-| P4-105 | Add full sequential CLI integration flow | agent | [ ] Pending | `init -> inject -> update -> tag -> link -> search -> export` still needs one explicit test suite |
+| P4-105 | Add full sequential CLI integration flow | agent | [x] Done | `cli_workflow` added for `init -> inject -> update -> tag -> link -> search -> export` |
 
 ## Implementation Backlog (Phase 1.5 Wave A)
 
@@ -36,8 +36,8 @@
 | --- | --- | --- | --- | --- |
 | P4-301 | Add migration v4 for collections | agent | [x] Done | migration v4 added with `collections` + `collection_items` schema, constraints, and indexes |
 | P4-302 | Implement `collection` hybrid mode | agent | [x] Done | `collection create/add/remove/list/delete` implemented with static/dynamic behavior and JSON output |
-| P4-303 | Implement `bundle export|import` (`tar.gz`) | agent | [ ] Pending | metadata + managed files; skip existing conflicts on import |
-| P4-304 | Add Wave B integration tests | agent | [ ] In Progress | collection integration coverage added; bundle roundtrip/conflict/corruption pending |
+| P4-303 | Implement `bundle export|import` (`tar.gz`) | agent | [x] Done | deterministic manifest/checksum + managed-file transfer + skip-existing conflict policy |
+| P4-304 | Add Wave B integration tests | agent | [x] Done | collection and bundle (roundtrip/conflict/corruption) integration coverage merged |
 
 ## Wave B Slice Plan (Current Session)
 
@@ -66,6 +66,46 @@
 - Add migration compatibility checks from existing Phase 1 vaults.
 - Keep project and standalone docs synchronized in each wave.
 
+## Hardening Backlog (Post-Phase 1.5 Review)
+
+| ID | Task | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| P4-401 | Bundle import portability validation | agent | [ ] Pending | detect/report non-portable reference paths imported from bundle metadata |
+| P4-402 | Bundle import domain validation parity | agent | [ ] Pending | apply inject/tag/link normalization and validation paths during bundle import |
+| P4-403 | Bundle link-loss reporting policy | agent | [ ] Pending | include dropped-link counters and optional strict-fail mode |
+| P4-404 | Streaming bundle IO | agent | [ ] Pending | avoid full in-memory buffering for large bundle entries |
+| P4-405 | Bundle archive hardening | agent | [ ] Pending | reject duplicate manifest/metadata entries and unsupported tar members |
+| P4-406 | Query/collection numeric reference disambiguation | agent | [ ] Pending | add explicit `id` vs `name` reference mode in CLI |
+| P4-407 | Vault integrity verification command | agent | [ ] Pending | add core `verify` command for file existence/hash/size drift checks |
+| P4-408 | Bundle preflight commands | agent | [ ] Pending | add `bundle inspect` and `bundle import --dry-run` |
+| P4-409 | Bundle conflict policy controls | agent | [ ] Pending | add `bundle import --on-conflict skip|error|replace` |
+| P4-410 | Documentation alignment pass | agent | [ ] Pending | sync README/USAGE/spec language to implemented Phase 1.5 scope |
+| P4-411 | Fix tag rename descendant corruption | agent | [x] Done | rename now uses precomputed plan + `tag_id` updates; regression covered for prefix-expansion case |
+| P4-412 | Allow self-link cleanup in `link remove` | agent | [x] Done | removal path now permits self-link cleanup while add path still rejects self-links |
+| P4-413 | Toolchain compatibility policy (edition/MSRV) | agent | [x] Done | downgraded crate edition to Rust 2021 and updated 2021-incompatible syntax |
+| P4-414 | Shared DB connection helper rollout | agent | [x] Done | added `db::open_vault_connection` and migrated service modules to shared open + FK pragma path |
+| P4-415 | Query/export performance batching | agent | [x] Done | replaced `query --detail full` and export per-figure N+1 loads with batched grouped fetches |
+| P4-416 | Caption clear semantics | agent | [ ] Pending | add explicit way to clear caption (from WEAKNESS-6) |
+| P4-417 | Link uniqueness migration | agent | [ ] Pending | enforce unique business key with migration dedupe (from WEAKNESS-7) |
+| P4-418 | Shared tag validation module | agent | [ ] Pending | remove duplicated validation logic in tag/search/query (from WEAKNESS-9) |
+| P4-419 | Bundle import crash-consistency hardening | agent | [ ] Pending | reduce orphan-file window around file writes/DB commit (from WEAKNESS-10) |
+| P4-420 | Doctor file-path integrity checks | agent | [ ] Pending | detect missing files referenced by figure records (from WEAKNESS-8) |
+
+## CLI Expansion Backlog (From Independent Review)
+
+| ID | Task | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| P4-421 | Add `show`/`info` figure command | agent | [ ] Pending | inspect one figure's full metadata from CLI (from MISS-1) |
+| P4-422 | Add figure `list`/`ls` command | agent | [ ] Pending | list all figures with optional sorting/limit (from MISS-2) |
+| P4-423 | Add figure delete command | agent | [ ] Pending | complete core CRUD with safe deletion semantics (from MISS-3) |
+| P4-424 | Add figure `open` command | agent | [ ] Pending | open figure path in system viewer (from MISS-4) |
+| P4-425 | Add tag-prefix search capability | agent | [ ] Pending | leverage hierarchical tag model in search (`--tag-prefix`) (from MISS-5) |
+| P4-426 | Add source metadata update command | agent | [ ] Pending | update source metadata fields after ingest (from MISS-6) |
+| P4-427 | Allow filterless saved queries | agent | [ ] Pending | support sort+limit-only query templates (from MISS-7) |
+| P4-428 | Add JSON option for Phase 1 commands | agent | [ ] Pending | machine-friendly output parity with Phase 1.5 (from MISS-8) |
+| P4-429 | Add `tag list` command | agent | [ ] Pending | enumerate known tags without full export (from MISS-9) |
+| P4-430 | Add collection update command | agent | [ ] Pending | rename and/or change collection mode/query binding (from MISS-10) |
+
 ## Review Notes
 
 - 2026-02-19: Documentation bootstrap completed.
@@ -77,3 +117,6 @@
 - 2026-02-21: Implemented Phase 1.5 doctor slice (`doctor` checks + DB-only `--fix` + `cli_doctor` integration coverage); Wave A completed.
 - 2026-02-21: Started Wave B with migration slice (`collections` + `collection_items` via v4) and passed full gate.
 - 2026-02-21: Implemented Wave B collection command slice (`collection create/add/remove/list/delete`) with integration tests.
+- 2026-02-21: Completed Wave B bundle slice and Phase 1 sequential workflow test (`L-105`).
+- 2026-02-21: Added post-milestone hardening backlog from thorough review (bundle import hardening, ambiguity resolution, integrity verification).
+- 2026-02-21: Completed Phase 1.8 Wave 1 (`BUG-2`, `BUG-3`, edition downgrade to 2021) with full gate pass and new regression tests.

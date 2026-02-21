@@ -3,32 +3,32 @@ use std::path::PathBuf;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::bundle::{BundleExportRequest, BundleImportRequest, bundle_export, bundle_import};
+use crate::bundle::{bundle_export, bundle_import, BundleExportRequest, BundleImportRequest};
 use crate::cli::{
     BundleAction, Cli, CollectionAction, Command, LinkAction, QueryAction, TagAction,
 };
 use crate::collection::{
-    AddCollectionItemRequest, CreateCollectionRequest, DeleteCollectionRequest,
-    ListCollectionsRequest, RemoveCollectionItemRequest, add_collection_item, create_collection,
-    delete_collection, list_collections, remove_collection_item,
+    add_collection_item, create_collection, delete_collection, list_collections,
+    remove_collection_item, AddCollectionItemRequest, CreateCollectionRequest,
+    DeleteCollectionRequest, ListCollectionsRequest, RemoveCollectionItemRequest,
 };
 use crate::db;
-use crate::doctor::{DoctorRequest, doctor_vault};
+use crate::doctor::{doctor_vault, DoctorRequest};
 use crate::error::LamianError;
-use crate::export::{ExportRequest, export_metadata};
-use crate::import::{ImportRequest, import_batch};
-use crate::inject::{InjectRequest, inject_figure};
-use crate::link::{AddLinkRequest, RemoveLinkRequest, add_link, remove_link};
+use crate::export::{export_metadata, ExportRequest};
+use crate::import::{import_batch, ImportRequest};
+use crate::inject::{inject_figure, InjectRequest};
+use crate::link::{add_link, remove_link, AddLinkRequest, RemoveLinkRequest};
 use crate::query::{
-    DeleteQueryRequest, ListQueriesRequest, RunQueryRequest, SaveQueryRequest, delete_query,
-    list_queries, run_query, save_query,
+    delete_query, list_queries, run_query, save_query, DeleteQueryRequest, ListQueriesRequest,
+    RunQueryRequest, SaveQueryRequest,
 };
-use crate::search::{SearchRequest, search_figures};
+use crate::search::{search_figures, SearchRequest};
 use crate::tag::{
-    AddTagRequest, RemoveTagRequest, RenameTagRequest, add_tag_to_figure, remove_tag_from_figure,
-    rename_tag,
+    add_tag_to_figure, remove_tag_from_figure, rename_tag, AddTagRequest, RemoveTagRequest,
+    RenameTagRequest,
 };
-use crate::update::{UpdateRequest, update_figure};
+use crate::update::{update_figure, UpdateRequest};
 
 pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
     match cli.command {

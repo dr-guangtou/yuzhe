@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
-use crate::query::{QueryRunDetail, RunQueryRequest, run_query};
+use crate::query::{run_query, QueryRunDetail, RunQueryRequest};
 
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -135,19 +135,19 @@ pub fn create_collection(
         CollectionMode::Static
     };
 
-    let connection = open_vault_connection(&request.vault_root)?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
     if collection_name_exists(&connection, &collection_name)? {
         return Err(LamianError::CollectionAlreadyExists { collection_name });
     }
 
-    if let Some(query_id) = request.query_id
-        && !saved_query_exists(&connection, query_id)?
-    {
-        return Err(LamianError::InvalidCollectionValue {
-            field: "query_id",
-            reason: "saved query does not exist",
-            value: query_id.to_string(),
-        });
+    if let Some(query_id) = request.query_id {
+        if !saved_query_exists(&connection, query_id)? {
+            return Err(LamianError::InvalidCollectionValue {
+                field: "query_id",
+                reason: "saved query does not exist",
+                value: query_id.to_string(),
+            });
+        }
     }
 
     connection.execute(
@@ -178,7 +178,7 @@ pub fn add_collection_item(
     let collection_reference = normalize_collection_reference(&request.collection_reference)?;
     let figure_id = normalize_figure_id(&request.figure_id)?;
 
-    let connection = open_vault_connection(&request.vault_root)?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
     let stored_collection = resolve_collection(&connection, &collection_reference)?;
     ensure_static_collection(&stored_collection, "add")?;
     ensure_figure_exists(&connection, &figure_id)?;
@@ -204,7 +204,7 @@ pub fn remove_collection_item(
     let collection_reference = normalize_collection_reference(&request.collection_reference)?;
     let figure_id = normalize_figure_id(&request.figure_id)?;
 
-    let connection = open_vault_connection(&request.vault_root)?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
     let stored_collection = resolve_collection(&connection, &collection_reference)?;
     ensure_static_collection(&stored_collection, "remove")?;
 
@@ -227,7 +227,7 @@ pub fn list_collections(
     request: ListCollectionsRequest,
 ) -> Result<ListCollectionsResult, LamianError> {
     validate_vault_root(&request.vault_root)?;
-    let connection = open_vault_connection(&request.vault_root)?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
 
     let collections = if let Some(collection_reference_value) = request.collection_reference {
         let collection_reference = normalize_collection_reference(&collection_reference_value)?;
@@ -258,7 +258,7 @@ pub fn delete_collection(
 ) -> Result<DeleteCollectionResult, LamianError> {
     validate_vault_root(&request.vault_root)?;
     let collection_reference = normalize_collection_reference(&request.collection_reference)?;
-    let connection = open_vault_connection(&request.vault_root)?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
     let stored_collection = resolve_collection(&connection, &collection_reference)?;
 
     connection.execute(
@@ -281,19 +281,6 @@ fn validate_vault_root(vault_root: &Path) -> Result<(), LamianError> {
         });
     }
     Ok(())
-}
-
-fn open_vault_connection(vault_root: &Path) -> Result<Connection, LamianError> {
-    let vault_paths = db::resolve_vault_paths(vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: vault_root.to_path_buf(),
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
-    Ok(connection)
 }
 
 fn normalize_collection_name(value: &str) -> Result<String, LamianError> {
@@ -353,10 +340,10 @@ fn resolve_collection(
     connection: &Connection,
     collection_reference: &str,
 ) -> Result<StoredCollection, LamianError> {
-    if let Ok(collection_id) = collection_reference.parse::<i64>()
-        && let Some(collection) = load_collection_by_id(connection, collection_id)?
-    {
-        return Ok(collection);
+    if let Ok(collection_id) = collection_reference.parse::<i64>() {
+        if let Some(collection) = load_collection_by_id(connection, collection_id)? {
+            return Ok(collection);
+        }
     }
 
     load_collection_by_name(connection, collection_reference)?.ok_or_else(|| {

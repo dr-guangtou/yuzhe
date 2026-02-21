@@ -177,6 +177,25 @@ pub(crate) fn resolve_vault_paths(vault_root: &Path) -> VaultPaths {
     }
 }
 
+pub(crate) fn open_vault_connection(vault_root: &Path) -> Result<Connection, LamianError> {
+    if vault_root.as_os_str().is_empty() {
+        return Err(LamianError::InvalidVaultPath {
+            path: vault_root.to_path_buf(),
+        });
+    }
+
+    let vault_paths = resolve_vault_paths(vault_root);
+    if !vault_paths.database_path.exists() {
+        return Err(LamianError::VaultNotInitialized {
+            vault_root: vault_root.to_path_buf(),
+        });
+    }
+
+    let connection = Connection::open(vault_paths.database_path)?;
+    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    Ok(connection)
+}
+
 fn apply_migrations(connection: &mut Connection) -> Result<(), LamianError> {
     let transaction = connection.transaction()?;
     transaction.execute_batch(

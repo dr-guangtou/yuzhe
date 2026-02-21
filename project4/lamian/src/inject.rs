@@ -4,7 +4,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use clap::ValueEnum;
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 use sha2::{Digest, Sha256};
 
 use crate::db;
@@ -82,8 +82,7 @@ pub fn inject_figure(request: InjectRequest) -> Result<InjectResult, LamianError
     })?;
 
     let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    let mut connection = Connection::open(&vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let mut connection = db::open_vault_connection(&request.vault_root)?;
 
     if inspection.duplicate_exists {
         return Ok(InjectResult {
@@ -177,15 +176,7 @@ pub fn inspect_inject(request: InspectInjectRequest) -> Result<InspectInjectResu
     let file_hash_sha256 = sha256_file(&input_file_path)?;
     let figure_id = build_figure_id(&file_hash_sha256, request.source_type, &source_key);
 
-    let vault_paths = db::resolve_vault_paths(&request.vault_root);
-    if !vault_paths.database_path.exists() {
-        return Err(LamianError::VaultNotInitialized {
-            vault_root: request.vault_root,
-        });
-    }
-
-    let connection = Connection::open(vault_paths.database_path)?;
-    connection.execute_batch("PRAGMA foreign_keys = ON;")?;
+    let connection = db::open_vault_connection(&request.vault_root)?;
     let duplicate_exists = figure_exists(&connection, &figure_id)?;
 
     Ok(InspectInjectResult {
@@ -355,7 +346,7 @@ mod tests {
     use rusqlite::Connection;
     use tempfile::TempDir;
 
-    use super::{CopyMode, InjectRequest, SourceType, inject_figure};
+    use super::{inject_figure, CopyMode, InjectRequest, SourceType};
     use crate::db;
     use crate::error::LamianError;
 

@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::error::LamianError;
 use crate::inject::{
-    CopyMode, InjectRequest, InspectInjectRequest, SourceType, inject_figure, inspect_inject,
+    inject_figure, inspect_inject, CopyMode, InjectRequest, InspectInjectRequest, SourceType,
 };
 
 const TEMPLATE_PLACEHOLDER_FILE_NAME: &str = "file_name";
@@ -464,7 +464,7 @@ fn render_source_key_template(
 
 #[cfg(test)]
 mod tests {
-    use super::{TemplateContext, normalize_source_key_template, render_source_key_template};
+    use super::{normalize_source_key_template, render_source_key_template, TemplateContext};
 
     #[test]
     fn normalize_source_key_template_rejects_unknown_placeholder() {

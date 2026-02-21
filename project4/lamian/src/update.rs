@@ -12,6 +12,7 @@ pub struct UpdateRequest {
     pub figure_id: String,
     pub name: Option<String>,
     pub caption: Option<String>,
+    pub clear_caption: bool,
     pub note_file: Option<PathBuf>,
 }
 
@@ -30,14 +31,17 @@ pub fn update_figure(request: UpdateRequest) -> Result<UpdateResult, LamianError
 
     let normalized_figure_id = normalize_figure_id(&request.figure_id)?;
     let normalized_name = normalize_optional_text_field("name", request.name)?;
-    let normalized_caption = normalize_optional_text_field("caption", request.caption)?;
+    let caption_update = normalize_caption_update(request.caption, request.clear_caption)?;
     let note_markdown = request
         .note_file
         .as_deref()
         .map(read_note_file)
         .transpose()?;
 
-    if normalized_name.is_none() && normalized_caption.is_none() && note_markdown.is_none() {
+    if normalized_name.is_none()
+        && matches!(caption_update, CaptionUpdate::Unchanged)
+        && note_markdown.is_none()
+    {
         return Err(LamianError::MissingUpdatePayload);
     }
 
@@ -49,7 +53,7 @@ pub fn update_figure(request: UpdateRequest) -> Result<UpdateResult, LamianError
         &mut connection,
         &normalized_figure_id,
         normalized_name.as_deref(),
-        normalized_caption.as_deref(),
+        &caption_update,
         note_markdown.as_deref(),
     )?;
 
@@ -57,7 +61,7 @@ pub fn update_figure(request: UpdateRequest) -> Result<UpdateResult, LamianError
     if normalized_name.is_some() {
         updated_fields.push("name");
     }
-    if normalized_caption.is_some() {
+    if !matches!(caption_update, CaptionUpdate::Unchanged) {
         updated_fields.push("caption");
     }
     if note_markdown.is_some() {
@@ -68,6 +72,12 @@ pub fn update_figure(request: UpdateRequest) -> Result<UpdateResult, LamianError
         figure_id: normalized_figure_id,
         updated_fields,
     })
+}
+
+enum CaptionUpdate {
+    Unchanged,
+    Set(String),
+    Clear,
 }
 
 fn normalize_figure_id(figure_id: &str) -> Result<String, LamianError> {
@@ -91,6 +101,27 @@ fn normalize_optional_text_field(
             }
             Ok(Some(normalized_value.to_string()))
         }
+    }
+}
+
+fn normalize_caption_update(
+    caption: Option<String>,
+    clear_caption: bool,
+) -> Result<CaptionUpdate, LamianError> {
+    if clear_caption {
+        if caption.is_some() {
+            return Err(LamianError::InvalidUpdateValue {
+                field: "caption",
+                reason: "cannot combine --caption with --clear-caption",
+                value: "both provided".to_string(),
+            });
+        }
+        return Ok(CaptionUpdate::Clear);
+    }
+
+    match normalize_optional_text_field("caption", caption)? {
+        Some(value) => Ok(CaptionUpdate::Set(value)),
+        None => Ok(CaptionUpdate::Unchanged),
     }
 }
 
@@ -136,21 +167,34 @@ fn persist_updates(
     connection: &mut Connection,
     figure_id: &str,
     name: Option<&str>,
-    caption: Option<&str>,
+    caption_update: &CaptionUpdate,
     note_markdown: Option<&str>,
 ) -> Result<(), LamianError> {
     let transaction = connection.transaction()?;
 
-    if name.is_some() || caption.is_some() {
+    let caption_value = match caption_update {
+        CaptionUpdate::Set(value) => Some(value.as_str()),
+        _ => None,
+    };
+    let clear_caption_value = if matches!(caption_update, CaptionUpdate::Clear) {
+        1_i64
+    } else {
+        0_i64
+    };
+
+    if name.is_some() || !matches!(caption_update, CaptionUpdate::Unchanged) {
         transaction.execute(
             r#"
 UPDATE figures
 SET display_name = COALESCE(?2, display_name),
-    caption = COALESCE(?3, caption),
+    caption = CASE
+        WHEN ?4 = 1 THEN NULL
+        ELSE COALESCE(?3, caption)
+    END,
     updated_at = CURRENT_TIMESTAMP
 WHERE figure_id = ?1
 "#,
-            params![figure_id, name, caption],
+            params![figure_id, name, caption_value, clear_caption_value],
         )?;
     }
 

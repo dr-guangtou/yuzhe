@@ -12,6 +12,7 @@ mod link;
 mod query;
 mod search;
 mod tag;
+mod tag_validation;
 mod update;
 
 use clap::Parser;

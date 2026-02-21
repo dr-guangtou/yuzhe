@@ -85,7 +85,7 @@ fn cli_full_sequential_workflow_init_to_export() {
     ]);
     let export_json: JsonValue =
         serde_json::from_slice(&export_output.stdout).expect("parse export json");
-    assert_eq!(export_json["schema_version"].as_i64(), Some(4));
+    assert_eq!(export_json["schema_version"].as_i64(), Some(5));
     assert_eq!(export_json["figures"].as_array().map(Vec::len), Some(2));
 
     let figures = export_json["figures"].as_array().expect("figures array");

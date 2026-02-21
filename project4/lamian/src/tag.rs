@@ -4,6 +4,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db;
 use crate::error::LamianError;
+use crate::tag_validation::{normalize_and_validate_tag, TagValidationError};
 
 #[derive(Debug, Clone)]
 pub struct AddTagRequest {
@@ -132,42 +133,12 @@ fn normalize_figure_id(figure_id: &str) -> Result<String, LamianError> {
 }
 
 fn normalize_tag(tag: &str) -> Result<String, LamianError> {
-    let normalized_tag = tag.trim().to_ascii_lowercase();
-    if normalized_tag.is_empty() {
-        return Err(LamianError::MissingTagField { field: "tag" });
-    }
-
-    if normalized_tag.starts_with(':')
-        || normalized_tag.ends_with(':')
-        || normalized_tag.contains("::")
-    {
-        return Err(LamianError::InvalidTagValue {
-            reason: "tag hierarchy segments cannot be empty",
-            value: normalized_tag,
-        });
-    }
-
-    for segment in normalized_tag.split(':') {
-        if segment.is_empty() {
-            return Err(LamianError::InvalidTagValue {
-                reason: "tag hierarchy segments cannot be empty",
-                value: normalized_tag,
-            });
+    normalize_and_validate_tag(tag).map_err(|error| match error {
+        TagValidationError::MissingTag => LamianError::MissingTagField { field: "tag" },
+        TagValidationError::InvalidTag { reason, value } => {
+            LamianError::InvalidTagValue { reason, value }
         }
-
-        if !segment.chars().all(is_valid_tag_character) {
-            return Err(LamianError::InvalidTagValue {
-                reason: "tag can only include letters, numbers, underscore, hyphen, and colon",
-                value: normalized_tag,
-            });
-        }
-    }
-
-    Ok(normalized_tag)
-}
-
-fn is_valid_tag_character(value: char) -> bool {
-    value.is_ascii_lowercase() || value.is_ascii_digit() || value == '_' || value == '-'
+    })
 }
 
 fn figure_exists(connection: &Connection, figure_id: &str) -> Result<bool, LamianError> {

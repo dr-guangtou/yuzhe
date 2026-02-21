@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::db;
 use crate::error::LamianError;
+use crate::tag_validation::{normalize_and_validate_tag, TagValidationError};
 
 #[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
 pub enum QuerySortField {
@@ -406,45 +407,14 @@ fn normalize_optional_filter(
 }
 
 fn normalize_tag_filter(value: &str) -> Result<String, LamianError> {
-    let normalized_tag = value.trim().to_ascii_lowercase();
-    if normalized_tag.is_empty() {
-        return Err(LamianError::MissingQueryField { field: "tag" });
-    }
-
-    if normalized_tag.starts_with(':')
-        || normalized_tag.ends_with(':')
-        || normalized_tag.contains("::")
-    {
-        return Err(LamianError::InvalidQueryValue {
+    normalize_and_validate_tag(value).map_err(|error| match error {
+        TagValidationError::MissingTag => LamianError::MissingQueryField { field: "tag" },
+        TagValidationError::InvalidTag { reason, value } => LamianError::InvalidQueryValue {
             field: "tag",
-            reason: "tag hierarchy segments cannot be empty",
-            value: normalized_tag,
-        });
-    }
-
-    for segment in normalized_tag.split(':') {
-        if segment.is_empty() {
-            return Err(LamianError::InvalidQueryValue {
-                field: "tag",
-                reason: "tag hierarchy segments cannot be empty",
-                value: normalized_tag,
-            });
-        }
-
-        if !segment.chars().all(is_valid_tag_character) {
-            return Err(LamianError::InvalidQueryValue {
-                field: "tag",
-                reason: "tag can only include letters, numbers, underscore, hyphen, and colon",
-                value: normalized_tag,
-            });
-        }
-    }
-
-    Ok(normalized_tag)
-}
-
-fn is_valid_tag_character(value: char) -> bool {
-    value.is_ascii_lowercase() || value.is_ascii_digit() || value == '_' || value == '-'
+            reason,
+            value,
+        },
+    })
 }
 
 fn normalize_limit(limit: Option<u32>) -> Result<Option<u32>, LamianError> {

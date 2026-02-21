@@ -159,26 +159,13 @@ fn persist_link(
 ) -> Result<bool, LamianError> {
     let transaction = connection.transaction()?;
 
-    let existing_link_id = transaction
-        .query_row(
-            "SELECT link_id FROM links WHERE from_figure_id = ?1 AND to_figure_id = ?2 AND relation_type = ?3",
-            params![from_figure_id, to_figure_id, relation],
-            |row| row.get::<_, i64>(0),
-        )
-        .optional()?;
-
-    if existing_link_id.is_some() {
-        transaction.commit()?;
-        return Ok(false);
-    }
-
-    transaction.execute(
-        "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+    let inserted_rows = transaction.execute(
+        "INSERT OR IGNORE INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
         params![from_figure_id, to_figure_id, relation],
     )?;
 
     transaction.commit()?;
-    Ok(true)
+    Ok(inserted_rows > 0)
 }
 
 fn delete_links(

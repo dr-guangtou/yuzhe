@@ -29,11 +29,12 @@ Build a local-only visual knowledge base for research figures with reliable meta
 
 ## Phase 1.8 Decisions (Finalized)
 
-### Wave 1 (Implemented)
+### Wave 1-2 (Implemented)
 
 1. Tag rename (`tag rename`) computes a full rename plan before any mutation, then updates by `tag_id` to avoid descendant corruption when prefixes overlap.
 2. `link remove` allows self-link cleanup (`from_figure_id == to_figure_id`) while `link add` continues to reject self-links.
 3. Crate edition policy is pinned to Rust 2021 for broader toolchain compatibility.
+4. Tag normalization and validation are centralized in a shared helper reused by `tag`, `search`, and `query`, preserving existing error semantics while removing duplication.
 
 ### Later Waves (Locked Decisions)
 
@@ -67,7 +68,7 @@ Build a local-only visual knowledge base for research figures with reliable meta
 ```text
 lamian init --vault <path>
 lamian inject <file_path> --vault <path> --source-type <type> --source-key <value> [--copy-mode copy|reference]
-lamian update <figure_id> [--name ...] [--caption ...] [--note-file ...]
+lamian update <figure_id> [--name ...] [--caption ...] [--clear-caption] [--note-file ...]
 lamian tag add|remove|rename ...
 lamian link add|remove ...
 lamian search [--tag ...] [--source-key ...] [--text ...]

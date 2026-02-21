@@ -162,6 +162,89 @@ fn cli_update_rejects_missing_note_file_path() {
     );
 }
 
+#[test]
+fn cli_update_clears_caption_with_flag() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "update",
+        figure_id.as_str(),
+        "--caption",
+        "temporary caption",
+    ]);
+
+    let clear_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "update",
+        figure_id.as_str(),
+        "--clear-caption",
+    ]);
+
+    let clear_stdout = String::from_utf8_lossy(&clear_output.stdout);
+    assert!(
+        clear_stdout.contains(&format!("Updated figure: {figure_id}")),
+        "unexpected clear stdout:\n{clear_stdout}"
+    );
+    assert!(
+        clear_stdout.contains("Updated fields: caption"),
+        "unexpected updated field list for clear:\n{clear_stdout}"
+    );
+
+    let connection = Connection::open(vault_path.join(".lamian").join("lamian.db"))
+        .expect("open sqlite database");
+    let caption: Option<String> = connection
+        .query_row(
+            "SELECT caption FROM figures WHERE figure_id = ?1",
+            [figure_id.as_str()],
+            |row| row.get(0),
+        )
+        .expect("query cleared caption");
+    assert_eq!(caption, None);
+}
+
+#[test]
+fn cli_update_rejects_conflicting_caption_set_and_clear() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+
+    let output = run_lamian([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "update",
+        figure_id.as_str(),
+        "--caption",
+        "value",
+        "--clear-caption",
+    ]);
+
+    assert!(
+        !output.status.success(),
+        "update unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("cannot combine --caption with --clear-caption"),
+        "unexpected stderr for conflicting caption flags:\n{stderr}"
+    );
+}
+
 fn inject_fixture_and_get_figure_id(
     vault_path: &Path,
     fixture_path: &Path,

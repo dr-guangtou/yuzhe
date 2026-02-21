@@ -79,14 +79,16 @@ Properties:
 
 ## 3. Metadata Update (`update`)
 
-`lamian update <figure_id> [--name <value>] [--caption <value>] [--note-file <path>] --vault <path>`
+`lamian update <figure_id> [--name <value>] [--caption <value>] [--clear-caption] [--note-file <path>] --vault <path>`
 
 Behavior:
 
 - requires `figure_id` to exist
-- requires at least one update payload flag: `--name`, `--caption`, or `--note-file`
+- requires at least one update payload flag: `--name`, `--caption`, `--clear-caption`, or `--note-file`
 - `--name` updates `figures.display_name`
 - `--caption` updates `figures.caption`
+- `--clear-caption` sets `figures.caption` to `NULL`
+- `--caption` and `--clear-caption` cannot be used together
 - `--note-file` reads UTF-8 markdown text and upserts into `notes.note_markdown`
 - all selected updates are committed transactionally
 
@@ -252,6 +254,7 @@ cargo run -- --vault "$PWD/.demo_vault" inject \
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --name "JWST Panel 1"
 cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --caption "NIRCam composite of target field"
+cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --clear-caption
 cargo run -- --vault "$PWD/.demo_vault" update <figure_id> --note-file "$PWD/example_note.md"
 ```
 

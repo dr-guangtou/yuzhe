@@ -133,6 +133,20 @@ CREATE INDEX IF NOT EXISTS idx_collections_query_id ON collections(query_id);
 CREATE INDEX IF NOT EXISTS idx_collection_items_figure_id ON collection_items(figure_id);
 "#,
     },
+    Migration {
+        version: 5,
+        sql: r#"
+DELETE FROM links
+WHERE link_id NOT IN (
+    SELECT MIN(link_id)
+    FROM links
+    GROUP BY from_figure_id, to_figure_id, relation_type
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_links_unique_business_key
+ON links(from_figure_id, to_figure_id, relation_type);
+"#,
+    },
 ];
 
 #[derive(Debug, Clone)]
@@ -259,7 +273,7 @@ mod tests {
     use rusqlite::Connection;
     use tempfile::TempDir;
 
-    use super::{initialize_vault, latest_migration_version};
+    use super::{apply_migrations, initialize_vault, latest_migration_version};
 
     #[test]
     fn initialize_vault_creates_database_and_config() {
@@ -285,6 +299,7 @@ mod tests {
         assert!(table_exists(&connection, "collections"));
         assert!(table_exists(&connection, "collection_items"));
         assert!(column_exists(&connection, "figures", "caption"));
+        assert!(index_exists(&connection, "idx_links_unique_business_key"));
     }
 
     #[test]
@@ -305,6 +320,86 @@ mod tests {
             .expect("migration count");
 
         assert_eq!(migration_count, latest_migration_version());
+    }
+
+    #[test]
+    fn apply_migrations_deduplicates_legacy_links_and_enforces_unique_business_key() {
+        let temp_dir = TempDir::new().expect("temp directory");
+        let database_path = temp_dir.path().join("legacy.db");
+        let mut connection = Connection::open(&database_path).expect("open sqlite db");
+
+        connection
+            .execute_batch(
+                r#"
+CREATE TABLE schema_migrations (
+    version INTEGER PRIMARY KEY,
+    applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE links (
+    link_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_figure_id TEXT NOT NULL,
+    to_figure_id TEXT NOT NULL,
+    relation_type TEXT NOT NULL DEFAULT 'related',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+"#,
+            )
+            .expect("create legacy schema");
+
+        for version in 1..=4 {
+            connection
+                .execute(
+                    "INSERT INTO schema_migrations (version) VALUES (?1)",
+                    [version],
+                )
+                .expect("insert legacy schema migration");
+        }
+
+        connection
+            .execute(
+                "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+                ["fig_a", "fig_b", "related"],
+            )
+            .expect("insert link row 1");
+        connection
+            .execute(
+                "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+                ["fig_a", "fig_b", "related"],
+            )
+            .expect("insert link row 2 duplicate");
+        connection
+            .execute(
+                "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+                ["fig_a", "fig_b", "supports"],
+            )
+            .expect("insert link row 3 distinct");
+
+        apply_migrations(&mut connection).expect("apply v5 migration");
+
+        let deduplicated_related_count: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM links WHERE from_figure_id = ?1 AND to_figure_id = ?2 AND relation_type = ?3",
+                ["fig_a", "fig_b", "related"],
+                |row| row.get(0),
+            )
+            .expect("count related links");
+        assert_eq!(deduplicated_related_count, 1);
+
+        let supports_count: i64 = connection
+            .query_row(
+                "SELECT COUNT(*) FROM links WHERE from_figure_id = ?1 AND to_figure_id = ?2 AND relation_type = ?3",
+                ["fig_a", "fig_b", "supports"],
+                |row| row.get(0),
+            )
+            .expect("count supports links");
+        assert_eq!(supports_count, 1);
+
+        let duplicate_insert_result = connection.execute(
+            "INSERT INTO links (from_figure_id, to_figure_id, relation_type) VALUES (?1, ?2, ?3)",
+            ["fig_a", "fig_b", "related"],
+        );
+        assert!(duplicate_insert_result.is_err());
+        assert!(index_exists(&connection, "idx_links_unique_business_key"));
     }
 
     fn table_exists(connection: &Connection, table_name: &str) -> bool {
@@ -328,5 +423,13 @@ mod tests {
         }
 
         false
+    }
+
+    fn index_exists(connection: &Connection, index_name: &str) -> bool {
+        let query = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='index' AND name=?1)";
+        let exists: i64 = connection
+            .query_row(query, [index_name], |row| row.get(0))
+            .expect("index exists query");
+        exists == 1
     }
 }

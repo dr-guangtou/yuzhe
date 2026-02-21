@@ -57,9 +57,9 @@
 | L-183 | Define Rust toolchain compatibility policy | Done | crate edition downgraded to 2021 and incompatible let-chains rewritten for Rust 2021 |
 | L-184 | Centralize vault DB connection opening | Done | introduced shared `db::open_vault_connection` and migrated command services to use one canonical open path |
 | L-185 | Reduce N+1 query patterns in export/query-full | Done | query full detail and export now batch-load grouped related records instead of per-figure round trips |
-| L-186 | Add caption clearing semantics | Pending | support explicit caption removal (`--clear-caption` or nullable set semantics) (from WEAKNESS-6) |
-| L-187 | Enforce link uniqueness at schema level | Pending | migration adds UNIQUE(from_figure_id,to_figure_id,relation_type) and dedupes legacy rows (from WEAKNESS-7) |
-| L-188 | Deduplicate tag validation logic | Pending | extract shared tag normalization/validation used by tag/search/query (from WEAKNESS-9) |
+| L-186 | Add caption clearing semantics | Done | implemented `update --clear-caption` and explicit conflict error when combined with `--caption` |
+| L-187 | Enforce link uniqueness at schema level | Done | added migration v5 to dedupe legacy duplicate links and enforce unique business key index |
+| L-188 | Deduplicate tag validation logic | Done | extracted shared `tag_validation` module and reused it in tag/search/query with preserved error semantics |
 | L-189 | Improve bundle import crash consistency | Pending | reduce orphan-file risk around DB commit and file writes via staged writes/journaling (from WEAKNESS-10) |
 | L-190 | Extend doctor for file-path integrity | Pending | add checks for missing/broken figure file paths (partially overlaps L-177; from WEAKNESS-8) |
 
@@ -77,6 +77,15 @@
 | L-198 | Add JSON output mode to Phase 1 commands | Pending | optional `--json` for inject/update/tag/link/search/export (from MISS-8) |
 | L-199 | Add `tag list` command | Pending | enumerate vault tags without full export (from MISS-9) |
 | L-200 | Add collection update command | Pending | rename collection and/or retarget dynamic query binding (from MISS-10) |
+
+## Phase 1.8 Wave 2 Slice Plan (P4-418 / L-188)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] W2-S1 | Done | Added shared helper module at `project4/lamian/src/tag_validation.rs` with preserved normalization + validation semantics |
+| [x] W2-S2 | Done | Refactored `project4/lamian/src/tag.rs`, `project4/lamian/src/search.rs`, and `project4/lamian/src/query.rs` to reuse shared helper |
+| [x] W2-S3 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` (all pass) |
+| [x] W2-S4 | Done | Updated project + standalone TODO trackers and review notes for Wave 2 completion |
 
 ## Verification Gate
 

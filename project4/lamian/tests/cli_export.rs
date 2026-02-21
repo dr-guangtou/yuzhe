@@ -58,7 +58,7 @@ fn cli_export_json_writes_target_file_with_expected_fields() {
     let export_content = std::fs::read_to_string(&export_path).expect("read export json");
     let parsed: JsonValue = serde_json::from_str(&export_content).expect("parse export json");
 
-    assert_eq!(parsed["schema_version"].as_i64(), Some(4));
+    assert_eq!(parsed["schema_version"].as_i64(), Some(5));
     assert_eq!(parsed["figures"].as_array().map(Vec::len), Some(1));
     assert_eq!(
         parsed["figures"][0]["figure_id"].as_str(),

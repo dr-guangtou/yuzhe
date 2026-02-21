@@ -61,6 +61,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             figure_id,
             name,
             caption,
+            clear_caption,
             note_file,
         } => {
             let vault_path = require_vault(cli.vault, "update")?;
@@ -69,6 +70,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 figure_id,
                 name,
                 caption,
+                clear_caption,
                 note_file,
             })?;
 

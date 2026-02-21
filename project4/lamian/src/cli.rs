@@ -43,6 +43,9 @@ pub enum Command {
         #[arg(long)]
         caption: Option<String>,
 
+        #[arg(long, default_value_t = false)]
+        clear_caption: bool,
+
         #[arg(long, value_name = "PATH")]
         note_file: Option<PathBuf>,
     },

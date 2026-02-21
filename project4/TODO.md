@@ -57,6 +57,15 @@
 | [x] WB2-S3 | Done | Added `project4/lamian/tests/cli_collection.rs` for static lifecycle and dynamic query-bound behavior |
 | [x] WB2-S4 | Done | Ran full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) |
 
+## Phase 1.8 Wave 2 Slice Plan (P4-418 / L-188)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] W2-S1 | Done | Added shared helper module at `project4/lamian/src/tag_validation.rs` with preserved normalization + validation semantics |
+| [x] W2-S2 | Done | Refactored `project4/lamian/src/tag.rs`, `project4/lamian/src/search.rs`, and `project4/lamian/src/query.rs` to reuse shared helper |
+| [x] W2-S3 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` (all pass) |
+| [x] W2-S4 | Done | Updated project + standalone TODO trackers and review notes for Wave 2 completion |
+
 ## Verification Plan
 
 - Run for implementation slices:
@@ -85,9 +94,9 @@
 | P4-413 | Toolchain compatibility policy (edition/MSRV) | agent | [x] Done | downgraded crate edition to Rust 2021 and updated 2021-incompatible syntax |
 | P4-414 | Shared DB connection helper rollout | agent | [x] Done | added `db::open_vault_connection` and migrated service modules to shared open + FK pragma path |
 | P4-415 | Query/export performance batching | agent | [x] Done | replaced `query --detail full` and export per-figure N+1 loads with batched grouped fetches |
-| P4-416 | Caption clear semantics | agent | [ ] Pending | add explicit way to clear caption (from WEAKNESS-6) |
-| P4-417 | Link uniqueness migration | agent | [ ] Pending | enforce unique business key with migration dedupe (from WEAKNESS-7) |
-| P4-418 | Shared tag validation module | agent | [ ] Pending | remove duplicated validation logic in tag/search/query (from WEAKNESS-9) |
+| P4-416 | Caption clear semantics | agent | [x] Done | added `update --clear-caption` with conflict validation against `--caption` and test coverage |
+| P4-417 | Link uniqueness migration | agent | [x] Done | migration v5 dedupes legacy duplicate links and enforces UNIQUE business key via index |
+| P4-418 | Shared tag validation module | agent | [x] Done | shared `tag_validation` module now powers tag/search/query validation with preserved error semantics |
 | P4-419 | Bundle import crash-consistency hardening | agent | [ ] Pending | reduce orphan-file window around file writes/DB commit (from WEAKNESS-10) |
 | P4-420 | Doctor file-path integrity checks | agent | [ ] Pending | detect missing files referenced by figure records (from WEAKNESS-8) |
 
@@ -120,3 +129,4 @@
 - 2026-02-21: Completed Wave B bundle slice and Phase 1 sequential workflow test (`L-105`).
 - 2026-02-21: Added post-milestone hardening backlog from thorough review (bundle import hardening, ambiguity resolution, integrity verification).
 - 2026-02-21: Completed Phase 1.8 Wave 1 (`BUG-2`, `BUG-3`, edition downgrade to 2021) with full gate pass and new regression tests.
+- 2026-02-21: Completed Phase 1.8 Wave 2 (`P4-418`/`L-188`) by extracting shared tag validation and reusing it across tag/search/query with full gate pass.

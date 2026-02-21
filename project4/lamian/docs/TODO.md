@@ -8,7 +8,7 @@
 | L-102 | Add SQLite migration framework | Done | migrations v1/v2 implemented |
 | L-103 | Implement core commands (`inject`, `update`, `tag`, `link`, `search`, `export`) | Done | command cores implemented with typed validation |
 | L-104 | Add command-focused integration tests | Done | tests cover inject/update/tag/link/search/export |
-| L-105 | Add one full sequential workflow integration test | Pending | explicit `init -> inject -> update -> tag -> link -> search -> export` coverage still required |
+| L-105 | Add one full sequential workflow integration test | Done | `cli_workflow` covers `init -> inject -> update -> tag -> link -> search -> export` |
 
 ## Phase 1.5: Automation and Curation (Pre-GUI)
 

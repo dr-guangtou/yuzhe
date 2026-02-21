@@ -131,6 +131,31 @@ pub enum LamianError {
     #[error("saved query not found: {query_reference}")]
     QueryNotFound { query_reference: String },
 
+    #[error("missing required collection field: {field}")]
+    MissingCollectionField { field: &'static str },
+
+    #[error("invalid collection value for {field}: {reason}; received: {value}")]
+    InvalidCollectionValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("collection already exists: {collection_name}")]
+    CollectionAlreadyExists { collection_name: String },
+
+    #[error("collection not found: {collection_reference}")]
+    CollectionNotFound { collection_reference: String },
+
+    #[error(
+        "collection mode conflict for operation `{operation}` on `{collection_name}`: mode is `{collection_mode}`"
+    )]
+    CollectionModeConflict {
+        operation: &'static str,
+        collection_name: String,
+        collection_mode: &'static str,
+    },
+
     #[error("missing required import field: {field}")]
     MissingImportField { field: &'static str },
 
@@ -143,6 +168,23 @@ pub enum LamianError {
 
     #[error("import completed with failures: {failed_count} item(s) failed")]
     ImportCompletedWithFailures { failed_count: usize },
+
+    #[error("missing required bundle field: {field}")]
+    MissingBundleField { field: &'static str },
+
+    #[error("invalid bundle value for {field}: {reason}; received: {value}")]
+    InvalidBundleValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("bundle checksum mismatch for `{entry_path}`: expected {expected}, actual {actual}")]
+    BundleChecksumMismatch {
+        entry_path: String,
+        expected: String,
+        actual: String,
+    },
 
     #[error("doctor found unresolved issue(s): {issue_count}")]
     DoctorIssuesFound { issue_count: usize },

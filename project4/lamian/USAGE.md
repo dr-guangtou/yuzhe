@@ -315,6 +315,18 @@ cargo run -- --vault "$PWD/.demo_vault" doctor
 cargo run -- --vault "$PWD/.demo_vault" doctor --fix
 ```
 
+## 11. Collection Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" collection create "my-static"
+cargo run -- --vault "$PWD/.demo_vault" collection add "my-static" <figure_id>
+cargo run -- --vault "$PWD/.demo_vault" collection remove "my-static" <figure_id>
+cargo run -- --vault "$PWD/.demo_vault" collection list
+cargo run -- --vault "$PWD/.demo_vault" collection list --collection "my-static"
+cargo run -- --vault "$PWD/.demo_vault" collection create "jwst-dynamic" --query-id 1
+cargo run -- --vault "$PWD/.demo_vault" collection delete "my-static"
+```
+
 ## Verification
 
 Run the full development gate:
@@ -330,7 +342,8 @@ cargo test
 
 The next command wave introduces automation-oriented commands with JSON-only output contracts:
 
-- `collection` and `bundle` will return structured JSON on success.
+- `bundle` will return structured JSON on success.
+- `collection` already returns JSON for `create/add/remove/list/delete`.
 - `doctor` already returns JSON with issue summaries and per-issue records.
 - `import` already returns JSON with `processed/succeeded/failed/skipped` summary and per-item records.
 - Existing Phase 1 commands keep their current human-readable output.

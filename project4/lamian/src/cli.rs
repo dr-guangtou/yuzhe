@@ -73,6 +73,16 @@ pub enum Command {
         action: QueryAction,
     },
 
+    Collection {
+        #[command(subcommand)]
+        action: CollectionAction,
+    },
+
+    Bundle {
+        #[command(subcommand)]
+        action: BundleAction,
+    },
+
     Doctor {
         #[arg(long, default_value_t = false)]
         fix: bool,
@@ -138,6 +148,42 @@ pub enum QueryAction {
     List,
     Delete {
         name_or_id: String,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum CollectionAction {
+    Create {
+        name: String,
+
+        #[arg(long)]
+        query_id: Option<i64>,
+    },
+    Add {
+        collection: String,
+        figure_id: String,
+    },
+    Remove {
+        collection: String,
+        figure_id: String,
+    },
+    List {
+        #[arg(long)]
+        collection: Option<String>,
+    },
+    Delete {
+        collection: String,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum BundleAction {
+    Export {
+        #[arg(long, value_name = "PATH")]
+        target: PathBuf,
+    },
+    Import {
+        bundle_path: PathBuf,
     },
 }
 

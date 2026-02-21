@@ -3,7 +3,15 @@ use std::path::PathBuf;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::cli::{Cli, Command, LinkAction, QueryAction, TagAction};
+use crate::bundle::{BundleExportRequest, BundleImportRequest, bundle_export, bundle_import};
+use crate::cli::{
+    BundleAction, Cli, CollectionAction, Command, LinkAction, QueryAction, TagAction,
+};
+use crate::collection::{
+    AddCollectionItemRequest, CreateCollectionRequest, DeleteCollectionRequest,
+    ListCollectionsRequest, RemoveCollectionItemRequest, add_collection_item, create_collection,
+    delete_collection, list_collections, remove_collection_item,
+};
 use crate::db;
 use crate::doctor::{DoctorRequest, doctor_vault};
 use crate::error::LamianError;
@@ -254,6 +262,117 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
 
                     print_json(&json!({
                         "command": "query.delete",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+            }
+        }
+        Command::Collection { action } => {
+            let vault_path = require_vault(cli.vault, "collection")?;
+            match action {
+                CollectionAction::Create { name, query_id } => {
+                    let result = create_collection(CreateCollectionRequest {
+                        vault_root: vault_path,
+                        collection_name: name,
+                        query_id,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "collection.create",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                CollectionAction::Add {
+                    collection,
+                    figure_id,
+                } => {
+                    let result = add_collection_item(AddCollectionItemRequest {
+                        vault_root: vault_path,
+                        collection_reference: collection,
+                        figure_id,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "collection.add",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                CollectionAction::Remove {
+                    collection,
+                    figure_id,
+                } => {
+                    let result = remove_collection_item(RemoveCollectionItemRequest {
+                        vault_root: vault_path,
+                        collection_reference: collection,
+                        figure_id,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "collection.remove",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                CollectionAction::List { collection } => {
+                    let result = list_collections(ListCollectionsRequest {
+                        vault_root: vault_path,
+                        collection_reference: collection,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "collection.list",
+                        "status": "ok",
+                        "count": result.collections.len(),
+                        "collections": result.collections,
+                    }))?;
+                    Ok(())
+                }
+                CollectionAction::Delete { collection } => {
+                    let result = delete_collection(DeleteCollectionRequest {
+                        vault_root: vault_path,
+                        collection_reference: collection,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "collection.delete",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+            }
+        }
+        Command::Bundle { action } => {
+            let vault_path = require_vault(cli.vault, "bundle")?;
+            match action {
+                BundleAction::Export { target } => {
+                    let result = bundle_export(BundleExportRequest {
+                        vault_root: vault_path,
+                        target_path: target,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "bundle.export",
+                        "status": "ok",
+                        "result": result,
+                    }))?;
+                    Ok(())
+                }
+                BundleAction::Import { bundle_path } => {
+                    let result = bundle_import(BundleImportRequest {
+                        vault_root: vault_path,
+                        bundle_path,
+                    })?;
+
+                    print_json(&json!({
+                        "command": "bundle.import",
                         "status": "ok",
                         "result": result,
                     }))?;

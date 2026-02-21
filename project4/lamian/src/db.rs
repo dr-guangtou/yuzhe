@@ -102,6 +102,37 @@ CREATE TABLE IF NOT EXISTS saved_queries (
 CREATE INDEX IF NOT EXISTS idx_saved_queries_name ON saved_queries(query_name);
 "#,
     },
+    Migration {
+        version: 4,
+        sql: r#"
+CREATE TABLE IF NOT EXISTS collections (
+    collection_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_name TEXT NOT NULL UNIQUE,
+    collection_mode TEXT NOT NULL CHECK (collection_mode IN ('static', 'dynamic')),
+    query_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (query_id) REFERENCES saved_queries(query_id) ON DELETE RESTRICT,
+    CHECK (
+        (collection_mode = 'static' AND query_id IS NULL)
+        OR (collection_mode = 'dynamic' AND query_id IS NOT NULL)
+    )
+);
+
+CREATE TABLE IF NOT EXISTS collection_items (
+    collection_id INTEGER NOT NULL,
+    figure_id TEXT NOT NULL,
+    added_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection_id, figure_id),
+    FOREIGN KEY (collection_id) REFERENCES collections(collection_id) ON DELETE CASCADE,
+    FOREIGN KEY (figure_id) REFERENCES figures(figure_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_collections_name ON collections(collection_name);
+CREATE INDEX IF NOT EXISTS idx_collections_query_id ON collections(query_id);
+CREATE INDEX IF NOT EXISTS idx_collection_items_figure_id ON collection_items(figure_id);
+"#,
+    },
 ];
 
 #[derive(Debug, Clone)]
@@ -232,6 +263,8 @@ mod tests {
         assert!(table_exists(&connection, "links"));
         assert!(table_exists(&connection, "notes"));
         assert!(table_exists(&connection, "saved_queries"));
+        assert!(table_exists(&connection, "collections"));
+        assert!(table_exists(&connection, "collection_items"));
         assert!(column_exists(&connection, "figures", "caption"));
     }
 

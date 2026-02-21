@@ -1,4 +1,6 @@
+mod bundle;
 mod cli;
+mod collection;
 mod commands;
 mod db;
 mod doctor;

@@ -34,10 +34,28 @@
 
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
-| P4-301 | Add migration v4 for collections | agent | [ ] Pending | `collections` + `collection_items` tables |
-| P4-302 | Implement `collection` hybrid mode | agent | [ ] Pending | static membership + dynamic binding to saved query ID |
+| P4-301 | Add migration v4 for collections | agent | [x] Done | migration v4 added with `collections` + `collection_items` schema, constraints, and indexes |
+| P4-302 | Implement `collection` hybrid mode | agent | [x] Done | `collection create/add/remove/list/delete` implemented with static/dynamic behavior and JSON output |
 | P4-303 | Implement `bundle export|import` (`tar.gz`) | agent | [ ] Pending | metadata + managed files; skip existing conflicts on import |
-| P4-304 | Add Wave B integration tests | agent | [ ] Pending | bundle roundtrip, conflict, corruption, and collection-query sync |
+| P4-304 | Add Wave B integration tests | agent | [ ] In Progress | collection integration coverage added; bundle roundtrip/conflict/corruption pending |
+
+## Wave B Slice Plan (Current Session)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] WB-S1 | Done | Added migration v4 for `collections` and `collection_items` in `project4/lamian/src/db.rs` with constraints/indexes |
+| [x] WB-S2 | Done | Extended migration tests to assert new tables exist and schema version bump is reflected |
+| [x] WB-S3 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` (all pass) |
+| [x] WB-S4 | Done | Updated TODO/docs status for completed Wave B migration slice |
+
+## Wave B Slice Plan (Collection Command Slice)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] WB2-S1 | Done | Implemented `collection` core service (`create/add/remove/list/delete`) in `project4/lamian/src/collection.rs` |
+| [x] WB2-S2 | Done | Wired `Command::Collection` in `src/cli.rs` and `src/commands.rs` with JSON output contracts |
+| [x] WB2-S3 | Done | Added `project4/lamian/tests/cli_collection.rs` for static lifecycle and dynamic query-bound behavior |
+| [x] WB2-S4 | Done | Ran full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) |
 
 ## Verification Plan
 
@@ -57,3 +75,5 @@
 - 2026-02-20: Implemented Phase 1.5 query foundation (`saved_queries` migration + `query save/run/list/delete` + CLI integration tests).
 - 2026-02-21: Implemented Phase 1.5 import slice (`import` core + CLI JSON output + `cli_import` integration coverage).
 - 2026-02-21: Implemented Phase 1.5 doctor slice (`doctor` checks + DB-only `--fix` + `cli_doctor` integration coverage); Wave A completed.
+- 2026-02-21: Started Wave B with migration slice (`collections` + `collection_items` via v4) and passed full gate.
+- 2026-02-21: Implemented Wave B collection command slice (`collection create/add/remove/list/delete`) with integration tests.

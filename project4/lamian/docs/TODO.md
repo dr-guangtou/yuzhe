@@ -26,10 +26,10 @@
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-161 | Add migration for collections tables | Pending | `collections` + `collection_items` |
-| L-162 | Implement hybrid `collection` command family | Pending | static membership + dynamic query binding |
-| L-163 | Implement `bundle export|import` with `tar.gz` | Pending | metadata + managed files, skip-existing conflict policy |
-| L-164 | Add Wave B integration tests | Pending | collection sync + bundle roundtrip/conflict/corruption |
+| L-161 | Add migration for collections tables | Done | migration v4 added with constraints and indexes for `collections` + `collection_items` |
+| L-162 | Implement hybrid `collection` command family | Done | `collection create/add/remove/list/delete` implemented with static/dynamic behavior |
+| L-163 | Implement `bundle export|import` with `tar.gz` | Done | deterministic `manifest.json` + checksum verification, metadata + managed files, skip-existing conflict policy |
+| L-164 | Add Wave B integration tests | Done | bundle roundtrip/conflict/corruption coverage added (with existing collection tests) |
 
 ## Phase 2: GUI Baseline
 

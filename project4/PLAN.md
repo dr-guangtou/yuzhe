@@ -54,7 +54,7 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - Project-level planning docs were stale and are now synchronized as part of Phase 1.5 kickoff.
 - Remaining Phase 1 quality gate still required: one full sequential integration scenario (`init -> inject -> update -> tag -> link -> search -> export`) plus migration compatibility fixtures.
 
-## Phase 1.5: Pre-GUI Automation and Curation CLI (In Progress)
+## Phase 1.5: Pre-GUI Automation and Curation CLI (Completed)
 
 Purpose:
 
@@ -145,6 +145,6 @@ Purpose:
 
 ## 8. Next Execution Step
 
-1. Implement Wave A migration and core services (`query`, `import`, `doctor`) in small verified slices.
-2. Add JSON output contracts and integration tests.
-3. Re-run full gate: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+1. Complete documentation synchronization pass for implemented Phase 1.8 hardening features (`verify`, bundle preflight, bundle conflict controls).
+2. Prioritize post-hardening backlog items (`P4-424` onward) and Phase 2 GUI baseline entry criteria.
+3. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.

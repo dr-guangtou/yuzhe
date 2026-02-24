@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
@@ -16,7 +17,7 @@ pub struct UpdateRequest {
     pub note_file: Option<PathBuf>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct UpdateResult {
     pub figure_id: String,
     pub updated_fields: Vec<&'static str>,

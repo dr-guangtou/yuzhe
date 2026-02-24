@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
@@ -13,7 +14,7 @@ pub struct AddTagRequest {
     pub tag: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AddTagResult {
     pub normalized_tag: String,
     pub created_relation: bool,
@@ -26,7 +27,7 @@ pub struct RemoveTagRequest {
     pub tag: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RemoveTagResult {
     pub normalized_tag: String,
     pub removed_relation: bool,
@@ -39,11 +40,27 @@ pub struct RenameTagRequest {
     pub new_tag: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RenameTagResult {
     pub normalized_old_tag: String,
     pub normalized_new_tag: String,
     pub renamed_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct ListTagsRequest {
+    pub vault_root: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ListTagsResult {
+    pub tags: Vec<TagSummary>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct TagSummary {
+    pub tag_name: String,
+    pub figure_count: usize,
 }
 
 pub fn add_tag_to_figure(request: AddTagRequest) -> Result<AddTagResult, LamianError> {
@@ -122,6 +139,42 @@ pub fn rename_tag(request: RenameTagRequest) -> Result<RenameTagResult, LamianEr
         normalized_new_tag,
         renamed_count,
     })
+}
+
+pub fn list_tags(request: ListTagsRequest) -> Result<ListTagsResult, LamianError> {
+    if request.vault_root.as_os_str().is_empty() {
+        return Err(LamianError::InvalidVaultPath {
+            path: request.vault_root,
+        });
+    }
+
+    let connection = db::open_vault_connection(&request.vault_root)?;
+    let mut statement = connection.prepare(
+        r#"
+SELECT tags.tag_name, COUNT(figure_tags.figure_id) AS figure_count
+FROM tags
+LEFT JOIN figure_tags ON figure_tags.tag_id = tags.tag_id
+GROUP BY tags.tag_id, tags.tag_name
+ORDER BY tags.tag_name ASC
+"#,
+    )?;
+    let mut rows = statement.query([])?;
+    let mut tags = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let figure_count_raw: i64 = row.get(1)?;
+        let figure_count =
+            usize::try_from(figure_count_raw).map_err(|_| LamianError::InvalidTagValue {
+                reason: "tag figure count cannot be negative",
+                value: figure_count_raw.to_string(),
+            })?;
+        tags.push(TagSummary {
+            tag_name: row.get(0)?,
+            figure_count,
+        });
+    }
+
+    Ok(ListTagsResult { tags })
 }
 
 fn normalize_figure_id(figure_id: &str) -> Result<String, LamianError> {

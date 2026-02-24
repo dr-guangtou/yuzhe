@@ -1,18 +1,14 @@
-# LaMian CLI Core (Bootstrap)
+# LaMian CLI Core
 
 This repository contains the Rust implementation for LaMian.
 
 ## Current Status
 
-- `init` command is implemented.
-- Database schema initialization and migrations are implemented.
-- `inject`, `update`, `tag` (`add`/`remove`/`rename`), `link` (`add`/`remove`), `search`, and `export` are implemented.
-- Phase 1.5 progress: Wave A is implemented and Wave B `collection` command family is implemented.
-
-## Next Milestone (Phase 1.5, Pre-GUI)
-
-- Wave B:
-  - `bundle export|import` (`tar.gz`)
+- Core commands are implemented: `init`, `inject`, `update`, `source update`, `tag`, `link`, `search`, `list|ls`, `show|info`, `delete`, `export`.
+- Global `--json` output mode is available for Phase 1 command families: `inject`, `update`, `tag`, `link`, `search`, and `export`.
+- Pre-GUI automation commands are implemented: `query`, `import`, `doctor`, `collection` (including `collection update`), `bundle`, `verify`.
+- Current schema includes migrations through v5 (including link uniqueness hardening).
+- Bundle hardening controls are implemented: `bundle inspect`, `bundle import --dry-run`, `bundle import --fail-on-link-loss`, and `bundle import --on-conflict skip|error|replace`.
 
 ## Quick Start
 

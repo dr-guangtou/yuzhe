@@ -5,7 +5,7 @@
 This guide explains:
 
 - how the current LaMian CLI works
-- the core algorithms behind `init`, `inject`, `update`, `tag`, `link`, `search`, `export`, and `query`
+- the core algorithms behind `init`, `inject`, `update`, `source update`, `tag`, `link`, `search`, `list`, `show`, `delete`, `export`, `query`, `import`, `doctor`, `collection`, `bundle`, and `verify`
 - how to run the implemented workflows end-to-end
 
 ## Current Command Coverage
@@ -15,21 +15,29 @@ Implemented:
 - `init`
 - `inject`
 - `update`
+- `source update`
 - `tag add`
 - `tag remove`
 - `tag rename`
+- `tag list`
 - `link add`
 - `link remove`
 - `search`
+- `list` (alias: `ls`)
+- `show` (alias: `info`)
+- `delete`
 - `export`
 - `query save|run|list|delete`
-
-Planned for Phase 1.5 (pre-GUI):
-
 - `import`
 - `doctor`
-- `collection create|add|remove|list|delete`
-- `bundle export|import`
+- `collection create|add|remove|list|delete|update`
+- `bundle export|inspect|import`
+- `verify`
+
+Global output mode:
+
+- `--json` (global flag) is implemented for `inject`, `update`, `tag`, `link`, `search`, and `export`.
+- Without `--json`, these commands keep their existing human-readable output.
 
 ## Core Algorithms
 
@@ -150,6 +158,16 @@ Behavior:
 - updates `tag_parent` values accordingly
 - rejects rename when target tag or target descendant already exists
 
+## 3.4 `tag list`
+
+`lamian tag list --vault <path>`
+
+Behavior:
+
+- lists all known tags from the vault without running full metadata export
+- deterministic order by `tag_name` ascending
+- reports per-tag `figure_count`
+
 ## 5. Link Management (`link`)
 
 Links are directed: `A -> B` is different from `B -> A`.
@@ -180,18 +198,71 @@ Behavior:
 
 ## 6. Search (`search`)
 
-`lamian search [--tag <tag>] [--source-key <source_key>] [--text <text>] --vault <path>`
+`lamian search [--tag <tag>] [--tag-prefix <tag_prefix>] [--source-key <source_key>] [--text <text>] --vault <path>`
 
 Behavior:
 
 - accepts independent optional filters and combines them with logical `AND`
 - `--tag` is normalized to lowercase and uses the same hierarchy validation rules as tag commands
+- `--tag-prefix` is normalized like tags and matches descendants only (`prefix:*` semantics, for example `observatory` matches `observatory:jwst` but not `observ`)
 - `--source-key` matches case-insensitively against source records
 - `--text` performs case-insensitive substring matching against figure display name, figure caption, source fields, notes, and tag names
 - output is deterministic: first line prints count, followed by rows sorted by `figure_id`
 - when no rows match, prints `Search results: 0` and `No figures matched.`
 
-## 7. Export (`export`)
+## 7. Figure List (`list`/`ls`)
+
+`lamian list [--sort figure-id|display-name|created-at|updated-at] [--order asc|desc] [--limit <n>] --vault <path>`
+`lamian ls [--sort figure-id|display-name|created-at|updated-at] [--order asc|desc] [--limit <n>] --vault <path>`
+
+Behavior:
+
+- returns all figures in human-readable rows with key timestamps
+- default sort is `figure-id` ascending
+- supports explicit sort field and order
+- supports optional positive `--limit` to truncate output
+- prints `No figures found.` when the vault has no figures
+
+## 8. Figure Detail (`show`/`info`)
+
+`lamian show <figure_id> --vault <path>`
+`lamian info <figure_id> --vault <path>`
+
+Behavior:
+
+- resolves one figure by `figure_id`
+- prints full metadata in deterministic sections:
+  - figure fields (`display_name`, caption, path/hash/media/size, timestamps)
+  - source records
+  - assigned tags
+  - outbound links
+  - optional note metadata/content
+- fails with `unknown figure id` when the target figure does not exist
+
+## 9. Figure Delete (`delete`)
+
+`lamian delete <figure_id> --vault <path>`
+
+Behavior:
+
+- removes one figure by `figure_id` in a transaction
+- relies on foreign-key cascade cleanup for dependent rows (`sources`, `notes`, links, collection items, figure-tag relations)
+- prunes orphan tags after deletion when they have no remaining figure assignment and no child tag references
+- attempts managed-file cleanup only when the figure file is under `.lamian/figures`; reference files outside vault storage are not removed
+
+## 9.1 Source Metadata Update (`source update`)
+
+`lamian source update <figure_id> [--title <value>] [--authors <value>] [--published-at <value>] [--clear-title] [--clear-authors] [--clear-published-at] --vault <path>`
+
+Behavior:
+
+- requires `figure_id` to exist and have at least one source row
+- updates source metadata fields (`source_title`, `source_authors`, `source_published_at`) for the figure
+- supports explicit clearing per field via `--clear-*`
+- rejects conflicting set+clear for the same field in one request
+- requires at least one metadata update flag
+
+## 10. Export (`export`)
 
 `lamian export [--format yaml|json] [--target <path>] --vault <path>`
 
@@ -206,16 +277,16 @@ Behavior:
 - creates parent directories for `--target` automatically
 - rejects `--target` when it points to an existing directory
 
-## 8. Saved Queries (`query`)
+## 11. Saved Queries (`query`)
 
 `lamian query save|run|list|delete ... --vault <path>`
 
 Behavior:
 
 - `save` persists normalized filters (`--tag`, `--source-key`, `--text`) plus sort/order/limit
-- `run` resolves query by ID first, then by name, and supports `--detail ids|full`
+- `run` resolves references via `--reference-mode auto|id|name` and supports `--detail ids|full`
 - `list` returns all saved queries ordered by query name
-- `delete` removes query by ID or name
+- `delete` removes query by reference with `--reference-mode auto|id|name`
 - output for all `query` subcommands is JSON-only
 
 ## Practical CLI Usage
@@ -281,23 +352,53 @@ cargo run -- --vault "$PWD/.demo_vault" search --source-key "10.1126/science.ady
 cargo run -- --vault "$PWD/.demo_vault" search --text "elliptical_galaxy"
 ```
 
-## 7. Export Operations
+## 7. List Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" list
+cargo run -- --vault "$PWD/.demo_vault" ls --sort display-name --order desc --limit 20
+```
+
+## 8. Show Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" show <figure_id>
+cargo run -- --vault "$PWD/.demo_vault" info <figure_id>
+```
+
+## 9. Delete Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" delete <figure_id>
+```
+
+Source metadata update:
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" source update <figure_id> \
+  --title "JWST Deep Field" \
+  --authors "A. Researcher; B. Scientist" \
+  --published-at "2026-02-24"
+```
+
+## 10. Export Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" export --format json
 cargo run -- --vault "$PWD/.demo_vault" export --format yaml --target "$PWD/.demo_vault/.lamian/export.yaml"
 ```
 
-## 8. Query Operations
+## 11. Query Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" query save "jwst-only" --tag "observatory:jwst" --sort updated-at --order desc --limit 5
 cargo run -- --vault "$PWD/.demo_vault" query run "jwst-only" --detail ids
+cargo run -- --vault "$PWD/.demo_vault" query run "123" --reference-mode name --detail full
 cargo run -- --vault "$PWD/.demo_vault" query list
-cargo run -- --vault "$PWD/.demo_vault" query delete "jwst-only"
+cargo run -- --vault "$PWD/.demo_vault" query delete "jwst-only" --reference-mode auto
 ```
 
-## 9. Import Operations
+## 12. Import Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" import "$PWD/import_batch" --source-type local --source-key-template "batch:{relative_path}" --copy-mode reference
@@ -311,23 +412,45 @@ Supported import template placeholders:
 - `{extension}`
 - `{relative_path}`
 
-## 10. Doctor Operations
+## 13. Doctor Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" doctor
 cargo run -- --vault "$PWD/.demo_vault" doctor --fix
 ```
 
-## 11. Collection Operations
+## 14. Collection Operations
 
 ```bash
 cargo run -- --vault "$PWD/.demo_vault" collection create "my-static"
-cargo run -- --vault "$PWD/.demo_vault" collection add "my-static" <figure_id>
-cargo run -- --vault "$PWD/.demo_vault" collection remove "my-static" <figure_id>
+cargo run -- --vault "$PWD/.demo_vault" collection add "my-static" <figure_id> --reference-mode auto
+cargo run -- --vault "$PWD/.demo_vault" collection remove "my-static" <figure_id> --reference-mode auto
 cargo run -- --vault "$PWD/.demo_vault" collection list
-cargo run -- --vault "$PWD/.demo_vault" collection list --collection "my-static"
+cargo run -- --vault "$PWD/.demo_vault" collection list --collection "my-static" --reference-mode auto
 cargo run -- --vault "$PWD/.demo_vault" collection create "jwst-dynamic" --query-id 1
-cargo run -- --vault "$PWD/.demo_vault" collection delete "my-static"
+cargo run -- --vault "$PWD/.demo_vault" collection delete "my-static" --reference-mode auto
+cargo run -- --vault "$PWD/.demo_vault" collection update "my-static" --name "my-renamed"
+cargo run -- --vault "$PWD/.demo_vault" collection update "my-renamed" --query-id 1
+cargo run -- --vault "$PWD/.demo_vault" collection update "my-renamed" --clear-query-id
+```
+
+## 15. Bundle Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" bundle export --target "$PWD/snapshot.tar.gz"
+cargo run -- bundle inspect "$PWD/snapshot.tar.gz"
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz"
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz" --dry-run
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz" --fail-on-link-loss
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz" --on-conflict skip
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz" --on-conflict error
+cargo run -- --vault "$PWD/.demo_vault" bundle import "$PWD/snapshot.tar.gz" --on-conflict replace
+```
+
+## 16. Verify Operations
+
+```bash
+cargo run -- --vault "$PWD/.demo_vault" verify
 ```
 
 ## Verification
@@ -341,12 +464,9 @@ cargo clippy --all-targets -- -D warnings
 cargo test
 ```
 
-## Phase 1.5 Contract Preview
+## Output Contract Summary
 
-The next command wave introduces automation-oriented commands with JSON-only output contracts:
-
-- `bundle` will return structured JSON on success.
-- `collection` already returns JSON for `create/add/remove/list/delete`.
-- `doctor` already returns JSON with issue summaries and per-issue records.
-- `import` already returns JSON with `processed/succeeded/failed/skipped` summary and per-item records.
-- Existing Phase 1 commands keep their current human-readable output.
+- Existing Phase 1 commands keep human-readable output.
+- `query`, `import`, `doctor`, `collection`, `bundle`, and `verify` use JSON output.
+- `verify` exits non-zero with `status = "issues_found"` when integrity issues are detected.
+- `bundle import --dry-run` returns projections only and does not mutate DB/files.

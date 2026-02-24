@@ -1,17 +1,26 @@
 use std::path::{Path, PathBuf};
 
+use clap::ValueEnum;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
-use crate::query::{run_query, QueryRunDetail, RunQueryRequest};
+use crate::query::{run_query, QueryReferenceMode, QueryRunDetail, RunQueryRequest};
 
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CollectionMode {
     Static,
     Dynamic,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CollectionReferenceMode {
+    Auto,
+    Id,
+    Name,
 }
 
 impl CollectionMode {
@@ -54,6 +63,7 @@ pub struct CreateCollectionResult {
 pub struct AddCollectionItemRequest {
     pub vault_root: PathBuf,
     pub collection_reference: String,
+    pub reference_mode: CollectionReferenceMode,
     pub figure_id: String,
 }
 
@@ -70,6 +80,7 @@ pub struct AddCollectionItemResult {
 pub struct RemoveCollectionItemRequest {
     pub vault_root: PathBuf,
     pub collection_reference: String,
+    pub reference_mode: CollectionReferenceMode,
     pub figure_id: String,
 }
 
@@ -86,6 +97,7 @@ pub struct RemoveCollectionItemResult {
 pub struct ListCollectionsRequest {
     pub vault_root: PathBuf,
     pub collection_reference: Option<String>,
+    pub reference_mode: CollectionReferenceMode,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -106,6 +118,7 @@ pub struct CollectionDetail {
 pub struct DeleteCollectionRequest {
     pub vault_root: PathBuf,
     pub collection_reference: String,
+    pub reference_mode: CollectionReferenceMode,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,11 +130,36 @@ pub struct DeleteCollectionResult {
 }
 
 #[derive(Debug, Clone)]
+pub struct UpdateCollectionRequest {
+    pub vault_root: PathBuf,
+    pub collection_reference: String,
+    pub reference_mode: CollectionReferenceMode,
+    pub name: Option<String>,
+    pub query_id: Option<i64>,
+    pub clear_query_id: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct UpdateCollectionResult {
+    pub collection_id: i64,
+    pub collection_name: String,
+    pub collection_mode: CollectionMode,
+    pub query_id: Option<i64>,
+    pub updated_fields: Vec<&'static str>,
+}
+
+#[derive(Debug, Clone)]
 struct StoredCollection {
     collection_id: i64,
     collection_name: String,
     collection_mode: CollectionMode,
     query_id: Option<i64>,
+}
+
+enum QueryIdUpdate {
+    Unchanged,
+    Set(i64),
+    Clear,
 }
 
 pub fn create_collection(
@@ -179,7 +217,8 @@ pub fn add_collection_item(
     let figure_id = normalize_figure_id(&request.figure_id)?;
 
     let connection = db::open_vault_connection(&request.vault_root)?;
-    let stored_collection = resolve_collection(&connection, &collection_reference)?;
+    let stored_collection =
+        resolve_collection(&connection, &collection_reference, request.reference_mode)?;
     ensure_static_collection(&stored_collection, "add")?;
     ensure_figure_exists(&connection, &figure_id)?;
 
@@ -205,7 +244,8 @@ pub fn remove_collection_item(
     let figure_id = normalize_figure_id(&request.figure_id)?;
 
     let connection = db::open_vault_connection(&request.vault_root)?;
-    let stored_collection = resolve_collection(&connection, &collection_reference)?;
+    let stored_collection =
+        resolve_collection(&connection, &collection_reference, request.reference_mode)?;
     ensure_static_collection(&stored_collection, "remove")?;
 
     let changed_rows = connection.execute(
@@ -231,7 +271,8 @@ pub fn list_collections(
 
     let collections = if let Some(collection_reference_value) = request.collection_reference {
         let collection_reference = normalize_collection_reference(&collection_reference_value)?;
-        let stored_collection = resolve_collection(&connection, &collection_reference)?;
+        let stored_collection =
+            resolve_collection(&connection, &collection_reference, request.reference_mode)?;
         vec![build_collection_detail(
             &request.vault_root,
             &connection,
@@ -259,7 +300,8 @@ pub fn delete_collection(
     validate_vault_root(&request.vault_root)?;
     let collection_reference = normalize_collection_reference(&request.collection_reference)?;
     let connection = db::open_vault_connection(&request.vault_root)?;
-    let stored_collection = resolve_collection(&connection, &collection_reference)?;
+    let stored_collection =
+        resolve_collection(&connection, &collection_reference, request.reference_mode)?;
 
     connection.execute(
         "DELETE FROM collections WHERE collection_id = ?1",
@@ -271,6 +313,95 @@ pub fn delete_collection(
         collection_name: stored_collection.collection_name,
         collection_mode: stored_collection.collection_mode,
         query_id: stored_collection.query_id,
+    })
+}
+
+pub fn update_collection(
+    request: UpdateCollectionRequest,
+) -> Result<UpdateCollectionResult, LamianError> {
+    validate_vault_root(&request.vault_root)?;
+    let collection_reference = normalize_collection_reference(&request.collection_reference)?;
+    let normalized_name = normalize_optional_collection_name(request.name)?;
+    let query_id_update = normalize_query_id_update(request.query_id, request.clear_query_id)?;
+
+    if normalized_name.is_none() && matches!(query_id_update, QueryIdUpdate::Unchanged) {
+        return Err(LamianError::InvalidCollectionValue {
+            field: "update",
+            reason: "provide at least one of --name, --query-id, or --clear-query-id",
+            value: "empty payload".to_string(),
+        });
+    }
+
+    let connection = db::open_vault_connection(&request.vault_root)?;
+    let stored_collection =
+        resolve_collection(&connection, &collection_reference, request.reference_mode)?;
+
+    if let Some(new_name) = normalized_name.as_deref() {
+        if new_name != stored_collection.collection_name
+            && collection_name_exists(&connection, new_name)?
+        {
+            return Err(LamianError::CollectionAlreadyExists {
+                collection_name: new_name.to_string(),
+            });
+        }
+    }
+
+    let next_query_id = match query_id_update {
+        QueryIdUpdate::Unchanged => stored_collection.query_id,
+        QueryIdUpdate::Set(query_id) => {
+            if !saved_query_exists(&connection, query_id)? {
+                return Err(LamianError::InvalidCollectionValue {
+                    field: "query_id",
+                    reason: "saved query does not exist",
+                    value: query_id.to_string(),
+                });
+            }
+            Some(query_id)
+        }
+        QueryIdUpdate::Clear => None,
+    };
+
+    let next_name = normalized_name
+        .as_deref()
+        .unwrap_or(stored_collection.collection_name.as_str())
+        .to_string();
+    let next_mode = if next_query_id.is_some() {
+        CollectionMode::Dynamic
+    } else {
+        CollectionMode::Static
+    };
+
+    connection.execute(
+        r#"
+UPDATE collections
+SET collection_name = ?1, collection_mode = ?2, query_id = ?3
+WHERE collection_id = ?4
+"#,
+        params![
+            &next_name,
+            next_mode.as_db_value(),
+            next_query_id,
+            stored_collection.collection_id
+        ],
+    )?;
+
+    let mut updated_fields = Vec::new();
+    if next_name != stored_collection.collection_name {
+        updated_fields.push("name");
+    }
+    if next_query_id != stored_collection.query_id {
+        updated_fields.push("query_id");
+    }
+    if next_mode.as_db_value() != stored_collection.collection_mode.as_db_value() {
+        updated_fields.push("collection_mode");
+    }
+
+    Ok(UpdateCollectionResult {
+        collection_id: stored_collection.collection_id,
+        collection_name: next_name,
+        collection_mode: next_mode,
+        query_id: next_query_id,
+        updated_fields,
     })
 }
 
@@ -293,6 +424,15 @@ fn normalize_collection_name(value: &str) -> Result<String, LamianError> {
     Ok(normalized_value.to_string())
 }
 
+fn normalize_optional_collection_name(
+    value: Option<String>,
+) -> Result<Option<String>, LamianError> {
+    match value {
+        None => Ok(None),
+        Some(name) => Ok(Some(normalize_collection_name(&name)?)),
+    }
+}
+
 fn normalize_collection_reference(value: &str) -> Result<String, LamianError> {
     let normalized_value = value.trim();
     if normalized_value.is_empty() {
@@ -309,6 +449,27 @@ fn normalize_figure_id(value: &str) -> Result<String, LamianError> {
         return Err(LamianError::MissingCollectionField { field: "figure_id" });
     }
     Ok(normalized_value.to_string())
+}
+
+fn normalize_query_id_update(
+    query_id: Option<i64>,
+    clear_query_id: bool,
+) -> Result<QueryIdUpdate, LamianError> {
+    if clear_query_id {
+        if query_id.is_some() {
+            return Err(LamianError::InvalidCollectionValue {
+                field: "query_id",
+                reason: "cannot combine --query-id with --clear-query-id",
+                value: "both provided".to_string(),
+            });
+        }
+        return Ok(QueryIdUpdate::Clear);
+    }
+
+    match query_id {
+        None => Ok(QueryIdUpdate::Unchanged),
+        Some(value) => Ok(QueryIdUpdate::Set(value)),
+    }
 }
 
 fn collection_name_exists(
@@ -339,18 +500,41 @@ fn saved_query_exists(connection: &Connection, query_id: i64) -> Result<bool, La
 fn resolve_collection(
     connection: &Connection,
     collection_reference: &str,
+    reference_mode: CollectionReferenceMode,
 ) -> Result<StoredCollection, LamianError> {
-    if let Ok(collection_id) = collection_reference.parse::<i64>() {
-        if let Some(collection) = load_collection_by_id(connection, collection_id)? {
-            return Ok(collection);
-        }
-    }
+    match reference_mode {
+        CollectionReferenceMode::Auto => {
+            if let Ok(collection_id) = collection_reference.parse::<i64>() {
+                if let Some(collection) = load_collection_by_id(connection, collection_id)? {
+                    return Ok(collection);
+                }
+            }
 
-    load_collection_by_name(connection, collection_reference)?.ok_or_else(|| {
-        LamianError::CollectionNotFound {
-            collection_reference: collection_reference.to_string(),
+            load_collection_by_name(connection, collection_reference)?.ok_or_else(|| {
+                LamianError::CollectionNotFound {
+                    collection_reference: collection_reference.to_string(),
+                }
+            })
         }
-    })
+        CollectionReferenceMode::Id => {
+            let collection_id = collection_reference.parse::<i64>().map_err(|_| {
+                LamianError::InvalidCollectionValue {
+                    field: "collection",
+                    reason: "collection reference must be a numeric id when reference mode is `id`",
+                    value: collection_reference.to_string(),
+                }
+            })?;
+            load_collection_by_id(connection, collection_id)?.ok_or_else(|| {
+                LamianError::CollectionNotFound {
+                    collection_reference: collection_reference.to_string(),
+                }
+            })
+        }
+        CollectionReferenceMode::Name => load_collection_by_name(connection, collection_reference)?
+            .ok_or_else(|| LamianError::CollectionNotFound {
+                collection_reference: collection_reference.to_string(),
+            }),
+    }
 }
 
 fn load_collection_by_id(
@@ -509,6 +693,7 @@ fn load_dynamic_figure_ids(
     let query_result = run_query(RunQueryRequest {
         vault_root: vault_root.to_path_buf(),
         query_reference: query_id.to_string(),
+        reference_mode: QueryReferenceMode::Id,
         detail: QueryRunDetail::Ids,
     })?;
     Ok(query_result.figure_ids)

@@ -105,6 +105,50 @@ fn cli_doctor_fix_removes_self_link_issue() {
     );
 }
 
+#[test]
+fn cli_doctor_detects_missing_figure_file_path() {
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+    let staged_file_path = temp_dir.path().join("transient.png");
+
+    std::fs::write(&staged_file_path, b"sample image").expect("write transient file");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let _figure_id = inject_file_and_get_figure_id(&vault_path, &staged_file_path);
+
+    std::fs::remove_file(&staged_file_path).expect("remove transient file");
+
+    let output = run_lamian(["--vault", vault_path.to_string_lossy().as_ref(), "doctor"]);
+    assert!(
+        !output.status.success(),
+        "doctor unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("doctor found unresolved issue(s)"),
+        "unexpected doctor stderr:\n{stderr}"
+    );
+
+    let payload: JsonValue = serde_json::from_slice(&output.stdout).expect("parse doctor json");
+    assert_eq!(payload["command"].as_str(), Some("doctor"));
+    assert_eq!(payload["status"].as_str(), Some("issues_found"));
+    assert_eq!(
+        payload["result"]["issue_count_before_fix"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(payload["result"]["unresolved_count"].as_u64(), Some(1));
+    assert_eq!(
+        payload["result"]["issues_before_fix"][0]["kind"].as_str(),
+        Some("figure_file_path_invalid")
+    );
+    assert_eq!(
+        payload["result"]["issues_before_fix"][0]["fixable"].as_bool(),
+        Some(false)
+    );
+}
+
 fn insert_self_link_issue(vault_path: &Path, figure_id: &str) {
     let database_path = vault_database_path(vault_path);
     let connection = Connection::open(database_path).expect("open sqlite db");
@@ -121,11 +165,15 @@ fn vault_database_path(vault_path: &Path) -> PathBuf {
 }
 
 fn inject_fixture_and_get_figure_id(vault_path: &Path, fixture_path: &Path) -> String {
+    inject_file_and_get_figure_id(vault_path, fixture_path)
+}
+
+fn inject_file_and_get_figure_id(vault_path: &Path, file_path: &Path) -> String {
     let inject_output = run_lamian_and_assert_success([
         "--vault",
         vault_path.to_string_lossy().as_ref(),
         "inject",
-        fixture_path.to_string_lossy().as_ref(),
+        file_path.to_string_lossy().as_ref(),
         "--source-type",
         "local",
         "--source-key",

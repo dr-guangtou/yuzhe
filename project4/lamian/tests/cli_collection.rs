@@ -260,6 +260,255 @@ fn cli_collection_create_rejects_missing_saved_query() {
     );
 }
 
+#[test]
+fn cli_collection_reference_mode_disambiguates_numeric_name() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+
+    let create_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "create",
+        "9999",
+    ]);
+    let create_json: JsonValue =
+        serde_json::from_slice(&create_output.stdout).expect("parse collection create json");
+    let collection_id = create_json["result"]["collection_id"]
+        .as_i64()
+        .expect("collection id");
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "add",
+        "9999",
+        figure_id.as_str(),
+        "--reference-mode",
+        "name",
+    ]);
+
+    let id_mode_output = run_lamian([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "add",
+        "9999",
+        figure_id.as_str(),
+        "--reference-mode",
+        "id",
+    ]);
+    assert!(
+        !id_mode_output.status.success(),
+        "collection add with id mode unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&id_mode_output.stdout),
+        String::from_utf8_lossy(&id_mode_output.stderr)
+    );
+    let id_mode_stderr = String::from_utf8_lossy(&id_mode_output.stderr);
+    assert!(
+        id_mode_stderr.contains("collection not found"),
+        "expected collection-not-found with id mode, got:\n{id_mode_stderr}"
+    );
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "list",
+        "--collection",
+        &collection_id.to_string(),
+        "--reference-mode",
+        "id",
+    ]);
+}
+
+#[test]
+fn cli_collection_update_renames_and_retargets_query_binding() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let first_figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+    let second_figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "url", URL_SOURCE_KEY);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "add",
+        first_figure_id.as_str(),
+        "observatory:jwst",
+    ]);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "add",
+        second_figure_id.as_str(),
+        "galaxy:elliptical",
+    ]);
+
+    let query_save_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "save",
+        "jwst-only",
+        "--tag",
+        "observatory:jwst",
+    ]);
+    let query_save_json: JsonValue =
+        serde_json::from_slice(&query_save_output.stdout).expect("parse query save json");
+    let query_id = query_save_json["result"]["query_id"]
+        .as_i64()
+        .expect("query id");
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "create",
+        "my-static",
+    ]);
+
+    let update_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "update",
+        "my-static",
+        "--name",
+        "my-dynamic",
+        "--query-id",
+        &query_id.to_string(),
+    ]);
+    let update_json: JsonValue =
+        serde_json::from_slice(&update_output.stdout).expect("parse collection update json");
+    assert_eq!(update_json["command"].as_str(), Some("collection.update"));
+    assert_eq!(
+        update_json["result"]["collection_name"].as_str(),
+        Some("my-dynamic")
+    );
+    assert_eq!(
+        update_json["result"]["collection_mode"].as_str(),
+        Some("dynamic")
+    );
+    assert_eq!(update_json["result"]["query_id"].as_i64(), Some(query_id));
+
+    let list_dynamic_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "list",
+        "--collection",
+        "my-dynamic",
+    ]);
+    let list_dynamic_json: JsonValue =
+        serde_json::from_slice(&list_dynamic_output.stdout).expect("parse list json");
+    let dynamic_figure_ids = list_dynamic_json["collections"][0]["figure_ids"]
+        .as_array()
+        .expect("figure ids");
+    assert_eq!(dynamic_figure_ids.len(), 1);
+    assert_eq!(
+        dynamic_figure_ids[0].as_str(),
+        Some(first_figure_id.as_str())
+    );
+
+    let clear_update_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "update",
+        "my-dynamic",
+        "--clear-query-id",
+        "--reference-mode",
+        "name",
+    ]);
+    let clear_update_json: JsonValue =
+        serde_json::from_slice(&clear_update_output.stdout).expect("parse clear update json");
+    assert_eq!(
+        clear_update_json["result"]["collection_mode"].as_str(),
+        Some("static")
+    );
+    assert_eq!(clear_update_json["result"]["query_id"].as_i64(), None);
+
+    let add_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "add",
+        "my-dynamic",
+        first_figure_id.as_str(),
+    ]);
+    let add_json: JsonValue =
+        serde_json::from_slice(&add_output.stdout).expect("parse add after clear json");
+    assert_eq!(add_json["result"]["created_relation"].as_bool(), Some(true));
+}
+
+#[test]
+fn cli_collection_update_rejects_invalid_payload() {
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "create",
+        "to-update",
+    ]);
+
+    let empty_output = run_lamian([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "update",
+        "to-update",
+    ]);
+    assert!(
+        !empty_output.status.success(),
+        "collection update unexpectedly succeeded without payload.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&empty_output.stdout),
+        String::from_utf8_lossy(&empty_output.stderr)
+    );
+    let empty_stderr = String::from_utf8_lossy(&empty_output.stderr);
+    assert!(
+        empty_stderr.contains("provide at least one of --name, --query-id, or --clear-query-id"),
+        "unexpected empty payload stderr:\n{empty_stderr}"
+    );
+
+    let conflict_output = run_lamian([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "collection",
+        "update",
+        "to-update",
+        "--query-id",
+        "1",
+        "--clear-query-id",
+    ]);
+    assert!(
+        !conflict_output.status.success(),
+        "collection update unexpectedly succeeded with conflicting query payload.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&conflict_output.stdout),
+        String::from_utf8_lossy(&conflict_output.stderr)
+    );
+    let conflict_stderr = String::from_utf8_lossy(&conflict_output.stderr);
+    assert!(
+        conflict_stderr.contains("cannot combine --query-id with --clear-query-id"),
+        "unexpected conflicting payload stderr:\n{conflict_stderr}"
+    );
+}
+
 fn inject_fixture_and_get_figure_id(
     vault_path: &Path,
     fixture_path: &Path,

@@ -136,28 +136,58 @@ fn cli_query_save_list_run_and_delete() {
 }
 
 #[test]
-fn cli_query_save_rejects_empty_filters() {
+fn cli_query_save_runs_filterless_template_with_deterministic_limit() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
     let temp_dir = TempDir::new().expect("temp directory");
     let vault_path = temp_dir.path().join("vault");
     run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
 
-    let output = run_lamian([
+    let first_figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+    let second_figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "url", URL_SOURCE_KEY);
+
+    let expected_first_figure_id = [first_figure_id.as_str(), second_figure_id.as_str()]
+        .into_iter()
+        .min()
+        .expect("minimum figure id")
+        .to_string();
+
+    let save_output = run_lamian_and_assert_success([
         "--vault",
         vault_path.to_string_lossy().as_ref(),
         "query",
         "save",
-        "empty-filters",
+        "all-figures-top-1",
+        "--sort",
+        "figure-id",
+        "--order",
+        "asc",
+        "--limit",
+        "1",
     ]);
-    assert!(
-        !output.status.success(),
-        "query save unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        stderr.contains("missing required query field: filters"),
-        "unexpected stderr for empty filters:\n{stderr}"
+    let save_json: JsonValue =
+        serde_json::from_slice(&save_output.stdout).expect("parse filterless save json");
+    assert_eq!(save_json["command"].as_str(), Some("query.save"));
+    assert_eq!(save_json["status"].as_str(), Some("ok"));
+
+    let run_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "run",
+        "all-figures-top-1",
+        "--detail",
+        "ids",
+    ]);
+    let run_json: JsonValue =
+        serde_json::from_slice(&run_output.stdout).expect("parse filterless run json");
+    assert_eq!(run_json["command"].as_str(), Some("query.run"));
+    assert_eq!(run_json["status"].as_str(), Some("ok"));
+    assert_eq!(run_json["result"]["total_matches"].as_u64(), Some(1));
+    assert_eq!(
+        run_json["result"]["figure_ids"][0].as_str(),
+        Some(expected_first_figure_id.as_str())
     );
 }
 
@@ -209,6 +239,79 @@ fn cli_query_save_rejects_duplicate_name() {
         stderr.contains("saved query already exists"),
         "unexpected stderr for duplicate name:\n{stderr}"
     );
+}
+
+#[test]
+fn cli_query_reference_mode_disambiguates_numeric_name() {
+    let fixture_path = repository_fixture_path("2602.17205_1.png");
+    let temp_dir = TempDir::new().expect("temp directory");
+    let vault_path = temp_dir.path().join("vault");
+
+    run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "init"]);
+    let figure_id =
+        inject_fixture_and_get_figure_id(&vault_path, &fixture_path, "doi", DOI_SOURCE_KEY);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "tag",
+        "add",
+        figure_id.as_str(),
+        "observatory:jwst",
+    ]);
+
+    let save_output = run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "save",
+        "9999",
+        "--tag",
+        "observatory:jwst",
+    ]);
+    let save_json: JsonValue =
+        serde_json::from_slice(&save_output.stdout).expect("parse query save json");
+    let query_id = save_json["result"]["query_id"].as_i64().expect("query id");
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "run",
+        "9999",
+        "--reference-mode",
+        "name",
+    ]);
+
+    let id_mode_output = run_lamian([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "run",
+        "9999",
+        "--reference-mode",
+        "id",
+    ]);
+    assert!(
+        !id_mode_output.status.success(),
+        "query run with id mode unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&id_mode_output.stdout),
+        String::from_utf8_lossy(&id_mode_output.stderr)
+    );
+    let id_mode_stderr = String::from_utf8_lossy(&id_mode_output.stderr);
+    assert!(
+        id_mode_stderr.contains("saved query not found"),
+        "expected query-not-found with id mode, got:\n{id_mode_stderr}"
+    );
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "query",
+        "run",
+        &query_id.to_string(),
+        "--reference-mode",
+        "id",
+    ]);
 }
 
 fn inject_fixture_and_get_figure_id(

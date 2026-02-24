@@ -2,8 +2,9 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
 
+use crate::collection::CollectionReferenceMode;
 use crate::inject::{CopyMode, SourceType};
-use crate::query::{QueryRunDetail, QuerySortField, QuerySortOrder};
+use crate::query::{QueryReferenceMode, QueryRunDetail, QuerySortField, QuerySortOrder};
 
 #[derive(Debug, Parser)]
 #[command(name = "lamian")]
@@ -12,6 +13,9 @@ use crate::query::{QueryRunDetail, QuerySortField, QuerySortOrder};
 pub struct Cli {
     #[arg(long, global = true, value_name = "PATH")]
     pub vault: Option<PathBuf>,
+
+    #[arg(long = "json", global = true, default_value_t = false)]
+    pub json_output: bool,
 
     #[command(subcommand)]
     pub command: Command,
@@ -55,6 +59,11 @@ pub enum Command {
         action: TagAction,
     },
 
+    Source {
+        #[command(subcommand)]
+        action: SourceAction,
+    },
+
     Link {
         #[command(subcommand)]
         action: LinkAction,
@@ -65,10 +74,38 @@ pub enum Command {
         tag: Option<String>,
 
         #[arg(long)]
+        tag_prefix: Option<String>,
+
+        #[arg(long)]
         source_key: Option<String>,
 
         #[arg(long)]
         text: Option<String>,
+    },
+
+    #[command(alias = "ls")]
+    List {
+        #[arg(long, value_enum, default_value = "figure-id")]
+        sort: ListSortField,
+
+        #[arg(long, value_enum, default_value = "asc")]
+        order: ListSortOrder,
+
+        #[arg(long)]
+        limit: Option<u32>,
+    },
+
+    #[command(alias = "info")]
+    Show {
+        figure_id: String,
+    },
+
+    Open {
+        figure_id: String,
+    },
+
+    Delete {
+        figure_id: String,
     },
 
     Query {
@@ -90,6 +127,8 @@ pub enum Command {
         #[arg(long, default_value_t = false)]
         fix: bool,
     },
+
+    Verify,
 
     Import {
         input_path: PathBuf,
@@ -147,10 +186,16 @@ pub enum QueryAction {
 
         #[arg(long, value_enum, default_value = "ids")]
         detail: QueryRunDetail,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: QueryReferenceMode,
     },
     List,
     Delete {
         name_or_id: String,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: QueryReferenceMode,
     },
 }
 
@@ -165,17 +210,44 @@ pub enum CollectionAction {
     Add {
         collection: String,
         figure_id: String,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: CollectionReferenceMode,
     },
     Remove {
         collection: String,
         figure_id: String,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: CollectionReferenceMode,
     },
     List {
         #[arg(long)]
         collection: Option<String>,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: CollectionReferenceMode,
     },
     Delete {
         collection: String,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: CollectionReferenceMode,
+    },
+    Update {
+        collection: String,
+
+        #[arg(long, value_enum, default_value = "auto")]
+        reference_mode: CollectionReferenceMode,
+
+        #[arg(long)]
+        name: Option<String>,
+
+        #[arg(long)]
+        query_id: Option<i64>,
+
+        #[arg(long, default_value_t = false)]
+        clear_query_id: bool,
     },
 }
 
@@ -185,9 +257,28 @@ pub enum BundleAction {
         #[arg(long, value_name = "PATH")]
         target: PathBuf,
     },
-    Import {
+    Inspect {
         bundle_path: PathBuf,
     },
+    Import {
+        bundle_path: PathBuf,
+
+        #[arg(long, default_value_t = false)]
+        fail_on_link_loss: bool,
+
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+
+        #[arg(long, value_enum, default_value = "skip")]
+        on_conflict: BundleImportConflictPolicy,
+    },
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum BundleImportConflictPolicy {
+    Skip,
+    Error,
+    Replace,
 }
 
 #[derive(Debug, Subcommand)]
@@ -195,6 +286,32 @@ pub enum TagAction {
     Add { figure_id: String, tag: String },
     Remove { figure_id: String, tag: String },
     Rename { old_tag: String, new_tag: String },
+    List,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SourceAction {
+    Update {
+        figure_id: String,
+
+        #[arg(long)]
+        title: Option<String>,
+
+        #[arg(long)]
+        authors: Option<String>,
+
+        #[arg(long)]
+        published_at: Option<String>,
+
+        #[arg(long, default_value_t = false)]
+        clear_title: bool,
+
+        #[arg(long, default_value_t = false)]
+        clear_authors: bool,
+
+        #[arg(long, default_value_t = false)]
+        clear_published_at: bool,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -215,4 +332,18 @@ pub enum LinkAction {
 pub enum ExportFormat {
     Yaml,
     Json,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum ListSortField {
+    FigureId,
+    DisplayName,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum ListSortOrder {
+    Asc,
+    Desc,
 }

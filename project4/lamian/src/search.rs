@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection};
+use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
@@ -10,16 +11,17 @@ use crate::tag_validation::{normalize_and_validate_tag, TagValidationError};
 pub struct SearchRequest {
     pub vault_root: PathBuf,
     pub tag: Option<String>,
+    pub tag_prefix: Option<String>,
     pub source_key: Option<String>,
     pub text: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
     pub figures: Vec<SearchFigure>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SearchFigure {
     pub figure_id: String,
     pub display_name: String,
@@ -29,6 +31,7 @@ pub struct SearchFigure {
 struct SearchFilters {
     vault_root: PathBuf,
     tag: Option<String>,
+    tag_prefix_pattern: Option<String>,
     source_key: Option<String>,
     text_like_pattern: Option<String>,
 }
@@ -54,6 +57,12 @@ impl SearchFilters {
             Some(tag_value) => Some(normalize_tag_filter(&tag_value)?),
             None => None,
         };
+        let tag_prefix_pattern = match request.tag_prefix {
+            Some(tag_prefix_value) => Some(build_tag_prefix_pattern(&normalize_tag_prefix_filter(
+                &tag_prefix_value,
+            )?)),
+            None => None,
+        };
         let source_key = normalize_optional_filter("source_key", request.source_key)?;
         let text = normalize_optional_filter("text", request.text)?;
         let text_like_pattern = text.as_deref().map(build_like_pattern);
@@ -61,6 +70,7 @@ impl SearchFilters {
         Ok(Self {
             vault_root: request.vault_root,
             tag,
+            tag_prefix_pattern,
             source_key,
             text_like_pattern,
         })
@@ -84,35 +94,42 @@ WHERE (?1 IS NULL OR EXISTS (
 ))
 AND (?2 IS NULL OR EXISTS (
     SELECT 1
+    FROM figure_tags
+    JOIN tags ON tags.tag_id = figure_tags.tag_id
+    WHERE figure_tags.figure_id = figures.figure_id
+      AND tags.tag_name LIKE ?2 ESCAPE '\'
+))
+AND (?3 IS NULL OR EXISTS (
+    SELECT 1
     FROM sources
     WHERE sources.figure_id = figures.figure_id
-      AND LOWER(sources.source_key) = LOWER(?2)
+      AND LOWER(sources.source_key) = LOWER(?3)
 ))
-AND (?3 IS NULL OR (
-    LOWER(figures.display_name) LIKE ?3 ESCAPE '\'
-    OR LOWER(COALESCE(figures.caption, '')) LIKE ?3 ESCAPE '\'
+AND (?4 IS NULL OR (
+    LOWER(figures.display_name) LIKE ?4 ESCAPE '\'
+    OR LOWER(COALESCE(figures.caption, '')) LIKE ?4 ESCAPE '\'
     OR EXISTS (
         SELECT 1
         FROM sources
         WHERE sources.figure_id = figures.figure_id
           AND (
-              LOWER(sources.source_key) LIKE ?3 ESCAPE '\'
-              OR LOWER(COALESCE(sources.source_title, '')) LIKE ?3 ESCAPE '\'
-              OR LOWER(COALESCE(sources.source_authors, '')) LIKE ?3 ESCAPE '\'
+              LOWER(sources.source_key) LIKE ?4 ESCAPE '\'
+              OR LOWER(COALESCE(sources.source_title, '')) LIKE ?4 ESCAPE '\'
+              OR LOWER(COALESCE(sources.source_authors, '')) LIKE ?4 ESCAPE '\'
           )
     )
     OR EXISTS (
         SELECT 1
         FROM notes
         WHERE notes.figure_id = figures.figure_id
-          AND LOWER(notes.note_markdown) LIKE ?3 ESCAPE '\'
+          AND LOWER(notes.note_markdown) LIKE ?4 ESCAPE '\'
     )
     OR EXISTS (
         SELECT 1
         FROM figure_tags
         JOIN tags ON tags.tag_id = figure_tags.tag_id
         WHERE figure_tags.figure_id = figures.figure_id
-          AND LOWER(tags.tag_name) LIKE ?3 ESCAPE '\'
+          AND LOWER(tags.tag_name) LIKE ?4 ESCAPE '\'
     )
 ))
 ORDER BY figures.figure_id ASC
@@ -121,6 +138,7 @@ ORDER BY figures.figure_id ASC
 
     let mut rows = statement.query(params![
         filters.tag.as_deref(),
+        filters.tag_prefix_pattern.as_deref(),
         filters.source_key.as_deref(),
         filters.text_like_pattern.as_deref()
     ])?;
@@ -153,14 +171,27 @@ fn normalize_optional_filter(
 }
 
 fn normalize_tag_filter(value: &str) -> Result<String, LamianError> {
+    normalize_tag_filter_for_field(value, "tag")
+}
+
+fn normalize_tag_prefix_filter(value: &str) -> Result<String, LamianError> {
+    normalize_tag_filter_for_field(value, "tag_prefix")
+}
+
+fn normalize_tag_filter_for_field(value: &str, field: &'static str) -> Result<String, LamianError> {
     normalize_and_validate_tag(value).map_err(|error| match error {
-        TagValidationError::MissingTag => LamianError::MissingSearchField { field: "tag" },
+        TagValidationError::MissingTag => LamianError::MissingSearchField { field },
         TagValidationError::InvalidTag { reason, value } => LamianError::InvalidSearchValue {
-            field: "tag",
+            field,
             reason,
             value,
         },
     })
+}
+
+fn build_tag_prefix_pattern(tag_prefix: &str) -> String {
+    let escaped_tag_prefix = escape_like_pattern(tag_prefix);
+    format!("{escaped_tag_prefix}:%")
 }
 
 fn build_like_pattern(value: &str) -> String {

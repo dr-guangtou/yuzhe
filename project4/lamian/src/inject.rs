@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use clap::ValueEnum;
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::db;
@@ -46,7 +47,7 @@ pub struct InjectRequest {
     pub copy_mode: CopyMode,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct InjectResult {
     pub figure_id: String,
     pub created_new: bool,

@@ -3,37 +3,53 @@ use std::path::PathBuf;
 use serde::Serialize;
 use serde_json::json;
 
-use crate::bundle::{bundle_export, bundle_import, BundleExportRequest, BundleImportRequest};
+use crate::bundle::{
+    bundle_export, bundle_import, bundle_inspect, BundleExportRequest, BundleImportRequest,
+    BundleInspectRequest,
+};
 use crate::cli::{
-    BundleAction, Cli, CollectionAction, Command, LinkAction, QueryAction, TagAction,
+    BundleAction, Cli, CollectionAction, Command, LinkAction, QueryAction, SourceAction, TagAction,
 };
 use crate::collection::{
     add_collection_item, create_collection, delete_collection, list_collections,
-    remove_collection_item, AddCollectionItemRequest, CreateCollectionRequest,
+    remove_collection_item, update_collection, AddCollectionItemRequest, CreateCollectionRequest,
     DeleteCollectionRequest, ListCollectionsRequest, RemoveCollectionItemRequest,
+    UpdateCollectionRequest,
 };
 use crate::db;
+use crate::delete::{delete_figure, DeleteFigureRequest};
 use crate::doctor::{doctor_vault, DoctorRequest};
 use crate::error::LamianError;
 use crate::export::{export_metadata, ExportRequest};
 use crate::import::{import_batch, ImportRequest};
 use crate::inject::{inject_figure, InjectRequest};
 use crate::link::{add_link, remove_link, AddLinkRequest, RemoveLinkRequest};
+use crate::list::{list_figures, ListFiguresRequest};
+use crate::open::{open_figure, OpenFigureRequest};
 use crate::query::{
     delete_query, list_queries, run_query, save_query, DeleteQueryRequest, ListQueriesRequest,
     RunQueryRequest, SaveQueryRequest,
 };
 use crate::search::{search_figures, SearchRequest};
+use crate::show::{show_figure, ShowFigureRequest};
+use crate::source::{update_source_metadata, UpdateSourceRequest};
 use crate::tag::{
-    add_tag_to_figure, remove_tag_from_figure, rename_tag, AddTagRequest, RemoveTagRequest,
-    RenameTagRequest,
+    add_tag_to_figure, list_tags, remove_tag_from_figure, rename_tag, AddTagRequest,
+    ListTagsRequest, RemoveTagRequest, RenameTagRequest,
 };
 use crate::update::{update_figure, UpdateRequest};
+use crate::verify::{verify_vault, VerifyRequest};
 
 pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
-    match cli.command {
+    let Cli {
+        vault,
+        json_output,
+        command,
+    } = cli;
+
+    match command {
         Command::Init => {
-            let vault_path = require_vault(cli.vault, "init")?;
+            let vault_path = require_vault(vault, "init")?;
             let paths = db::initialize_vault(&vault_path)?;
             println!("Initialized vault: {}", paths.vault_root.display());
             println!("Database path: {}", paths.database_path.display());
@@ -45,7 +61,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             source_key,
             copy_mode,
         } => {
-            let vault_path = require_vault(cli.vault, "inject")?;
+            let vault_path = require_vault(vault, "inject")?;
             let result = inject_figure(InjectRequest {
                 vault_root: vault_path,
                 file_path,
@@ -54,7 +70,15 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 copy_mode,
             })?;
 
-            println!("Injected figure: {}", result.figure_id);
+            if json_output {
+                print_json(&json!({
+                    "command": "inject",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+            } else {
+                println!("Injected figure: {}", result.figure_id);
+            }
             Ok(())
         }
         Command::Update {
@@ -64,7 +88,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             clear_caption,
             note_file,
         } => {
-            let vault_path = require_vault(cli.vault, "update")?;
+            let vault_path = require_vault(vault, "update")?;
             let result = update_figure(UpdateRequest {
                 vault_root: vault_path,
                 figure_id,
@@ -74,12 +98,20 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 note_file,
             })?;
 
-            println!("Updated figure: {}", result.figure_id);
-            println!("Updated fields: {}", result.updated_fields.join(", "));
+            if json_output {
+                print_json(&json!({
+                    "command": "update",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+            } else {
+                println!("Updated figure: {}", result.figure_id);
+                println!("Updated fields: {}", result.updated_fields.join(", "));
+            }
             Ok(())
         }
         Command::Tag { action } => {
-            let vault_path = require_vault(cli.vault, "tag")?;
+            let vault_path = require_vault(vault, "tag")?;
             match action {
                 TagAction::Add { figure_id, tag } => {
                     let result = add_tag_to_figure(AddTagRequest {
@@ -88,7 +120,13 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                         tag,
                     })?;
 
-                    if result.created_relation {
+                    if json_output {
+                        print_json(&json!({
+                            "command": "tag.add",
+                            "status": "ok",
+                            "result": result,
+                        }))?;
+                    } else if result.created_relation {
                         println!("Added tag: {}", result.normalized_tag);
                     } else {
                         println!("Tag already assigned: {}", result.normalized_tag);
@@ -102,7 +140,13 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                         tag,
                     })?;
 
-                    if result.removed_relation {
+                    if json_output {
+                        print_json(&json!({
+                            "command": "tag.remove",
+                            "status": "ok",
+                            "result": result,
+                        }))?;
+                    } else if result.removed_relation {
                         println!("Removed tag: {}", result.normalized_tag);
                     } else {
                         println!("Tag not assigned: {}", result.normalized_tag);
@@ -116,7 +160,13 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                         new_tag,
                     })?;
 
-                    if result.renamed_count == 0 {
+                    if json_output {
+                        print_json(&json!({
+                            "command": "tag.rename",
+                            "status": "ok",
+                            "result": result,
+                        }))?;
+                    } else if result.renamed_count == 0 {
                         println!("Tag unchanged: {}", result.normalized_old_tag);
                     } else {
                         println!(
@@ -128,10 +178,63 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }
                     Ok(())
                 }
+                TagAction::List => {
+                    let result = list_tags(ListTagsRequest {
+                        vault_root: vault_path,
+                    })?;
+
+                    if json_output {
+                        print_json(&json!({
+                            "command": "tag.list",
+                            "status": "ok",
+                            "count": result.tags.len(),
+                            "tags": result.tags,
+                        }))?;
+                    } else {
+                        println!("Tags: {}", result.tags.len());
+                        if result.tags.is_empty() {
+                            println!("No tags found.");
+                        } else {
+                            for tag in result.tags {
+                                println!("{} | figures={}", tag.tag_name, tag.figure_count);
+                            }
+                        }
+                    }
+                    Ok(())
+                }
+            }
+        }
+        Command::Source { action } => {
+            let vault_path = require_vault(vault, "source")?;
+            match action {
+                SourceAction::Update {
+                    figure_id,
+                    title,
+                    authors,
+                    published_at,
+                    clear_title,
+                    clear_authors,
+                    clear_published_at,
+                } => {
+                    let result = update_source_metadata(UpdateSourceRequest {
+                        vault_root: vault_path,
+                        figure_id,
+                        title,
+                        authors,
+                        published_at,
+                        clear_title,
+                        clear_authors,
+                        clear_published_at,
+                    })?;
+
+                    println!("Updated source metadata for figure: {}", result.figure_id);
+                    println!("Updated fields: {}", result.updated_fields.join(", "));
+                    Ok(())
+                }
             }
         }
         Command::Link { action } => {
-            let vault_path = require_vault(cli.vault, "link")?;
+            let vault_path = require_vault(vault, "link")?;
             match action {
                 LinkAction::Add {
                     from_figure_id,
@@ -145,7 +248,13 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                         relation,
                     })?;
 
-                    if result.created_link {
+                    if json_output {
+                        print_json(&json!({
+                            "command": "link.add",
+                            "status": "ok",
+                            "result": result,
+                        }))?;
+                    } else if result.created_link {
                         println!(
                             "Added link: {} -> {} [{}]",
                             result.from_figure_id, result.to_figure_id, result.normalized_relation
@@ -168,39 +277,163 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                         to_figure_id,
                     })?;
 
-                    println!(
-                        "Removed links: {} -> {} (count: {})",
-                        result.from_figure_id, result.to_figure_id, result.removed_count
-                    );
+                    if json_output {
+                        print_json(&json!({
+                            "command": "link.remove",
+                            "status": "ok",
+                            "result": result,
+                        }))?;
+                    } else {
+                        println!(
+                            "Removed links: {} -> {} (count: {})",
+                            result.from_figure_id, result.to_figure_id, result.removed_count
+                        );
+                    }
                     Ok(())
                 }
             }
         }
         Command::Search {
             tag,
+            tag_prefix,
             source_key,
             text,
         } => {
-            let vault_path = require_vault(cli.vault, "search")?;
+            let vault_path = require_vault(vault, "search")?;
             let result = search_figures(SearchRequest {
                 vault_root: vault_path,
                 tag,
+                tag_prefix,
                 source_key,
                 text,
             })?;
 
-            println!("Search results: {}", result.figures.len());
-            if result.figures.is_empty() {
-                println!("No figures matched.");
+            if json_output {
+                print_json(&json!({
+                    "command": "search",
+                    "status": "ok",
+                    "count": result.figures.len(),
+                    "result": result,
+                }))?;
             } else {
-                for figure in result.figures {
-                    println!("{} | {}", figure.figure_id, figure.display_name);
+                println!("Search results: {}", result.figures.len());
+                if result.figures.is_empty() {
+                    println!("No figures matched.");
+                } else {
+                    for figure in result.figures {
+                        println!("{} | {}", figure.figure_id, figure.display_name);
+                    }
                 }
             }
             Ok(())
         }
+        Command::List { sort, order, limit } => {
+            let vault_path = require_vault(vault, "list")?;
+            let result = list_figures(ListFiguresRequest {
+                vault_root: vault_path,
+                sort,
+                order,
+                limit,
+            })?;
+
+            println!("List results: {}", result.figures.len());
+            if result.figures.is_empty() {
+                println!("No figures found.");
+            } else {
+                for figure in result.figures {
+                    println!(
+                        "{} | {} | created_at={} | updated_at={}",
+                        figure.figure_id, figure.display_name, figure.created_at, figure.updated_at
+                    );
+                }
+            }
+            Ok(())
+        }
+        Command::Show { figure_id } => {
+            let vault_path = require_vault(vault, "show")?;
+            let result = show_figure(ShowFigureRequest {
+                vault_root: vault_path,
+                figure_id,
+            })?;
+
+            println!("Figure: {}", result.figure_id);
+            println!("Display name: {}", result.display_name);
+            println!(
+                "Caption: {}",
+                optional_text_or_none(result.caption.as_deref())
+            );
+            println!("File path: {}", result.file_path);
+            println!("File hash sha256: {}", result.file_hash_sha256);
+            println!("Media type: {}", result.media_type);
+            println!("File size bytes: {}", result.file_size_bytes);
+            println!("Created at: {}", result.created_at);
+            println!("Updated at: {}", result.updated_at);
+
+            println!("Sources ({}):", result.sources.len());
+            for source in result.sources {
+                println!(
+                    "- {} | {} | title={} | authors={} | published_at={} | created_at={}",
+                    source.source_type,
+                    source.source_key,
+                    optional_text_or_none(source.source_title.as_deref()),
+                    optional_text_or_none(source.source_authors.as_deref()),
+                    optional_text_or_none(source.source_published_at.as_deref()),
+                    source.created_at
+                );
+            }
+
+            println!("Tags ({}):", result.tags.len());
+            for tag in result.tags {
+                println!("- {tag}");
+            }
+
+            println!("Outbound links ({}):", result.outbound_links.len());
+            for link in result.outbound_links {
+                println!(
+                    "- {} | relation={} | created_at={}",
+                    link.to_figure_id, link.relation_type, link.created_at
+                );
+            }
+
+            match result.note {
+                Some(note) => {
+                    println!("Note updated at: {}", note.updated_at);
+                    println!("Note markdown: {}", note.note_markdown);
+                }
+                None => {
+                    println!("Note: (none)");
+                }
+            }
+            Ok(())
+        }
+        Command::Open { figure_id } => {
+            let vault_path = require_vault(vault, "open")?;
+            let result = open_figure(OpenFigureRequest {
+                vault_root: vault_path,
+                figure_id,
+            })?;
+
+            println!("Opened figure: {}", result.figure_id);
+            println!("Opened path: {}", result.resolved_file_path.display());
+            Ok(())
+        }
+        Command::Delete { figure_id } => {
+            let vault_path = require_vault(vault, "delete")?;
+            let result = delete_figure(DeleteFigureRequest {
+                vault_root: vault_path,
+                figure_id,
+            })?;
+
+            println!("Deleted figure: {}", result.figure_id);
+            println!(
+                "Removed managed file: {}",
+                yes_no(result.removed_managed_file)
+            );
+            println!("Removed orphan tags: {}", result.removed_orphan_tag_count);
+            Ok(())
+        }
         Command::Query { action } => {
-            let vault_path = require_vault(cli.vault, "query")?;
+            let vault_path = require_vault(vault, "query")?;
             match action {
                 QueryAction::Save {
                     name,
@@ -229,10 +462,15 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }))?;
                     Ok(())
                 }
-                QueryAction::Run { name_or_id, detail } => {
+                QueryAction::Run {
+                    name_or_id,
+                    detail,
+                    reference_mode,
+                } => {
                     let result = run_query(RunQueryRequest {
                         vault_root: vault_path,
                         query_reference: name_or_id,
+                        reference_mode,
                         detail,
                     })?;
 
@@ -256,10 +494,14 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }))?;
                     Ok(())
                 }
-                QueryAction::Delete { name_or_id } => {
+                QueryAction::Delete {
+                    name_or_id,
+                    reference_mode,
+                } => {
                     let result = delete_query(DeleteQueryRequest {
                         vault_root: vault_path,
                         query_reference: name_or_id,
+                        reference_mode,
                     })?;
 
                     print_json(&json!({
@@ -272,7 +514,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             }
         }
         Command::Collection { action } => {
-            let vault_path = require_vault(cli.vault, "collection")?;
+            let vault_path = require_vault(vault, "collection")?;
             match action {
                 CollectionAction::Create { name, query_id } => {
                     let result = create_collection(CreateCollectionRequest {
@@ -291,10 +533,12 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 CollectionAction::Add {
                     collection,
                     figure_id,
+                    reference_mode,
                 } => {
                     let result = add_collection_item(AddCollectionItemRequest {
                         vault_root: vault_path,
                         collection_reference: collection,
+                        reference_mode,
                         figure_id,
                     })?;
 
@@ -308,10 +552,12 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 CollectionAction::Remove {
                     collection,
                     figure_id,
+                    reference_mode,
                 } => {
                     let result = remove_collection_item(RemoveCollectionItemRequest {
                         vault_root: vault_path,
                         collection_reference: collection,
+                        reference_mode,
                         figure_id,
                     })?;
 
@@ -322,10 +568,14 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }))?;
                     Ok(())
                 }
-                CollectionAction::List { collection } => {
+                CollectionAction::List {
+                    collection,
+                    reference_mode,
+                } => {
                     let result = list_collections(ListCollectionsRequest {
                         vault_root: vault_path,
                         collection_reference: collection,
+                        reference_mode,
                     })?;
 
                     print_json(&json!({
@@ -336,10 +586,14 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }))?;
                     Ok(())
                 }
-                CollectionAction::Delete { collection } => {
+                CollectionAction::Delete {
+                    collection,
+                    reference_mode,
+                } => {
                     let result = delete_collection(DeleteCollectionRequest {
                         vault_root: vault_path,
                         collection_reference: collection,
+                        reference_mode,
                     })?;
 
                     print_json(&json!({
@@ -349,32 +603,24 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                     }))?;
                     Ok(())
                 }
-            }
-        }
-        Command::Bundle { action } => {
-            let vault_path = require_vault(cli.vault, "bundle")?;
-            match action {
-                BundleAction::Export { target } => {
-                    let result = bundle_export(BundleExportRequest {
+                CollectionAction::Update {
+                    collection,
+                    reference_mode,
+                    name,
+                    query_id,
+                    clear_query_id,
+                } => {
+                    let result = update_collection(UpdateCollectionRequest {
                         vault_root: vault_path,
-                        target_path: target,
+                        collection_reference: collection,
+                        reference_mode,
+                        name,
+                        query_id,
+                        clear_query_id,
                     })?;
 
                     print_json(&json!({
-                        "command": "bundle.export",
-                        "status": "ok",
-                        "result": result,
-                    }))?;
-                    Ok(())
-                }
-                BundleAction::Import { bundle_path } => {
-                    let result = bundle_import(BundleImportRequest {
-                        vault_root: vault_path,
-                        bundle_path,
-                    })?;
-
-                    print_json(&json!({
-                        "command": "bundle.import",
+                        "command": "collection.update",
                         "status": "ok",
                         "result": result,
                     }))?;
@@ -382,6 +628,54 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
                 }
             }
         }
+        Command::Bundle { action } => match action {
+            BundleAction::Export { target } => {
+                let vault_path = require_vault(vault, "bundle export")?;
+                let result = bundle_export(BundleExportRequest {
+                    vault_root: vault_path,
+                    target_path: target,
+                })?;
+
+                print_json(&json!({
+                    "command": "bundle.export",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+                Ok(())
+            }
+            BundleAction::Inspect { bundle_path } => {
+                let result = bundle_inspect(BundleInspectRequest { bundle_path })?;
+
+                print_json(&json!({
+                    "command": "bundle.inspect",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+                Ok(())
+            }
+            BundleAction::Import {
+                bundle_path,
+                fail_on_link_loss,
+                dry_run,
+                on_conflict,
+            } => {
+                let vault_path = require_vault(vault, "bundle import")?;
+                let result = bundle_import(BundleImportRequest {
+                    vault_root: vault_path,
+                    bundle_path,
+                    fail_on_link_loss,
+                    dry_run,
+                    on_conflict,
+                })?;
+
+                print_json(&json!({
+                    "command": "bundle.import",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+                Ok(())
+            }
+        },
         Command::Import {
             input_path,
             source_type,
@@ -390,7 +684,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             recursive,
             dry_run,
         } => {
-            let vault_path = require_vault(cli.vault, "import")?;
+            let vault_path = require_vault(vault, "import")?;
             let result = import_batch(ImportRequest {
                 vault_root: vault_path,
                 input_path,
@@ -420,7 +714,7 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
             Ok(())
         }
         Command::Doctor { fix } => {
-            let vault_path = require_vault(cli.vault, "doctor")?;
+            let vault_path = require_vault(vault, "doctor")?;
             let result = doctor_vault(DoctorRequest {
                 vault_root: vault_path,
                 fix,
@@ -446,15 +740,45 @@ pub fn dispatch(cli: Cli) -> Result<(), LamianError> {
 
             Ok(())
         }
+        Command::Verify => {
+            let vault_path = require_vault(vault, "verify")?;
+            let result = verify_vault(VerifyRequest {
+                vault_root: vault_path,
+            })?;
+
+            let status = if result.issue_count == 0 {
+                "ok"
+            } else {
+                "issues_found"
+            };
+            let issue_count = result.issue_count;
+            print_json(&json!({
+                "command": "verify",
+                "status": status,
+                "result": result,
+            }))?;
+
+            if issue_count > 0 {
+                return Err(LamianError::VerifyIssuesFound { issue_count });
+            }
+
+            Ok(())
+        }
         Command::Export { format, target } => {
-            let vault_path = require_vault(cli.vault, "export")?;
+            let vault_path = require_vault(vault, "export")?;
             let result = export_metadata(ExportRequest {
                 vault_root: vault_path,
                 format,
                 target,
             })?;
 
-            if let Some(path) = result.target_path {
+            if json_output {
+                print_json(&json!({
+                    "command": "export",
+                    "status": "ok",
+                    "result": result,
+                }))?;
+            } else if let Some(path) = result.target_path {
                 println!(
                     "Exported metadata: {} figures -> {}",
                     result.figure_count,
@@ -483,4 +807,16 @@ fn print_json<T: Serialize>(value: &T) -> Result<(), LamianError> {
     })?;
     println!("{content}");
     Ok(())
+}
+
+fn optional_text_or_none(value: Option<&str>) -> &str {
+    value.unwrap_or("(none)")
+}
+
+fn yes_no(value: bool) -> &'static str {
+    if value {
+        "yes"
+    } else {
+        "no"
+    }
 }

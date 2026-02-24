@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::Serialize;
 
 use crate::db;
 use crate::error::LamianError;
@@ -13,7 +14,7 @@ pub struct AddLinkRequest {
     pub relation: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AddLinkResult {
     pub from_figure_id: String,
     pub to_figure_id: String,
@@ -28,7 +29,7 @@ pub struct RemoveLinkRequest {
     pub to_figure_id: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RemoveLinkResult {
     pub from_figure_id: String,
     pub to_figure_id: String,

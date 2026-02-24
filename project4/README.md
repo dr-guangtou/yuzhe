@@ -8,21 +8,22 @@ Implementation code lives in `project4/lamian/`.
 ## Current Status
 
 - Roadmap state: active development
-- Current phase: Phase 1.5 planning and implementation kickoff
-- Primary goal: complete pre-GUI automation and curation CLI capabilities
+- Current phase: Phase 1.x CLI expansion backlog execution
+- Primary goal: close highest-priority post-review CLI gaps before Phase 2 GUI baseline
 
-## Phase 1.5 Scope (Pre-GUI)
+## Implemented Pre-GUI Scope
 
 - `query save|run|list|delete` (saved search rules)
 - `import` (batch ingest with strict provenance templates)
 - `doctor` (read checks + DB-only safe fixes)
 - `collection` (hybrid static and dynamic collections)
-- `bundle export|import` (`tar.gz` for portable snapshots)
+- `bundle export|inspect|import` (`tar.gz` for portable snapshots and preflight)
+- `verify` (read-only filesystem-vs-DB integrity checks)
 
-Delivery order:
+Recent hardening controls:
 
-- Wave A: `query`, `import`, `doctor`
-- Wave B: `collection`, `bundle`
+- `query` and `collection` support `--reference-mode auto|id|name`
+- `bundle import` supports `--fail-on-link-loss`, `--dry-run`, and `--on-conflict skip|error|replace`
 
 ## Document Map
 

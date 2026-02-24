@@ -47,7 +47,7 @@ topics:
     - "Exoplanet; protoplanetary disks; planet formation; prestellar cores"
     - "Solar physics; solar corona related physics; solar MHD; solar flares; solar wind"
     - "Star formation and molecular gas clouds in the Milky Way (Galactic)"
-    - "Stellar physics (except for AGB and TP-AGB phases); stellar evolution (except for AGB and TP-AGB phases); stellar populations in the Milky Way (Galactic)" 
+    - "Stellar physics (except for AGB and TP-AGB phases); stellar evolution (except for AGB and TP-AGB phases); stellar populations in the Milky Way (Galactic)"
     - "Compact object: neutron star, pulsar, or stellar mass black hole"
     - "Galactic (Milky Way) structure and dynamics"
 
@@ -110,7 +110,7 @@ providers:
   glm:
     api_key_env: "GLM_API_KEY"
     base_url: "https://open.bigmodel.cn/api/paas/v4"
-    default_model: "glm-4.7"
+    default_model: "glm-5"
 
   deepseek:
     api_key_env: "DEEPSEEK_API_KEY"
@@ -130,16 +130,16 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "kimi"
-  model: ""  # empty = use provider default_model
-  temperature: 0.3
-  max_tokens: 5000
+  provider: "glm"
+  model: "glm-5" # empty = use provider default_model
+  temperature: 0.2
+  max_tokens: 20000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
   - moonshot
-  - glm
-  - nvidia 
+  - qwen
+  - nvidia
 
 # Pipeline Configuration
 # The pipeline runs in 3 stages:
@@ -150,7 +150,7 @@ llm_fallback:
 # Stage 1: Local Filter (MANDATORY - always runs first)
 local_filter:
   interest_model: "song_db/artifacts/interest_model.json"
-  threshold: 0.5  # 0-1 scale (0.5 = 5.0/10) - papers scoring below this are filtered out
+  threshold: 0.5 # 0-1 scale (0.5 = 5.0/10) - papers scoring below this are filtered out
   weights:
     w_topic: 0.60
     w_global: 0.30
@@ -173,15 +173,15 @@ topic_scorer:
     0.40: 4.0
     0.50: 6.0
     0.65: 8.0
-  match_threshold: 0.50   # cosine sim above this counts as a topic match
-  multi_match_bonus: 0.10  # bonus per extra primary topic match (capped at +1.0)
-  negative_penalty: 3.0   # penalty multiplier when best negative sim > best primary sim
+  match_threshold: 0.50 # cosine sim above this counts as a topic match
+  multi_match_bonus: 0.10 # bonus per extra primary topic match (capped at +1.0)
+  negative_penalty: 3.0 # penalty multiplier when best negative sim > best primary sim
 
 # Stage 2: LLM Scoring (OPTIONAL - default OFF to save tokens)
 # Enable with --use-llm-scoring flag
 llm_scoring:
-  enabled: false  # Default: disabled (override with --use-llm-scoring)
-  keep_tiers:  # Papers in these tiers proceed to summary generation
+  enabled: false # Default: disabled (override with --use-llm-scoring)
+  keep_tiers: # Papers in these tiers proceed to summary generation
     - most_relevant
     - somewhat_relevant
   # Tier thresholds (0-10 scale) - used when LLM scoring is enabled
@@ -193,18 +193,18 @@ llm_scoring:
 # Stage 3: Summary Generation (OPTIONAL - default ON)
 # Disable with --no-summary flag
 summary:
-  enabled: true  # Default: enabled (override with --no-summary)
-  fallback_to_abstract: true  # If LLM API fails, output abstract instead
+  enabled: true # Default: enabled (override with --no-summary)
+  fallback_to_abstract: true # If LLM API fails, output abstract instead
 
 # Output paths
 output:
   digest_dir: "arxiv_digest"
   archive_subdir: "archive"
-  obsidian_vault: null  # Optional: path to Obsidian vault
+  obsidian_vault: null # Optional: path to Obsidian vault
 
 # API settings
 api:
-  arxiv_delay_seconds: 3.0  # Minimum 3 seconds required by arXiv API terms of use
+  arxiv_delay_seconds: 3.0 # Minimum 3 seconds required by arXiv API terms of use
   arxiv_max_results_per_category: 100
   llm_retry_attempts: 3
   llm_retry_delay_seconds: 5.0

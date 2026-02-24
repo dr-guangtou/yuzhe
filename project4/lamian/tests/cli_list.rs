@@ -7,153 +7,122 @@ const DOI_SOURCE_KEY: &str = "10.1126/science.ady9404";
 const URL_SOURCE_KEY: &str = "https://en.wikipedia.org/wiki/Elliptical_galaxy";
 
 #[test]
-fn cli_search_filters_by_tag() {
+fn cli_list_prints_default_figure_id_order() {
     let (_temp_dir, vault_path, first_figure_id, second_figure_id) = seed_two_figures();
 
-    let output = run_lamian_and_assert_success([
-        "--vault",
-        vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--tag",
-        "OBSERVATORY:JWST",
-    ]);
-
+    let output =
+        run_lamian_and_assert_success(["--vault", vault_path.to_string_lossy().as_ref(), "list"]);
     let stdout = String::from_utf8_lossy(&output.stdout);
+
     assert!(
-        stdout.contains("Search results: 1"),
-        "unexpected tag search count:\n{stdout}"
+        stdout.contains("List results: 2"),
+        "unexpected list count:\n{stdout}"
     );
     assert!(
         stdout.contains(&format!("{first_figure_id} |")),
-        "tag search did not include expected figure:\n{stdout}"
+        "missing first figure row:\n{stdout}"
     );
     assert!(
-        !stdout.contains(&format!("{second_figure_id} |")),
-        "tag search unexpectedly included second figure:\n{stdout}"
+        stdout.contains(&format!("{second_figure_id} |")),
+        "missing second figure row:\n{stdout}"
     );
 }
 
 #[test]
-fn cli_search_filters_by_tag_prefix() {
-    let (_temp_dir, vault_path, first_figure_id, second_figure_id) = seed_two_figures();
-
-    let output = run_lamian_and_assert_success([
-        "--vault",
-        vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--tag-prefix",
-        "OBSERVATORY",
-    ]);
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        stdout.contains("Search results: 1"),
-        "unexpected tag-prefix search count:\n{stdout}"
-    );
-    assert!(
-        stdout.contains(&format!("{first_figure_id} |")),
-        "tag-prefix search did not include expected figure:\n{stdout}"
-    );
-    assert!(
-        !stdout.contains(&format!("{second_figure_id} |")),
-        "tag-prefix search unexpectedly included second figure:\n{stdout}"
-    );
-}
-
-#[test]
-fn cli_search_tag_prefix_does_not_match_partial_segment() {
+fn cli_list_alias_ls_and_limit_work() {
     let (_temp_dir, vault_path, _first_figure_id, _second_figure_id) = seed_two_figures();
 
     let output = run_lamian_and_assert_success([
         "--vault",
         vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--tag-prefix",
-        "observ",
+        "ls",
+        "--limit",
+        "1",
     ]);
-
     let stdout = String::from_utf8_lossy(&output.stdout);
+
     assert!(
-        stdout.contains("Search results: 0"),
-        "partial-segment tag-prefix should not match:\n{stdout}"
+        stdout.contains("List results: 1"),
+        "unexpected limited list count:\n{stdout}"
     );
 }
 
 #[test]
-fn cli_search_filters_by_source_key_case_insensitive() {
+fn cli_list_sort_by_display_name_desc() {
     let (_temp_dir, vault_path, first_figure_id, second_figure_id) = seed_two_figures();
+
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "update",
+        first_figure_id.as_str(),
+        "--name",
+        "A Item",
+    ]);
+    run_lamian_and_assert_success([
+        "--vault",
+        vault_path.to_string_lossy().as_ref(),
+        "update",
+        second_figure_id.as_str(),
+        "--name",
+        "Z Item",
+    ]);
 
     let output = run_lamian_and_assert_success([
         "--vault",
         vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--source-key",
-        "HTTPS://EN.WIKIPEDIA.ORG/WIKI/ELLIPTICAL_GALAXY",
+        "list",
+        "--sort",
+        "display-name",
+        "--order",
+        "desc",
     ]);
-
     let stdout = String::from_utf8_lossy(&output.stdout);
+    let rows = extract_list_rows(&stdout);
+    assert_eq!(rows.len(), 2, "unexpected row count:\n{stdout}");
     assert!(
-        stdout.contains("Search results: 1"),
-        "unexpected source-key search count:\n{stdout}"
+        rows[0].contains(&second_figure_id),
+        "expected descending name order first row to be second figure:\n{stdout}"
     );
     assert!(
-        stdout.contains(&format!("{second_figure_id} |")),
-        "source-key search did not include expected figure:\n{stdout}"
-    );
-    assert!(
-        !stdout.contains(&format!("{first_figure_id} |")),
-        "source-key search unexpectedly included first figure:\n{stdout}"
+        rows[1].contains(&first_figure_id),
+        "expected descending name order second row to be first figure:\n{stdout}"
     );
 }
 
 #[test]
-fn cli_search_filters_by_text() {
-    let (_temp_dir, vault_path, first_figure_id, second_figure_id) = seed_two_figures();
-
-    let output = run_lamian_and_assert_success([
-        "--vault",
-        vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--text",
-        "ELLIPTICAL_GALAXY",
-    ]);
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        stdout.contains("Search results: 1"),
-        "unexpected text search count:\n{stdout}"
-    );
-    assert!(
-        stdout.contains(&format!("{second_figure_id} |")),
-        "text search did not include expected figure:\n{stdout}"
-    );
-    assert!(
-        !stdout.contains(&format!("{first_figure_id} |")),
-        "text search unexpectedly included first figure:\n{stdout}"
-    );
-}
-
-#[test]
-fn cli_search_prints_empty_result_message() {
+fn cli_list_rejects_zero_limit() {
     let (_temp_dir, vault_path, _first_figure_id, _second_figure_id) = seed_two_figures();
 
-    let output = run_lamian_and_assert_success([
+    let output = run_lamian([
         "--vault",
         vault_path.to_string_lossy().as_ref(),
-        "search",
-        "--text",
-        "no_match_phrase_2026_02_20",
+        "list",
+        "--limit",
+        "0",
     ]);
+    assert!(
+        !output.status.success(),
+        "list unexpectedly succeeded.\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("invalid list value for limit"),
+        "unexpected stderr for zero limit:\n{stderr}"
+    );
+}
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(
-        stdout.contains("Search results: 0"),
-        "unexpected empty search count:\n{stdout}"
-    );
-    assert!(
-        stdout.contains("No figures matched."),
-        "missing empty-result message:\n{stdout}"
-    );
+fn extract_list_rows(stdout: &str) -> Vec<&str> {
+    stdout
+        .lines()
+        .filter(|line| {
+            line.contains(" | ")
+                && !line.starts_with("List results:")
+                && !line.starts_with("No figures found.")
+        })
+        .collect()
 }
 
 fn seed_two_figures() -> (TempDir, PathBuf, String, String) {
@@ -169,23 +138,6 @@ fn seed_two_figures() -> (TempDir, PathBuf, String, String) {
         inject_fixture_and_get_figure_id(&vault_path, &first_fixture_path, "doi", DOI_SOURCE_KEY);
     let second_figure_id =
         inject_fixture_and_get_figure_id(&vault_path, &second_fixture_path, "url", URL_SOURCE_KEY);
-
-    run_lamian_and_assert_success([
-        "--vault",
-        vault_path.to_string_lossy().as_ref(),
-        "tag",
-        "add",
-        first_figure_id.as_str(),
-        "observatory:jwst",
-    ]);
-    run_lamian_and_assert_success([
-        "--vault",
-        vault_path.to_string_lossy().as_ref(),
-        "tag",
-        "add",
-        second_figure_id.as_str(),
-        "galaxy:elliptical",
-    ]);
 
     (temp_dir, vault_path, first_figure_id, second_figure_id)
 }
@@ -220,7 +172,6 @@ fn extract_figure_id_from_stdout(stdout: &[u8]) -> String {
             return figure_id.trim().to_string();
         }
     }
-
     panic!("failed to parse figure id from stdout:\n{output}");
 }
 
@@ -231,18 +182,11 @@ fn repository_fixture_path(file_name: &str) -> PathBuf {
         .join(file_name);
 
     assert!(
-        is_existing_file(&path),
+        path.exists(),
         "missing fixture file: {}",
-        path.display()
+        path.to_string_lossy()
     );
     path
-}
-
-fn is_existing_file(path: &Path) -> bool {
-    match std::fs::metadata(path) {
-        Ok(metadata) => metadata.is_file(),
-        Err(_) => false,
-    }
 }
 
 fn run_lamian(arguments: impl IntoIterator<Item = impl AsRef<std::ffi::OsStr>>) -> Output {

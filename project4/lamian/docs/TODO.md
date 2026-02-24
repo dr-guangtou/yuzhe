@@ -42,16 +42,16 @@
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-171 | Harden bundle import path portability | Pending | detect and report non-portable reference-mode file paths imported from bundles |
-| L-172 | Reuse domain validation in bundle import | Pending | apply inject/tag/link validation rules to imported metadata records |
-| L-173 | Add link-loss visibility in bundle import | Pending | report dropped outbound links and optionally fail when link targets are missing |
-| L-174 | Stream bundle export/import IO | Pending | avoid full-file buffering for large managed files and archive entries |
-| L-175 | Tighten archive structural validation | Pending | reject duplicate/ambiguous manifest or metadata entries and unexpected archive records |
-| L-176 | Resolve numeric ID/name ambiguity | Pending | add explicit reference mode for `query` and `collection` operations (`id` vs `name`) |
-| L-177 | Add vault integrity verification command | Pending | implement `verify` command for filesystem-vs-DB checks (missing files, hash drift, size drift) |
-| L-178 | Add bundle preflight planning | Pending | implement `bundle inspect` and `bundle import --dry-run` summaries before mutation |
-| L-179 | Add explicit bundle conflict policies | Pending | implement `bundle import --on-conflict skip|error|replace` |
-| L-180 | Refresh user docs for implemented scope | Pending | align `README.md`, `USAGE.md`, and command coverage text with current state |
+| L-171 | Harden bundle import path portability | Done | reject non-portable reference paths (absolute/UNC/drive/parent traversal) with CLI coverage |
+| L-172 | Reuse domain validation in bundle import | Done | apply inject/tag/link validation rules with normalization and CLI coverage |
+| L-173 | Add link-loss visibility in bundle import | Done | added outbound link-loss counters and optional strict failure mode via `bundle import --fail-on-link-loss` |
+| L-174 | Stream bundle export/import IO | Done | managed-file export/import now streams archive/file reads and avoids full managed payload buffering |
+| L-175 | Tighten archive structural validation | Done | reject duplicate manifest/metadata entries, unexpected archive records, and non-regular tar members during import preflight |
+| L-176 | Resolve numeric ID/name ambiguity | Done | added `--reference-mode auto|id|name` for `query` and `collection` reference operations with CLI coverage |
+| L-177 | Add vault integrity verification command | Done | implemented read-only `verify` command for missing files, hash drift, and size drift with CLI integration tests |
+| L-178 | Add bundle preflight planning | Done | implemented `bundle inspect` validation summary and non-mutating `bundle import --dry-run` projection output with CLI tests |
+| L-179 | Add explicit bundle conflict policies | Done | implemented `bundle import --on-conflict skip|error|replace` with deterministic skip/error/replace behaviors and CLI tests |
+| L-180 | Refresh user docs for implemented scope | Done | aligned README/USAGE/spec command coverage with implemented verify + bundle preflight/conflict controls |
 | L-181 | Fix tag rename descendant corruption path | Done | rename computes full plan before mutation and applies updates by `tag_id`; panic-prone assumption removed |
 | L-182 | Allow self-link cleanup via `link remove` | Done | removed self-link guard from removal path; add path still blocks self-links |
 | L-183 | Define Rust toolchain compatibility policy | Done | crate edition downgraded to 2021 and incompatible let-chains rewritten for Rust 2021 |
@@ -61,22 +61,22 @@
 | L-187 | Enforce link uniqueness at schema level | Done | added migration v5 to dedupe legacy duplicate links and enforce unique business key index |
 | L-188 | Deduplicate tag validation logic | Done | extracted shared `tag_validation` module and reused it in tag/search/query with preserved error semantics |
 | L-189 | Improve bundle import crash consistency | Done | bundle import now stages managed files and uses journaled recovery before promotion to final paths |
-| L-190 | Extend doctor for file-path integrity | Pending | add checks for missing/broken figure file paths (partially overlaps L-177; from WEAKNESS-8) |
+| L-190 | Extend doctor for file-path integrity | Done | missing/non-regular file checks added with CLI coverage; full gate passed |
 
 ## Phase 1.x CLI Expansion Backlog (Post-Review)
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-191 | Add `show`/`info` command for single figure detail | Pending | return full metadata for one figure ID (from MISS-1) |
-| L-192 | Add `list`/`ls` command for figures | Pending | browse all figures with optional limit/sort (from MISS-2) |
-| L-193 | Add figure delete command | Pending | safe remove flow with dependency cleanup policy (from MISS-3) |
-| L-194 | Add `open` command for figure file | Pending | open resolved file path in OS viewer (from MISS-4) |
-| L-195 | Add hierarchical tag-prefix search mode | Pending | support prefix matching for tag trees (from MISS-5) |
-| L-196 | Add source metadata update command | Pending | update `source_title`/`source_authors`/`source_published_at` after ingest (from MISS-6) |
-| L-197 | Allow filterless saved queries | Pending | support sort+limit-only query definitions (from MISS-7) |
-| L-198 | Add JSON output mode to Phase 1 commands | Pending | optional `--json` for inject/update/tag/link/search/export (from MISS-8) |
-| L-199 | Add `tag list` command | Pending | enumerate vault tags without full export (from MISS-9) |
-| L-200 | Add collection update command | Pending | rename collection and/or retarget dynamic query binding (from MISS-10) |
+| L-191 | Add `show`/`info` command for single figure detail | Done | implemented `show` with `info` alias, full metadata output, and `cli_show` integration tests |
+| L-192 | Add `list`/`ls` command for figures | Done | implemented `list` with `ls` alias and `--sort/--order/--limit` plus `cli_list` integration tests |
+| L-193 | Add figure delete command | Done | implemented `delete` with transactional dependency cleanup, orphan-tag pruning, and managed-file cleanup policy |
+| L-194 | Add `open` command for figure file | Done | implemented `open <figure_id>` with resolved path launch in OS viewer and CLI integration tests |
+| L-195 | Add hierarchical tag-prefix search mode | Done | implemented `search --tag-prefix` with hierarchical prefix filtering and CLI integration tests |
+| L-196 | Add source metadata update command | Done | implemented `source update` for source metadata field set/clear operations with CLI integration tests |
+| L-197 | Allow filterless saved queries | Done | `query save` accepts sort/order/limit-only definitions with filterless save/run integration coverage |
+| L-198 | Add JSON output mode to Phase 1 commands | Done | global `--json` provides machine-friendly envelopes for inject/update/tag/link/search/export with CLI integration coverage |
+| L-199 | Add `tag list` command | Done | implemented deterministic `tag list` output (human + JSON) with per-tag figure counts and integration coverage |
+| L-200 | Add collection update command | Done | implemented `collection update` for rename/query-binding/mode changes with payload validation and integration coverage |
 
 ## Phase 1.8 Wave 2 Slice Plan (P4-418 / L-188)
 
@@ -95,6 +95,15 @@
 | [x] W3-S2 | Done | Added bundle import journal + startup recovery path for committed/staged states |
 | [x] W3-S3 | Done | Added bundle journal recovery unit tests covering committed and staged scenarios |
 | [x] W3-S4 | Done | Ran `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` (all pass) |
+
+## Phase 1.8 Wave 4 Slice Plan (P4-420 / L-190)
+
+| Step | Status | Notes |
+| --- | --- | --- |
+| [x] W4-S1 | Done | Reviewed `doctor` implementation and aligned with existing issue-collection pattern |
+| [x] W4-S2 | Done | Added file-path integrity checks for missing/non-regular figure files (read-only) |
+| [x] W4-S3 | Done | Full gate passed: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test` |
+| [x] W4-S4 | Done | Updated TODO trackers and review notes for Wave 4 completion |
 
 ## Verification Gate
 

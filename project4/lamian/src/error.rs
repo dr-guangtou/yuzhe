@@ -86,6 +86,48 @@ pub enum LamianError {
         value: String,
     },
 
+    #[error("invalid list value for {field}: {reason}; received: {value}")]
+    InvalidListValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("missing required show field: {field}")]
+    MissingShowField { field: &'static str },
+
+    #[error("invalid show value for {field}: {reason}; received: {value}")]
+    InvalidShowValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("missing required open field: {field}")]
+    MissingOpenField { field: &'static str },
+
+    #[error("failed to open figure path with launcher `{launcher}` (exit code: {exit_code})")]
+    OpenViewerLaunchFailed { launcher: String, exit_code: String },
+
+    #[error("missing required delete field: {field}")]
+    MissingDeleteField { field: &'static str },
+
+    #[error("missing required source field: {field}")]
+    MissingSourceField { field: &'static str },
+
+    #[error("missing source update payload: provide at least one source metadata field")]
+    MissingSourcePayload,
+
+    #[error("invalid source value for {field}: {reason}; received: {value}")]
+    InvalidSourceValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("source not found for figure id: {figure_id}")]
+    SourceNotFound { figure_id: String },
+
     #[error("missing required update field: {field}")]
     MissingUpdateField { field: &'static str },
 
@@ -188,6 +230,16 @@ pub enum LamianError {
 
     #[error("doctor found unresolved issue(s): {issue_count}")]
     DoctorIssuesFound { issue_count: usize },
+
+    #[error("invalid verify value for {field}: {reason}; received: {value}")]
+    InvalidVerifyValue {
+        field: &'static str,
+        reason: &'static str,
+        value: String,
+    },
+
+    #[error("verify found unresolved issue(s): {issue_count}")]
+    VerifyIssuesFound { issue_count: usize },
 
     #[error("failed to serialize command output as JSON: {reason}")]
     JsonOutputSerializationFailed { reason: String },

@@ -39,6 +39,8 @@ This file applies to all work under `project4/`.
 - Plan implementation steps in small slices that fit one context window.
 - Prefer changes that complete 1-2 TODO items per session rather than broad partial edits.
 - Before ending a session, update `project4/TODO.md` and add a journal entry in `project4/journal/`.
+- When producing handover artifacts, append the one-sentence summary to the Obsidian daily journal.
+- Always auto-run the Obsidian CLI append command for one-sentence/development-snapshot text during handover sessions (no extra confirmation needed).
 - If context is getting tight, create handover artifacts:
   - `project4/journal/handover-YYYY-MM-DD-HHMM.md`
   - `project4/journal/next-session-prompt-YYYY-MM-DD-HHMM.md`

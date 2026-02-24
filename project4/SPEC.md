@@ -27,7 +27,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - migrations v1/v2
 - command-specific integration tests
 
-## 4.2 Phase 1.5 (Current)
+## 4.2 Phase 1.5 (Completed) + Phase 1.x Hardening (Current)
 
 ### Wave A
 
@@ -39,6 +39,9 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 
 - FR-104 Collections (`collection`) with hybrid static/dynamic mode
 - FR-105 Portable bundles (`bundle export|import`) using `tar.gz`
+- FR-106 Vault integrity verification (`verify`)
+- FR-107 Bundle preflight (`bundle inspect`, `bundle import --dry-run`)
+- FR-108 Bundle conflict controls (`bundle import --on-conflict skip|error|replace`)
 
 ## 4.3 Phase 2 (Next)
 
@@ -53,11 +56,15 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-005 Directed links
 - FR-006 Search/filter
 - FR-007 Metadata export (`yaml`/`json`)
+- FR-008 Source metadata update (`source update`)
 - FR-101 Saved query management
 - FR-102 Batch import with per-item reporting
 - FR-103 Doctor checks and DB-safe fixes
 - FR-104 Hybrid collections
 - FR-105 Bundle portability
+- FR-106 Vault integrity verification
+- FR-107 Bundle preflight
+- FR-108 Bundle conflict controls
 
 ## 6. Non-Functional Requirements
 
@@ -105,7 +112,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - `notes`
 - `schema_migrations`
 
-## 8.2 Planned Phase 1.5 Tables
+## 8.2 Additional Tables Added in Phase 1.5
 
 - `saved_queries`
   - `query_id`, `query_name`, `filters_json`, `sort_field`, `sort_order`, `limit_count`, timestamps
@@ -114,33 +121,43 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - `collection_items`
   - `collection_id`, `figure_id`, `added_at`
 
+## 8.3 Schema Hardening Updates
+
+- Migration v5 enforces link business-key uniqueness (`from_figure_id`, `to_figure_id`, `relation_type`) after deduplicating legacy duplicates.
+
 ## 9. CLI Interface (Target After Phase 1.5)
 
 ```text
 lamian init --vault <path>
 lamian inject <file_path> --vault <path> --source-type <type> --source-key <value> [--copy-mode copy|reference]
 lamian update <figure_id> [--name ...] [--caption ...] [--note-file ...]
+lamian source update <figure_id> [--title ...] [--authors ...] [--published-at ...] [--clear-title] [--clear-authors] [--clear-published-at]
 lamian tag add|remove|rename ...
 lamian link add|remove ...
-lamian search [--tag ...] [--source-key ...] [--text ...]
+lamian search [--tag ...] [--tag-prefix ...] [--source-key ...] [--text ...]
+lamian list|ls [--sort figure-id|display-name|created-at|updated-at] [--order asc|desc] [--limit <n>]
+lamian show|info <figure_id>
+lamian delete <figure_id>
 lamian export [--format yaml|json] [--target <path>]
 
 lamian query save <name> [--tag ...] [--source-key ...] [--text ...] [--sort ...] [--order ...] [--limit ...]
-lamian query run <name_or_id> [--detail ids|full]
+lamian query run <name_or_id> [--detail ids|full] [--reference-mode auto|id|name]
 lamian query list
-lamian query delete <name_or_id>
+lamian query delete <name_or_id> [--reference-mode auto|id|name]
 
 lamian import <input_path> --source-type <type> --source-key-template <template> [--copy-mode copy|reference] [--recursive] [--dry-run]
 lamian doctor [--fix]
+lamian verify
 
 lamian collection create <name> [--query-id <id>]
-lamian collection add <collection> <figure_id>
-lamian collection remove <collection> <figure_id>
-lamian collection list [--collection <id_or_name>]
-lamian collection delete <collection>
+lamian collection add <collection> <figure_id> [--reference-mode auto|id|name]
+lamian collection remove <collection> <figure_id> [--reference-mode auto|id|name]
+lamian collection list [--collection <id_or_name>] [--reference-mode auto|id|name]
+lamian collection delete <collection> [--reference-mode auto|id|name]
 
 lamian bundle export --target <path.tar.gz>
-lamian bundle import <path.tar.gz>
+lamian bundle inspect <path.tar.gz>
+lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-conflict skip|error|replace]
 ```
 
 ## 10. Output Contracts
@@ -151,6 +168,8 @@ lamian bundle import <path.tar.gz>
   - summary counts (`processed`, `succeeded`, `failed`, `skipped`)
   - per-item result/error records
 - `query run` supports `--detail ids|full`.
+- `verify` reports integrity issues and exits non-zero when unresolved issues exist.
+- `bundle import --dry-run` reports deterministic projections and does not mutate DB/files.
 
 ## 11. Error Handling Contract
 
@@ -165,7 +184,7 @@ lamian bundle import <path.tar.gz>
   - inaccessible vault path
 - Data integrity errors:
   - rollback on failed writes
-  - conflict policy for bundle import is skip-existing by default
+  - conflict policy for bundle import is explicit (`skip|error|replace`) with default `skip`
 
 ## 12. Security and Compliance Baseline
 

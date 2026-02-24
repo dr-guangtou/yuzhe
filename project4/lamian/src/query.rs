@@ -75,6 +75,13 @@ pub enum QueryRunDetail {
     Full,
 }
 
+#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
+pub enum QueryReferenceMode {
+    Auto,
+    Id,
+    Name,
+}
+
 #[derive(Debug, Clone)]
 pub struct SaveQueryRequest {
     pub vault_root: PathBuf,
@@ -119,6 +126,7 @@ pub struct SavedQuerySummary {
 pub struct RunQueryRequest {
     pub vault_root: PathBuf,
     pub query_reference: String,
+    pub reference_mode: QueryReferenceMode,
     pub detail: QueryRunDetail,
 }
 
@@ -146,6 +154,7 @@ pub struct QueryFigureDetail {
 pub struct DeleteQueryRequest {
     pub vault_root: PathBuf,
     pub query_reference: String,
+    pub reference_mode: QueryReferenceMode,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -289,7 +298,7 @@ pub fn run_query(request: RunQueryRequest) -> Result<RunQueryResult, LamianError
     let query_reference = normalize_query_reference(&request.query_reference)?;
     let connection = db::open_vault_connection(&request.vault_root)?;
 
-    let stored_query = resolve_stored_query(&connection, &query_reference)?;
+    let stored_query = resolve_stored_query(&connection, &query_reference, request.reference_mode)?;
     let figure_rows = execute_stored_query(&connection, &stored_query)?;
     let figure_ids = figure_rows
         .iter()
@@ -339,7 +348,7 @@ pub fn delete_query(request: DeleteQueryRequest) -> Result<DeleteQueryResult, La
     let query_reference = normalize_query_reference(&request.query_reference)?;
     let connection = db::open_vault_connection(&request.vault_root)?;
 
-    let stored_query = resolve_stored_query(&connection, &query_reference)?;
+    let stored_query = resolve_stored_query(&connection, &query_reference, request.reference_mode)?;
     connection.execute(
         "DELETE FROM saved_queries WHERE query_id = ?1",
         [stored_query.query_id],
@@ -378,10 +387,6 @@ fn normalize_filters(
     };
     let normalized_source_key = normalize_optional_filter("source_key", source_key)?;
     let normalized_text = normalize_optional_filter("text", text)?;
-
-    if normalized_tag.is_none() && normalized_source_key.is_none() && normalized_text.is_none() {
-        return Err(LamianError::MissingQueryField { field: "filters" });
-    }
 
     Ok(QueryFilters {
         tag: normalized_tag,
@@ -443,19 +448,42 @@ fn query_name_exists(connection: &Connection, query_name: &str) -> Result<bool, 
 fn resolve_stored_query(
     connection: &Connection,
     query_reference: &str,
+    reference_mode: QueryReferenceMode,
 ) -> Result<StoredQuery, LamianError> {
-    if let Ok(query_id) = query_reference.parse::<i64>() {
-        if let Some(query) = load_stored_query_by_id(connection, query_id)? {
-            return Ok(query);
-        }
-    }
+    match reference_mode {
+        QueryReferenceMode::Auto => {
+            if let Ok(query_id) = query_reference.parse::<i64>() {
+                if let Some(query) = load_stored_query_by_id(connection, query_id)? {
+                    return Ok(query);
+                }
+            }
 
-    let query = load_stored_query_by_name(connection, query_reference)?.ok_or_else(|| {
-        LamianError::QueryNotFound {
-            query_reference: query_reference.to_string(),
+            load_stored_query_by_name(connection, query_reference)?.ok_or_else(|| {
+                LamianError::QueryNotFound {
+                    query_reference: query_reference.to_string(),
+                }
+            })
         }
-    })?;
-    Ok(query)
+        QueryReferenceMode::Id => {
+            let query_id =
+                query_reference
+                    .parse::<i64>()
+                    .map_err(|_| LamianError::InvalidQueryValue {
+                        field: "query",
+                        reason: "query reference must be a numeric id when reference mode is `id`",
+                        value: query_reference.to_string(),
+                    })?;
+            load_stored_query_by_id(connection, query_id)?.ok_or_else(|| {
+                LamianError::QueryNotFound {
+                    query_reference: query_reference.to_string(),
+                }
+            })
+        }
+        QueryReferenceMode::Name => load_stored_query_by_name(connection, query_reference)?
+            .ok_or_else(|| LamianError::QueryNotFound {
+                query_reference: query_reference.to_string(),
+            }),
+    }
 }
 
 fn load_stored_query_by_id(

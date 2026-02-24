@@ -16,7 +16,7 @@ pub struct ExportRequest {
     pub target: Option<PathBuf>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ExportResult {
     pub target_path: Option<PathBuf>,
     pub figure_count: usize,

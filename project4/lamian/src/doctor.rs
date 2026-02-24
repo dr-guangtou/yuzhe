@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use rusqlite::{Connection, Transaction};
 use serde::Serialize;
@@ -38,6 +39,7 @@ pub enum DoctorIssueKind {
     DanglingTagParent,
     OrphanTag,
     FigureWithoutSource,
+    FigureFilePathInvalid,
 }
 
 #[derive(Debug, Clone)]
@@ -58,6 +60,17 @@ enum IssueRecord {
     FigureWithoutSource {
         figure_id: String,
     },
+    FigureFilePathInvalid {
+        figure_id: String,
+        file_path: PathBuf,
+        problem: FigureFilePathProblem,
+    },
+}
+
+#[derive(Debug, Clone, Copy)]
+enum FigureFilePathProblem {
+    Missing,
+    NotFile,
 }
 
 pub fn doctor_vault(request: DoctorRequest) -> Result<DoctorResult, LamianError> {
@@ -69,7 +82,7 @@ pub fn doctor_vault(request: DoctorRequest) -> Result<DoctorResult, LamianError>
 
     let mut connection = db::open_vault_connection(&request.vault_root)?;
 
-    let issues_before_fix_records = collect_issues(&connection)?;
+    let issues_before_fix_records = collect_issues(&request.vault_root, &connection)?;
     let mut fixed_count = 0_usize;
 
     if request.fix {
@@ -80,7 +93,7 @@ pub fn doctor_vault(request: DoctorRequest) -> Result<DoctorResult, LamianError>
         transaction.commit()?;
     }
 
-    let issues_after_fix_records = collect_issues(&connection)?;
+    let issues_after_fix_records = collect_issues(&request.vault_root, &connection)?;
     let issues_before_fix = issues_before_fix_records
         .iter()
         .map(issue_record_to_output)
@@ -101,12 +114,16 @@ pub fn doctor_vault(request: DoctorRequest) -> Result<DoctorResult, LamianError>
     })
 }
 
-fn collect_issues(connection: &Connection) -> Result<Vec<IssueRecord>, LamianError> {
+fn collect_issues(
+    vault_root: &Path,
+    connection: &Connection,
+) -> Result<Vec<IssueRecord>, LamianError> {
     let mut issues = Vec::new();
     collect_self_link_issues(connection, &mut issues)?;
     collect_dangling_tag_parent_issues(connection, &mut issues)?;
     collect_orphan_tag_issues(connection, &mut issues)?;
     collect_figure_without_source_issues(connection, &mut issues)?;
+    collect_figure_file_path_issues(vault_root, connection, &mut issues)?;
     Ok(issues)
 }
 
@@ -229,6 +246,47 @@ ORDER BY f.figure_id ASC
     Ok(())
 }
 
+fn collect_figure_file_path_issues(
+    vault_root: &Path,
+    connection: &Connection,
+    issues: &mut Vec<IssueRecord>,
+) -> Result<(), LamianError> {
+    let mut statement = connection.prepare(
+        r#"
+SELECT f.figure_id, f.file_path
+FROM figures f
+ORDER BY f.figure_id ASC
+"#,
+    )?;
+    let mut rows = statement.query([])?;
+
+    while let Some(row) = rows.next()? {
+        let figure_id: String = row.get(0)?;
+        let file_path_value: String = row.get(1)?;
+        let resolved_path = resolve_figure_file_path(vault_root, &file_path_value);
+        match fs::metadata(&resolved_path) {
+            Ok(metadata) => {
+                if !metadata.is_file() {
+                    issues.push(IssueRecord::FigureFilePathInvalid {
+                        figure_id,
+                        file_path: resolved_path,
+                        problem: FigureFilePathProblem::NotFile,
+                    });
+                }
+            }
+            Err(_) => {
+                issues.push(IssueRecord::FigureFilePathInvalid {
+                    figure_id,
+                    file_path: resolved_path,
+                    problem: FigureFilePathProblem::Missing,
+                });
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn apply_fix(transaction: &Transaction, issue: &IssueRecord) -> Result<usize, LamianError> {
     let affected_rows = match issue {
         IssueRecord::SelfLink { link_id, .. } => {
@@ -242,6 +300,7 @@ fn apply_fix(transaction: &Transaction, issue: &IssueRecord) -> Result<usize, La
             transaction.execute("DELETE FROM tags WHERE tag_id = ?1", [tag_id])?
         }
         IssueRecord::FigureWithoutSource { .. } => 0,
+        IssueRecord::FigureFilePathInvalid { .. } => 0,
     };
 
     if affected_rows > 0 {
@@ -284,5 +343,37 @@ fn issue_record_to_output(issue: &IssueRecord) -> DoctorIssue {
             detail: "figure has no source records".to_string(),
             fixable: false,
         },
+        IssueRecord::FigureFilePathInvalid {
+            figure_id,
+            file_path,
+            problem,
+        } => {
+            let detail = match problem {
+                FigureFilePathProblem::Missing => {
+                    format!(
+                        "figure file path is missing on disk: `{}`",
+                        file_path.display()
+                    )
+                }
+                FigureFilePathProblem::NotFile => {
+                    format!("figure file path is not a file: `{}`", file_path.display())
+                }
+            };
+            DoctorIssue {
+                kind: DoctorIssueKind::FigureFilePathInvalid,
+                subject: format!("figure:{figure_id}"),
+                detail,
+                fixable: false,
+            }
+        }
+    }
+}
+
+fn resolve_figure_file_path(vault_root: &Path, file_path_value: &str) -> PathBuf {
+    let path = PathBuf::from(file_path_value);
+    if path.is_absolute() {
+        path
+    } else {
+        vault_root.join(path)
     }
 }

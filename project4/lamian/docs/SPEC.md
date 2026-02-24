@@ -27,6 +27,13 @@ Build a local-only visual knowledge base for research figures with reliable meta
 1. Collections (`collection`) with static and dynamic modes
 2. Portable bundles (`bundle export|import`) via `tar.gz`
 
+## Phase 2.0 GUI Baseline (Locked)
+
+1. GUI stack: `egui/eframe`.
+2. Architecture boundary: extract shared library exports first, then wire both CLI and GUI binaries to the same service layer.
+3. First slice (Phase 2.0-S1): read-only vault browser and figure detail panel using existing `list`, `search`, and `show` service semantics.
+4. Later slices: mutation flows and drag-and-drop ingest after S1 stabilization.
+
 ## Phase 1.8 Decisions (Finalized)
 
 ### Wave 1-3 (Implemented)
@@ -139,3 +146,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 3. Wave A and Wave B command behavior is covered by tests.
 4. Batch and bundle commands provide deterministic summaries and conflict reporting.
 5. GUI drag-and-drop path stays equivalent to core ingest behavior.
+6. Phase 2.0-S1 GUI preserves service ordering guarantees by rendering rows in exactly the order returned from shared core list/search services.

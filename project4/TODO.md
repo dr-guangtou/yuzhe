@@ -133,6 +133,15 @@
 | P4-429 | Add `tag list` command | agent | [x] Done | added `tag list` with deterministic tag ordering + figure counts in human/JSON outputs and CLI integration coverage |
 | P4-430 | Add collection update command | agent | [x] Done | added `collection update` for rename and query binding/mode changes with validation and CLI integration coverage |
 
+## Phase 2.0 GUI Foundation
+
+| ID | Task | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| P4-501 | Lock GUI stack decision | agent | [x] Done | selected `egui/eframe` for Rust-native Phase 2.0 baseline |
+| P4-502 | Extract shared library boundary for CLI/GUI reuse | agent | [x] Done | added `src/lib.rs`, migrated CLI binary to library imports, and preserved CLI contract behavior |
+| P4-503 | Implement GUI read-only vault browser + detail slice | agent | [x] Done | added `src/gui.rs` and `src/bin/lamian_gui.rs` with vault open, list/search rows, and `show` detail panel |
+| P4-504 | Verify Phase 2.0-S1 full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` with GUI target included |
+
 ## Review Notes
 
 - 2026-02-19: Documentation bootstrap completed.
@@ -170,3 +179,5 @@
 - 2026-02-24: Completed Phase 1 JSON output mode (`P4-428`) by adding global `--json` output envelopes for `inject`/`update`/`tag`/`link`/`search`/`export` and integration coverage in `cli_json`.
 - 2026-02-24: Completed `tag list` (`P4-429`) with deterministic ordering, per-tag figure counts, human-readable + `--json` output paths, and `cli_tag_list` integration tests.
 - 2026-02-24: Completed `collection update` (`P4-430`) with rename/query-binding update semantics (`--name`, `--query-id`, `--clear-query-id`) and `cli_collection` integration tests.
+- 2026-02-24: Started Phase 2.0 planning-to-implementation transition by locking GUI stack (`egui/eframe`) and opening GUI foundation tasks (`P4-501`..`P4-504`).
+- 2026-02-24: Completed Phase 2.0-S1 GUI foundation (`P4-501`..`P4-504`) with shared library extraction, `lamian_gui` read-only browse/detail slice, and a passing full gate.

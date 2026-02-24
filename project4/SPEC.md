@@ -45,7 +45,11 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 
 ## 4.3 Phase 2 (Next)
 
-- GUI baseline over the same core services
+- GUI baseline over the same core services.
+- Stack for Phase 2.0 baseline: `egui/eframe` (Rust-native, no web runtime dependency).
+- Delivery order:
+  - Phase 2.0-S1: read-only vault browser + figure detail pane.
+  - Later Phase 2.x: mutation flows (`update`/`tag`/`link`/`delete`) and drag-and-drop ingest.
 
 ## 5. Functional Requirements
 
@@ -65,6 +69,8 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-106 Vault integrity verification
 - FR-107 Bundle preflight
 - FR-108 Bundle conflict controls
+- FR-201 GUI vault browser (read-only) reusing core list/search services
+- FR-202 GUI figure detail panel (read-only) reusing core show service
 
 ## 6. Non-Functional Requirements
 
@@ -93,6 +99,11 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
   - command parsing and JSON/human output contracts
 - `bundle`
   - tar manifest, checksum verification, import/export orchestration
+- `gui_app`
+  - desktop state management and rendering (`egui/eframe`)
+  - vault connection UX and error presentation
+- `shared_core`
+  - library-exposed service boundary reused by CLI and GUI binaries
 
 ## 7.3 Data Store Strategy
 
@@ -220,3 +231,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 - GUI gate:
   - all Phase 1.5 tests green
   - docs synchronized across `project4/` and `project4/lamian/docs/`
+  - Phase 2.0-S1 GUI launch succeeds on macOS and preserves deterministic row ordering from core services

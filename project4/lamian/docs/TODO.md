@@ -35,8 +35,12 @@
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-201 | Select Rust GUI approach | Pending | `egui`, `Iced`, or `Tauri` decision |
-| L-202 | Build vault browser and figure detail editor | Pending | prioritize functionality over styling |
+| L-201 | Select Rust GUI approach | Done | selected `egui/eframe` for Rust-native Phase 2.0 baseline |
+| L-202 | Build vault browser and figure detail editor | In Progress | read-only browse/detail delivered first; editable mutation controls remain for next slice |
+| L-203 | Extract shared library boundary for CLI and GUI | Done | added `src/lib.rs` exports and migrated CLI main to library imports |
+| L-204 | Add `lamian_gui` desktop binary | Done | added `src/bin/lamian_gui.rs` and `src/gui.rs` with read-only vault browse/detail flow |
+| L-205 | Run full verification gate for Phase 2.0-S1 | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` |
+| L-206 | Deliver read-only Phase 2.0-S1 GUI slice | Done | supports vault open, deterministic list/search rows, and `show`-equivalent figure detail rendering |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 

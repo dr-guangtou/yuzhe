@@ -1,29 +1,7 @@
-mod bundle;
-mod cli;
-mod collection;
-mod commands;
-mod db;
-mod delete;
-mod doctor;
-mod error;
-mod export;
-mod import;
-mod inject;
-mod link;
-mod list;
-mod open;
-mod query;
-mod search;
-mod show;
-mod source;
-mod tag;
-mod tag_validation;
-mod update;
-mod verify;
-
 use clap::Parser;
-use cli::Cli;
-use error::LamianError;
+use lamian::cli::Cli;
+use lamian::commands;
+use lamian::error::LamianError;
 
 fn main() {
     if let Err(error) = run() {

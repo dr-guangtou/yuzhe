@@ -2,10 +2,11 @@
 
 ## Active
 
-- Track post-CLI-expansion follow-up items after completing `P4-430`. See `project4/TODO.md` for detailed historical tracking and future backlog additions.
+- Execute Phase 2.0-S1 GUI foundation on feature branch `feat/phase-2-0-gui-foundation-egui`: lock `egui/eframe`, extract CLI/core shared library boundaries, and deliver read-only vault browse/detail with full Rust gate verification.
 
 ## Review
 
+- 2026-02-24: Phase 2.0-S1 GUI foundation completed on `feat/phase-2-0-gui-foundation-egui` with `egui/eframe`, shared library extraction, read-only browse/detail UI, and a full Rust gate pass.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

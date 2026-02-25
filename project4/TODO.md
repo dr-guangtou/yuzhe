@@ -167,9 +167,9 @@
 | --- | --- | --- | --- | --- |
 | P4-519 | Implement drop-session state machine in GUI | agent | [x] Done | added drag-and-drop session state model in `src/gui.rs`, captured dropped file paths from `egui` input, and covered deterministic transition behavior with GUI unit tests |
 | P4-520 | Wire dropped files to shared ingest core services | agent | [x] Done | wired drop-session commit path to shared `inject_figure` services with deterministic one-or-many batch processing, duplicate handling, and partial-failure reporting |
-| P4-521 | Implement provenance prompt defaults and per-item overrides | agent | [ ] In Progress | block commit until required provenance fields are complete for all pending items |
-| P4-522 | Add GUI regression coverage for deterministic multi-file ingest behavior | agent | [ ] In Progress | cover deterministic normalized-path ordering, stable per-item result reporting, and commit-failure recovery |
-| P4-523 | Verify Phase 2.2 ingest implementation full gate | agent | [ ] In Progress | run `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-519..P4-522 |
+| P4-521 | Implement provenance prompt defaults and per-item overrides | agent | [x] Done | added batch-level provenance defaults with per-item override resolution in `src/gui.rs`; commit remains blocked until each item has complete required metadata |
+| P4-522 | Add GUI regression coverage for deterministic multi-file ingest behavior | agent | [x] Done | added deterministic drop-commit ordering, stable per-item status mapping, and commit-failure recovery retry coverage in `src/gui.rs` tests |
+| P4-523 | Verify Phase 2.2 ingest implementation full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-519..P4-522 |
 
 ## Review Notes
 
@@ -228,3 +228,6 @@
 - 2026-02-25: Opened Phase 2.2 implementation backlog (`P4-519`..`P4-523`) for GUI drag-and-drop ingest based on the locked design.
 - 2026-02-25: Completed P4-519 by implementing the Phase 2.2 drop-session GUI state machine with captured dropped-file sessions, metadata-required/ready/commit-failed lifecycle transitions, deterministic path ordering, and focused GUI tests.
 - 2026-02-25: Completed P4-520 by wiring drop-session commits to shared ingest core (`inject_figure`) with deterministic batch ordering, duplicate-aware results, and partial-failure retention semantics.
+- 2026-02-25: Completed P4-521 by implementing drop-session batch provenance defaults and per-item override behavior in `src/gui.rs`, enforcing required-metadata gating across all pending items before commit while preserving deterministic ordering and Rust 2021 constraints; full gate remains pending for P4-523 after P4-522.
+- 2026-02-25: Completed P4-522 by extending GUI drop-ingest regression coverage for deterministic normalized-path commit-result ordering, stable per-item success/failure reporting, and commit-failure recovery retries; full-gate verification remains pending for P4-523.
+- 2026-02-25: Completed P4-523 by passing the full Rust verification gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) after P4-519..P4-522, closing Phase 2.2 implementation.

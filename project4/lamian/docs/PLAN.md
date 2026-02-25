@@ -50,6 +50,6 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 
 ## 5. Next Execution Steps
 
-1. Implement provenance prompt defaults and per-item override behavior for dropped-file sessions in `src/gui.rs`.
-2. Add regression tests for deterministic multi-file ordering, stable per-item result reporting, and commit-failure recovery.
-3. Run full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+1. Phase 2.2 implementation is closed after passing L-223 full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+2. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit as baseline constraints for the next GUI phase.
+3. Start Phase 2.3 parity-polish planning and tracker definition before implementation.

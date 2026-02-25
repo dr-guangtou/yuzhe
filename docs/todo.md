@@ -2,7 +2,7 @@
 
 ## Active
 
-- Execute Phase 2.2 GUI drag-and-drop ingest implementation on feature branch `feat/phase-2-2-gui-drop-ingest-planning`: complete P4-521..P4-523 (provenance prompts, regression coverage, full gate) after P4-520 shared-ingest wiring.
+- Phase 2.2 GUI drag-and-drop ingest implementation is closed on `feat/phase-2-2-gui-drop-ingest-planning`; next step is Phase 2.3 parity-polish planning/tracker definition.
 
 ## Review
 
@@ -22,6 +22,9 @@
 - 2026-02-25: P4-517 completed by locking the Phase 2.2 GUI drag-and-drop ingest UX/state model (provenance prompt policy, deterministic multi-file ordering, shared ingest-core reuse, and Rust 2021 compatibility constraints) across SPEC/TODO mirrors.
 - 2026-02-25: P4-519 completed by implementing the Phase 2.2 GUI drop-session state machine scaffold in `project4/lamian/src/gui.rs` with deterministic dropped-path ordering and lifecycle transition tests.
 - 2026-02-25: P4-520 completed by wiring drop-session commits in `project4/lamian/src/gui.rs` to shared `inject_figure` ingest services with deterministic one-or-many ordering, duplicate-aware outcomes, and partial-failure reporting.
+- 2026-02-25: P4-521 completed by adding batch provenance defaults and per-item override behavior to GUI drop ingest state/UI in `project4/lamian/src/gui.rs`, keeping commit blocked until required metadata is complete for all items; full-gate verification remains pending for P4-523 after P4-522.
+- 2026-02-25: P4-522 completed by adding GUI regression coverage for deterministic normalized-path commit-result ordering, stable per-item success/failure reporting, and commit-failure recovery retry behavior in `project4/lamian/src/gui.rs`; full-gate verification remains pending for P4-523.
+- 2026-02-25: P4-523 completed by passing the full Rust verification gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) after P4-519..P4-522, closing Phase 2.2 implementation.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

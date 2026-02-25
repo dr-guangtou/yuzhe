@@ -65,9 +65,9 @@
 | --- | --- | --- | --- |
 | L-219 | Implement drop-session state machine in GUI | Done | added drag-and-drop session state model in `src/gui.rs`, captured dropped file paths from `egui` input, and covered deterministic transition behavior with GUI unit tests |
 | L-220 | Wire dropped files to shared ingest core services | Done | wired drop-session commit path to shared `inject_figure` services with deterministic one-or-many batch processing, duplicate handling, and partial-failure reporting |
-| L-221 | Implement provenance prompt defaults and per-item overrides | In Progress | keep commit blocked until required provenance fields are complete for all pending items |
-| L-222 | Add GUI regression coverage for deterministic multi-file ingest behavior | In Progress | cover deterministic normalized-path ordering, stable per-item result reporting, and commit-failure recovery |
-| L-223 | Run full verification gate for Phase 2.2 ingest implementation | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-219..L-222 |
+| L-221 | Implement provenance prompt defaults and per-item overrides | Done | added batch-level provenance defaults with per-item override resolution in `src/gui.rs`; commit remains blocked until each item has complete required metadata |
+| L-222 | Add GUI regression coverage for deterministic multi-file ingest behavior | Done | added deterministic drop-commit ordering, stable per-item status mapping, and commit-failure recovery retry coverage in `src/gui.rs` tests |
+| L-223 | Run full verification gate for Phase 2.2 ingest implementation | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-219..L-222 |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 

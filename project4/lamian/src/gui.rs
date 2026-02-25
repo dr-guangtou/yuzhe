@@ -184,8 +184,8 @@ enum DropIngestLifecycle {
 struct DropIngestItemDraft {
     input_path: PathBuf,
     normalized_path: String,
-    source_type_input: String,
-    source_key_input: String,
+    source_type_override_input: String,
+    source_key_override_input: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -206,9 +206,17 @@ struct DropIngestItemCommitResult {
 #[derive(Debug, Clone, Default)]
 struct DropIngestSessionDraft {
     lifecycle: DropIngestLifecycle,
+    default_source_type_input: String,
+    default_source_key_input: String,
     dropped_items: Vec<DropIngestItemDraft>,
     last_commit_results: Vec<DropIngestItemCommitResult>,
     last_error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct DropIngestResolvedMetadata {
+    source_type_input: String,
+    source_key_input: String,
 }
 
 #[derive(Default)]
@@ -467,14 +475,16 @@ impl LamianGuiApp {
             .map(|input_path| DropIngestItemDraft {
                 normalized_path: normalize_drop_path(&input_path),
                 input_path,
-                source_type_input: String::new(),
-                source_key_input: String::new(),
+                source_type_override_input: String::new(),
+                source_key_override_input: String::new(),
             })
             .collect::<Vec<_>>();
         dropped_items.sort_by(|left, right| left.normalized_path.cmp(&right.normalized_path));
 
         self.drop_ingest_session = DropIngestSessionDraft {
             lifecycle: DropIngestLifecycle::DropReceived,
+            default_source_type_input: String::new(),
+            default_source_key_input: String::new(),
             dropped_items,
             last_commit_results: Vec::new(),
             last_error: None,
@@ -500,11 +510,15 @@ impl LamianGuiApp {
             return;
         }
 
-        let metadata_complete = self
-            .drop_ingest_session
-            .dropped_items
-            .iter()
-            .all(drop_ingest_metadata_is_complete);
+        let default_source_type_input = self.drop_ingest_session.default_source_type_input.clone();
+        let default_source_key_input = self.drop_ingest_session.default_source_key_input.clone();
+        let metadata_complete = self.drop_ingest_session.dropped_items.iter().all(|item| {
+            drop_ingest_metadata_is_complete(
+                item,
+                &default_source_type_input,
+                &default_source_key_input,
+            )
+        });
 
         self.drop_ingest_session.lifecycle = if metadata_complete {
             DropIngestLifecycle::ReadyToCommit
@@ -531,27 +545,35 @@ impl LamianGuiApp {
         let mut imported_count = 0_usize;
         let mut skipped_count = 0_usize;
         let mut failed_count = 0_usize;
+        let default_source_type_input = self.drop_ingest_session.default_source_type_input.clone();
+        let default_source_key_input = self.drop_ingest_session.default_source_key_input.clone();
 
         for item in self.drop_ingest_session.dropped_items.clone() {
-            let source_type = match parse_drop_source_type_input(&item.source_type_input) {
-                Ok(value) => value,
-                Err(error) => {
-                    failed_count += 1;
-                    commit_results.push(DropIngestItemCommitResult {
-                        normalized_path: item.normalized_path,
-                        status: DropIngestItemCommitStatus::Failed,
-                        figure_id: None,
-                        error: Some(error),
-                    });
-                    continue;
-                }
-            };
+            let resolved_metadata = resolve_drop_ingest_metadata(
+                &item,
+                &default_source_type_input,
+                &default_source_key_input,
+            );
+            let source_type =
+                match parse_drop_source_type_input(&resolved_metadata.source_type_input) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        failed_count += 1;
+                        commit_results.push(DropIngestItemCommitResult {
+                            normalized_path: item.normalized_path,
+                            status: DropIngestItemCommitStatus::Failed,
+                            figure_id: None,
+                            error: Some(error),
+                        });
+                        continue;
+                    }
+                };
 
             match inject_figure(InjectRequest {
                 vault_root: vault_root.clone(),
                 file_path: item.input_path.clone(),
                 source_type,
-                source_key: item.source_key_input.trim().to_string(),
+                source_key: resolved_metadata.source_key_input,
                 copy_mode: CopyMode::Copy,
             }) {
                 Ok(result) => {
@@ -955,17 +977,40 @@ impl LamianGuiApp {
             return;
         }
 
+        ui.separator();
+        ui.label("Batch provenance defaults");
+        ui.horizontal(|ui| {
+            ui.label("Default source type:");
+            ui.text_edit_singleline(&mut self.drop_ingest_session.default_source_type_input);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Default source key:");
+            ui.text_edit_singleline(&mut self.drop_ingest_session.default_source_key_input);
+        });
+
+        let default_source_type_input = self.drop_ingest_session.default_source_type_input.clone();
+        let default_source_key_input = self.drop_ingest_session.default_source_key_input.clone();
         for item in &mut self.drop_ingest_session.dropped_items {
             ui.separator();
             ui.label(format!("Path: {}", item.input_path.display()));
             ui.horizontal(|ui| {
-                ui.label("Source type:");
-                ui.text_edit_singleline(&mut item.source_type_input);
+                ui.label("Source type override:");
+                ui.text_edit_singleline(&mut item.source_type_override_input);
             });
             ui.horizontal(|ui| {
-                ui.label("Source key:");
-                ui.text_edit_singleline(&mut item.source_key_input);
+                ui.label("Source key override:");
+                ui.text_edit_singleline(&mut item.source_key_override_input);
             });
+            let resolved_metadata = resolve_drop_ingest_metadata(
+                item,
+                &default_source_type_input,
+                &default_source_key_input,
+            );
+            ui.label(format!(
+                "Effective provenance: source_type=`{}` source_key=`{}`",
+                value_or_placeholder(&resolved_metadata.source_type_input),
+                value_or_placeholder(&resolved_metadata.source_key_input)
+            ));
         }
 
         self.sync_drop_ingest_lifecycle();
@@ -989,7 +1034,7 @@ impl LamianGuiApp {
         if !can_commit {
             ui.colored_label(
                 egui::Color32::YELLOW,
-                "All dropped items require non-empty source type and source key before commit.",
+                "All dropped items require non-empty source type and source key via defaults and/or per-item overrides before commit.",
             );
         }
 
@@ -1706,8 +1751,45 @@ fn parse_drop_source_type_input(value: &str) -> Result<SourceType, String> {
     }
 }
 
-fn drop_ingest_metadata_is_complete(item: &DropIngestItemDraft) -> bool {
-    !item.source_type_input.trim().is_empty() && !item.source_key_input.trim().is_empty()
+fn resolve_drop_ingest_metadata(
+    item: &DropIngestItemDraft,
+    default_source_type_input: &str,
+    default_source_key_input: &str,
+) -> DropIngestResolvedMetadata {
+    let source_type_input = if item.source_type_override_input.trim().is_empty() {
+        default_source_type_input.trim().to_string()
+    } else {
+        item.source_type_override_input.trim().to_string()
+    };
+    let source_key_input = if item.source_key_override_input.trim().is_empty() {
+        default_source_key_input.trim().to_string()
+    } else {
+        item.source_key_override_input.trim().to_string()
+    };
+
+    DropIngestResolvedMetadata {
+        source_type_input,
+        source_key_input,
+    }
+}
+
+fn drop_ingest_metadata_is_complete(
+    item: &DropIngestItemDraft,
+    default_source_type_input: &str,
+    default_source_key_input: &str,
+) -> bool {
+    let resolved_metadata =
+        resolve_drop_ingest_metadata(item, default_source_type_input, default_source_key_input);
+    !resolved_metadata.source_type_input.is_empty()
+        && !resolved_metadata.source_key_input.is_empty()
+}
+
+fn value_or_placeholder(value: &str) -> &str {
+    if value.is_empty() {
+        "-"
+    } else {
+        value
+    }
 }
 
 fn drop_ingest_lifecycle_label(lifecycle: DropIngestLifecycle) -> &'static str {
@@ -1728,11 +1810,13 @@ mod tests {
         build_figure_update_payload, build_link_mutation_payload, build_source_update_payload,
         build_tag_mutation_payload, drop_ingest_lifecycle_label, figure_rows_from_list,
         figure_rows_from_search, normalize_drop_path, parse_drop_source_type_input,
-        sync_figure_draft_lifecycle, sync_link_draft_lifecycle, sync_source_draft_lifecycle,
-        sync_tag_draft_lifecycle, DeleteEditorLifecycle, DeleteFigurePayload, DropIngestLifecycle,
-        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle,
-        LinkMutationAction, LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft,
-        TagEditorLifecycle, TagMutationAction, TagMutationDraft,
+        resolve_drop_ingest_metadata, sync_figure_draft_lifecycle, sync_link_draft_lifecycle,
+        sync_source_draft_lifecycle, sync_tag_draft_lifecycle, DeleteEditorLifecycle,
+        DeleteFigurePayload, DropIngestItemCommitResult, DropIngestItemCommitStatus,
+        DropIngestItemDraft, DropIngestLifecycle, FigureEditorLifecycle, FigureMetadataDraft,
+        LamianGuiApp, LinkEditorLifecycle, LinkMutationAction, LinkMutationDraft,
+        SourceEditorLifecycle, SourceMetadataDraft, TagEditorLifecycle, TagMutationAction,
+        TagMutationDraft,
     };
     use std::fs;
     use std::path::{Path, PathBuf};
@@ -2073,6 +2157,37 @@ mod tests {
     }
 
     #[test]
+    fn resolve_drop_ingest_metadata_prefers_item_overrides() {
+        let item = DropIngestItemDraft {
+            input_path: PathBuf::from("alpha/file_a.png"),
+            normalized_path: "alpha/file_a.png".to_string(),
+            source_type_override_input: "url".to_string(),
+            source_key_override_input: "https://example.com/override".to_string(),
+        };
+
+        let resolved_metadata = resolve_drop_ingest_metadata(&item, "doi", "10.1000/default");
+        assert_eq!(resolved_metadata.source_type_input, "url");
+        assert_eq!(
+            resolved_metadata.source_key_input,
+            "https://example.com/override"
+        );
+    }
+
+    #[test]
+    fn resolve_drop_ingest_metadata_uses_batch_defaults_when_overrides_missing() {
+        let item = DropIngestItemDraft {
+            input_path: PathBuf::from("alpha/file_a.png"),
+            normalized_path: "alpha/file_a.png".to_string(),
+            source_type_override_input: "   ".to_string(),
+            source_key_override_input: String::new(),
+        };
+
+        let resolved_metadata = resolve_drop_ingest_metadata(&item, " doi ", " 10.1000/default ");
+        assert_eq!(resolved_metadata.source_type_input, "doi");
+        assert_eq!(resolved_metadata.source_key_input, "10.1000/default");
+    }
+
+    #[test]
     fn drop_ingest_session_transitions_from_drop_received_to_metadata_required() {
         let mut app = LamianGuiApp::default();
         app.begin_drop_ingest_session(vec![
@@ -2105,11 +2220,8 @@ mod tests {
             PathBuf::from("alpha/file_a.png"),
             PathBuf::from("beta/file_b.png"),
         ]);
-
-        for item in &mut app.drop_ingest_session.dropped_items {
-            item.source_type_input = "doi".to_string();
-            item.source_key_input = format!("10.1000/{}", item.normalized_path);
-        }
+        app.drop_ingest_session.default_source_type_input = "doi".to_string();
+        app.drop_ingest_session.default_source_key_input = "10.1000/default".to_string();
         app.sync_drop_ingest_lifecycle();
 
         assert_eq!(
@@ -2138,9 +2250,10 @@ mod tests {
         assert!(app.figure_rows.is_empty());
 
         app.begin_drop_ingest_session(vec![file_b_path, file_a_path]);
+        app.drop_ingest_session.default_source_type_input = "doi".to_string();
+        app.drop_ingest_session.default_source_key_input = "10.1000/drop-default".to_string();
         for (index, item) in app.drop_ingest_session.dropped_items.iter_mut().enumerate() {
-            item.source_type_input = "doi".to_string();
-            item.source_key_input = format!("10.1000/drop-{index}");
+            item.source_key_override_input = format!("10.1000/drop-{index}");
         }
         app.sync_drop_ingest_lifecycle();
         assert_eq!(
@@ -2160,6 +2273,7 @@ mod tests {
             .last_commit_results
             .iter()
             .all(|item| item.error.is_none()));
+        assert_drop_commit_results_sorted(&app.drop_ingest_session.last_commit_results);
         assert_eq!(app.figure_rows.len(), 2);
     }
 
@@ -2180,13 +2294,14 @@ mod tests {
             ..LamianGuiApp::default()
         };
         app.begin_drop_ingest_session(vec![file_b_path, file_a_path]);
+        app.drop_ingest_session.default_source_type_input = "doi".to_string();
+        app.drop_ingest_session.default_source_key_input = "10.1000/default".to_string();
         for item in &mut app.drop_ingest_session.dropped_items {
             if item.normalized_path.ends_with("drop_a.png") {
-                item.source_type_input = "doi".to_string();
-                item.source_key_input = "10.1000/good".to_string();
+                item.source_key_override_input = "10.1000/good".to_string();
             } else {
-                item.source_type_input = "invalid".to_string();
-                item.source_key_input = "10.1000/bad".to_string();
+                item.source_type_override_input = "invalid".to_string();
+                item.source_key_override_input = "10.1000/bad".to_string();
             }
         }
         app.sync_drop_ingest_lifecycle();
@@ -2209,7 +2324,97 @@ mod tests {
             .filter(|item| item.error.is_some())
             .count();
         assert_eq!(failed_count, 1);
+        assert_drop_commit_results_sorted(&app.drop_ingest_session.last_commit_results);
+        let success_for_drop_a = app
+            .drop_ingest_session
+            .last_commit_results
+            .iter()
+            .find(|item| item.normalized_path.ends_with("drop_a.png"))
+            .expect("drop_a result is present");
+        assert_eq!(
+            success_for_drop_a.status,
+            DropIngestItemCommitStatus::Imported
+        );
+        let failure_for_drop_b = app
+            .drop_ingest_session
+            .last_commit_results
+            .iter()
+            .find(|item| item.normalized_path.ends_with("drop_b.png"))
+            .expect("drop_b result is present");
+        assert_eq!(
+            failure_for_drop_b.status,
+            DropIngestItemCommitStatus::Failed
+        );
+        assert!(failure_for_drop_b.error.is_some());
         assert_eq!(app.figure_rows.len(), 1);
+    }
+
+    #[test]
+    fn drop_ingest_commit_failure_recovery_preserves_deterministic_result_order() {
+        let temp_dir = TempDir::new().expect("temp directory");
+        let vault_path = temp_dir.path().join("vault");
+        db::initialize_vault(&vault_path).expect("initialize vault");
+
+        let fixture_path = repository_fixture_path("2602.17205_1.png");
+        let file_a_path = temp_dir.path().join("drop_a.png");
+        let file_b_path = temp_dir.path().join("drop_b.png");
+        fs::copy(&fixture_path, &file_a_path).expect("copy fixture a");
+        fs::copy(&fixture_path, &file_b_path).expect("copy fixture b");
+
+        let mut app = LamianGuiApp {
+            connected_vault_root: Some(vault_path),
+            ..LamianGuiApp::default()
+        };
+        app.begin_drop_ingest_session(vec![file_b_path, file_a_path]);
+        app.drop_ingest_session.default_source_type_input = "doi".to_string();
+        app.drop_ingest_session.default_source_key_input = "10.1000/default".to_string();
+        for item in &mut app.drop_ingest_session.dropped_items {
+            if item.normalized_path.ends_with("drop_a.png") {
+                item.source_key_override_input = "10.1000/recovery-a".to_string();
+            } else {
+                item.source_type_override_input = "invalid".to_string();
+                item.source_key_override_input = "10.1000/recovery-b".to_string();
+            }
+        }
+        app.sync_drop_ingest_lifecycle();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::ReadyToCommit
+        );
+
+        app.begin_drop_ingest_commit();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::CommitFailed
+        );
+        assert_drop_commit_results_sorted(&app.drop_ingest_session.last_commit_results);
+        assert!(app.error_message.is_some());
+
+        for item in &mut app.drop_ingest_session.dropped_items {
+            if item.normalized_path.ends_with("drop_b.png") {
+                item.source_type_override_input = String::new();
+                item.source_key_override_input = "10.1000/recovery-b-fixed".to_string();
+            }
+        }
+        app.sync_drop_ingest_lifecycle();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::ReadyToCommit
+        );
+
+        app.begin_drop_ingest_commit();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::Committed
+        );
+        assert!(app
+            .drop_ingest_session
+            .last_commit_results
+            .iter()
+            .all(|item| item.status != DropIngestItemCommitStatus::Failed));
+        assert_drop_commit_results_sorted(&app.drop_ingest_session.last_commit_results);
+        assert_eq!(app.figure_rows.len(), 2);
+        assert!(app.error_message.is_none());
     }
 
     #[test]
@@ -2782,6 +2987,16 @@ mod tests {
 
         app.cancel_delete_figure_confirmation();
         assert!(app.delete_figure_draft.is_none());
+    }
+
+    fn assert_drop_commit_results_sorted(results: &[DropIngestItemCommitResult]) {
+        let actual_paths = results
+            .iter()
+            .map(|item| item.normalized_path.clone())
+            .collect::<Vec<_>>();
+        let mut expected_paths = actual_paths.clone();
+        expected_paths.sort();
+        assert_eq!(actual_paths, expected_paths);
     }
 
     fn seed_app_with_two_figures() -> (TempDir, PathBuf, LamianGuiApp, Vec<String>) {

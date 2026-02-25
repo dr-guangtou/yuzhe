@@ -163,6 +163,6 @@ Purpose:
 
 ## 8. Next Execution Step
 
-1. Implement provenance prompt defaults and per-item override behavior for Phase 2.2 dropped-file sessions.
-2. Add regression coverage for deterministic multi-file ordering, partial-failure reporting stability, and commit-failure recovery behavior.
-3. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+1. Phase 2.2 implementation is closed after passing P4-523 full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+2. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit as baseline constraints for the next GUI phase.
+3. Start Phase 2.3 parity-polish planning and tracker definition on the active feature branch before implementation.

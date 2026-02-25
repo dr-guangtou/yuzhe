@@ -36,7 +36,7 @@
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
 | L-201 | Select Rust GUI approach | Done | selected `egui/eframe` for Rust-native Phase 2.0 baseline |
-| L-202 | Build vault browser and figure detail editor | In Progress | read-only browse/detail delivered first; editable mutation controls remain for next slice |
+| L-202 | Build vault browser and figure detail editor | Done | delivered read-only browse/detail plus S2 figure/source metadata editors with deterministic refresh behavior |
 | L-203 | Extract shared library boundary for CLI and GUI | Done | added `src/lib.rs` exports and migrated CLI main to library imports |
 | L-204 | Add `lamian_gui` desktop binary | Done | added `src/bin/lamian_gui.rs` and `src/gui.rs` with read-only vault browse/detail flow |
 | L-205 | Run full verification gate for Phase 2.0-S1 | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` |
@@ -44,8 +44,20 @@
 | L-207 | Design Phase 2.0-S2 GUI mutation UX/state flow | Done | locked editor state lifecycle, shared-service validation mapping, and save/cancel semantics in spec docs |
 | L-208 | Wire GUI figure metadata editing to shared `update` service | Done | implemented editor draft state, save/cancel actions, and backend error surfacing via `update_figure` |
 | L-209 | Wire GUI source metadata editing to shared `source update` service | Done | implemented source editor draft state, clear-flag controls, and backend error surfacing via `update_source_metadata` |
-| L-210 | Add GUI mutation regression and deterministic behavior checks | In Progress | cover save success/failure paths and preserve core-service-driven row ordering |
-| L-211 | Run full verification gate for Phase 2.0-S2 | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after S2 slice completion |
+| L-210 | Add GUI mutation regression and deterministic behavior checks | Done | added `src/gui.rs` regression tests for editor lifecycle transitions, save failure recovery, and deterministic list/detail behavior after figure/source saves |
+| L-211 | Run full verification gate for Phase 2.0-S2 | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-210 |
+
+## Phase 2.1 GUI Mutation Expansion (Next)
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-212 | Design Phase 2.1 tag/link/delete mutation UX and state flow | In Progress | lock confirmation/state/error mapping for destructive and non-destructive mutation actions |
+| L-213 | Wire GUI tag add/remove actions to shared tag services | In Progress | reuse existing tag validation + mutation core services without GUI-side domain duplication |
+| L-214 | Wire GUI link add/remove actions to shared link services | In Progress | preserve deterministic detail refresh and backend error surfacing |
+| L-215 | Wire GUI figure delete flow to shared delete service | In Progress | add explicit confirmation and deterministic post-delete selection behavior |
+| L-216 | Add GUI regression coverage for tag/link/delete flows | In Progress | cover success/failure paths and deterministic list/detail state transitions |
+| L-217 | Run full verification gate for Phase 2.1 mutation expansion | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-213..L-216 |
+| L-218 | Design Phase 2.2 drag-and-drop ingest UX and provenance prompts | In Progress | define one/many file drop behavior while reusing shared ingest core |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 

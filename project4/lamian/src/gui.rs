@@ -804,11 +804,19 @@ fn source_lifecycle_label(lifecycle: SourceEditorLifecycle) -> &'static str {
 mod tests {
     use super::{
         build_figure_update_payload, build_source_update_payload, figure_rows_from_list,
-        figure_rows_from_search, FigureEditorLifecycle, FigureMetadataDraft, SourceEditorLifecycle,
+        figure_rows_from_search, sync_figure_draft_lifecycle, sync_source_draft_lifecycle,
+        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, SourceEditorLifecycle,
         SourceMetadataDraft,
     };
+    use std::path::{Path, PathBuf};
+
+    use tempfile::TempDir;
+
+    use crate::db;
+    use crate::inject::{inject_figure, CopyMode, InjectRequest, SourceType};
     use crate::list::ListFigureRow;
     use crate::search::SearchFigure;
+    use crate::source::{update_source_metadata, UpdateSourceRequest};
 
     #[test]
     fn rows_from_list_keep_input_order() {
@@ -1013,5 +1021,352 @@ mod tests {
         assert_eq!(payload.title, None);
         assert_eq!(payload.authors, None);
         assert_eq!(payload.published_at, None);
+    }
+
+    #[test]
+    fn sync_figure_lifecycle_transitions_clean_dirty_and_preserves_saving() {
+        let mut draft = FigureMetadataDraft {
+            figure_id: "fig_7".to_string(),
+            original_display_name: "original".to_string(),
+            original_caption: None,
+            display_name_input: "original".to_string(),
+            caption_input: String::new(),
+            clear_caption: false,
+            lifecycle: FigureEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        sync_figure_draft_lifecycle(&mut draft, true);
+        assert_eq!(draft.lifecycle, FigureEditorLifecycle::EditingDirty);
+
+        sync_figure_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, FigureEditorLifecycle::EditingClean);
+
+        draft.lifecycle = FigureEditorLifecycle::Saving;
+        sync_figure_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, FigureEditorLifecycle::Saving);
+    }
+
+    #[test]
+    fn sync_source_lifecycle_transitions_clean_dirty_and_preserves_saving() {
+        let mut draft = SourceMetadataDraft {
+            figure_id: "fig_8".to_string(),
+            original_title: Some("Title".to_string()),
+            original_authors: None,
+            original_published_at: None,
+            title_input: "Title".to_string(),
+            authors_input: String::new(),
+            published_at_input: String::new(),
+            clear_title: false,
+            clear_authors: false,
+            clear_published_at: false,
+            lifecycle: SourceEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        sync_source_draft_lifecycle(&mut draft, true);
+        assert_eq!(draft.lifecycle, SourceEditorLifecycle::EditingDirty);
+
+        sync_source_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, SourceEditorLifecycle::EditingClean);
+
+        draft.lifecycle = SourceEditorLifecycle::Saving;
+        sync_source_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, SourceEditorLifecycle::Saving);
+    }
+
+    #[test]
+    fn figure_save_failure_keeps_draft_and_allows_retry() {
+        let (_temp_dir, vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+
+        app.connected_vault_root = Some(vault_path);
+        app.load_figure_detail(&figure_id);
+        app.begin_figure_metadata_editing();
+
+        {
+            let draft = app
+                .figure_metadata_draft
+                .as_mut()
+                .expect("figure draft initialized");
+            draft.display_name_input = "   ".to_string();
+        }
+        let failure_payload = build_figure_update_payload(
+            app.figure_metadata_draft
+                .as_ref()
+                .expect("figure draft present"),
+        );
+        assert!(failure_payload.has_changes);
+
+        app.save_figure_metadata_changes(failure_payload);
+
+        let failed_draft = app
+            .figure_metadata_draft
+            .as_ref()
+            .expect("draft persists after failed save");
+        assert_eq!(failed_draft.lifecycle, FigureEditorLifecycle::SaveFailed);
+        assert!(failed_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("name")));
+        assert!(app.error_message.is_some());
+
+        {
+            let draft = app
+                .figure_metadata_draft
+                .as_mut()
+                .expect("figure draft still present");
+            draft.display_name_input = "Retry Name".to_string();
+        }
+        let retry_payload = build_figure_update_payload(
+            app.figure_metadata_draft
+                .as_ref()
+                .expect("figure draft present for retry"),
+        );
+        assert!(retry_payload.has_changes);
+
+        app.save_figure_metadata_changes(retry_payload);
+
+        assert!(app.figure_metadata_draft.is_none());
+        assert!(app.error_message.is_none());
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.display_name.as_str()),
+            Some("Retry Name")
+        );
+    }
+
+    #[test]
+    fn source_save_failure_keeps_draft_and_allows_retry() {
+        let (_temp_dir, vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+
+        update_source_metadata(UpdateSourceRequest {
+            vault_root: vault_path.clone(),
+            figure_id: figure_id.clone(),
+            title: None,
+            authors: Some("Original Authors".to_string()),
+            published_at: None,
+            clear_title: false,
+            clear_authors: false,
+            clear_published_at: false,
+        })
+        .expect("set initial source authors");
+
+        app.connected_vault_root = Some(vault_path);
+        app.load_figure_detail(&figure_id);
+        app.begin_source_metadata_editing();
+
+        {
+            let draft = app
+                .source_metadata_draft
+                .as_mut()
+                .expect("source draft initialized");
+            draft.authors_input = "   ".to_string();
+        }
+        let failure_payload = build_source_update_payload(
+            app.source_metadata_draft
+                .as_ref()
+                .expect("source draft present"),
+        );
+        assert!(failure_payload.has_changes);
+
+        app.save_source_metadata_changes(failure_payload);
+
+        let failed_draft = app
+            .source_metadata_draft
+            .as_ref()
+            .expect("draft persists after failed save");
+        assert_eq!(failed_draft.lifecycle, SourceEditorLifecycle::SaveFailed);
+        assert!(failed_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("authors")));
+        assert!(app.error_message.is_some());
+
+        {
+            let draft = app
+                .source_metadata_draft
+                .as_mut()
+                .expect("source draft still present");
+            draft.authors_input = "Recovered Authors".to_string();
+        }
+        let retry_payload = build_source_update_payload(
+            app.source_metadata_draft
+                .as_ref()
+                .expect("source draft present for retry"),
+        );
+        assert!(retry_payload.has_changes);
+
+        app.save_source_metadata_changes(retry_payload);
+
+        assert!(app.source_metadata_draft.is_none());
+        assert!(app.error_message.is_none());
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .and_then(|detail| detail.sources.first())
+                .and_then(|source| source.source_authors.as_deref()),
+            Some("Recovered Authors")
+        );
+    }
+
+    #[test]
+    fn figure_save_with_display_name_change_preserves_deterministic_list_and_detail_selection() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_figure_metadata_editing();
+        {
+            let draft = app
+                .figure_metadata_draft
+                .as_mut()
+                .expect("figure draft initialized");
+            draft.display_name_input = "deterministic rename".to_string();
+        }
+        let payload = build_figure_update_payload(
+            app.figure_metadata_draft
+                .as_ref()
+                .expect("figure draft present"),
+        );
+        assert!(payload.has_changes);
+        assert!(payload.display_name_changed);
+
+        app.save_figure_metadata_changes(payload);
+
+        let list_order_after = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(list_order_after, list_order_before);
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.figure_id.as_str()),
+            Some(figure_id.as_str())
+        );
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.display_name.as_str()),
+            Some("deterministic rename")
+        );
+    }
+
+    #[test]
+    fn source_save_preserves_deterministic_list_and_refreshes_detail() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_source_metadata_editing();
+        {
+            let draft = app
+                .source_metadata_draft
+                .as_mut()
+                .expect("source draft initialized");
+            draft.title_input = "Updated Source Title".to_string();
+        }
+        let payload = build_source_update_payload(
+            app.source_metadata_draft
+                .as_ref()
+                .expect("source draft present"),
+        );
+        assert!(payload.has_changes);
+
+        app.save_source_metadata_changes(payload);
+
+        let list_order_after = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(list_order_after, list_order_before);
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.figure_id.as_str()),
+            Some(figure_id.as_str())
+        );
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .and_then(|detail| detail.sources.first())
+                .and_then(|source| source.source_title.as_deref()),
+            Some("Updated Source Title")
+        );
+    }
+
+    fn seed_app_with_two_figures() -> (TempDir, PathBuf, LamianGuiApp, Vec<String>) {
+        let temp_dir = TempDir::new().expect("temp directory");
+        let vault_path = temp_dir.path().join("vault");
+        db::initialize_vault(&vault_path).expect("initialize vault");
+
+        let fixture_path = repository_fixture_path("2602.17205_1.png");
+        let first_figure = inject_figure(InjectRequest {
+            vault_root: vault_path.clone(),
+            file_path: fixture_path.clone(),
+            source_type: SourceType::Doi,
+            source_key: "10.1126/science.ady9404".to_string(),
+            copy_mode: CopyMode::Reference,
+        })
+        .expect("inject first figure");
+
+        let second_figure = inject_figure(InjectRequest {
+            vault_root: vault_path.clone(),
+            file_path: fixture_path,
+            source_type: SourceType::Doi,
+            source_key: "10.1126/science.ady9405".to_string(),
+            copy_mode: CopyMode::Reference,
+        })
+        .expect("inject second figure");
+
+        let mut app = LamianGuiApp {
+            connected_vault_root: Some(vault_path.clone()),
+            ..LamianGuiApp::default()
+        };
+        app.refresh_figure_rows();
+
+        let mut figure_ids = vec![first_figure.figure_id, second_figure.figure_id];
+        figure_ids.sort();
+        assert_eq!(
+            app.figure_rows
+                .iter()
+                .map(|row| row.figure_id.clone())
+                .collect::<Vec<_>>(),
+            figure_ids
+        );
+
+        (temp_dir, vault_path, app, figure_ids)
+    }
+
+    fn repository_fixture_path(file_name: &str) -> PathBuf {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join(file_name);
+
+        assert!(path.exists(), "missing fixture file: {}", path.display());
+        canonicalize_path(&path)
+    }
+
+    fn canonicalize_path(path: &Path) -> PathBuf {
+        path.canonicalize()
+            .unwrap_or_else(|error| panic!("failed to canonicalize {}: {error}", path.display()))
     }
 }

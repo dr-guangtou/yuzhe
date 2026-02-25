@@ -27,6 +27,7 @@ This file applies to all work under `project4/`.
 - Core mode: CLI-first, GUI built on the same core services
 - Storage: SQLite canonical metadata store with sidecar export support
 - Provenance: required on ingest
+- Incubator rule: while `project4/lamian/` is incubating, every architecture/spec/todo update made under `project4/` must be mirrored in the corresponding `project4/lamian/docs/` documents to keep migration-ready parity.
 
 ## Documentation Requirements
 

@@ -107,7 +107,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - `shared_core`
   - library-exposed service boundary reused by CLI and GUI binaries
 
-## 7.3 Phase 2.0-S2 GUI Mutation State Model
+## 7.3 Phase 2.0-S2 GUI Mutation State Model (Implemented)
 
 - Scope is limited to metadata mutation through existing core services:
   - figure fields via `update`
@@ -132,6 +132,10 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - Post-save refresh:
   - On success, reload selected figure detail via `show`.
   - If figure display name changed, refresh list rows via existing list/search path to keep deterministic ordering behavior.
+- Regression and determinism checks:
+  - GUI unit tests cover draft lifecycle transitions (`editing_clean`, `editing_dirty`, `saving`, `save_failed`).
+  - Save-failure paths preserve drafts and allow retry/cancel recovery for both figure and source editors.
+  - Post-save behavior is validated for deterministic list ordering and selected-detail continuity.
 
 ## 7.4 Data Store Strategy
 
@@ -249,6 +253,7 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 - collection static and dynamic workflows
 - bundle export/import roundtrip and conflict handling
 - migration compatibility from v2 to v3/v4
+- GUI mutation regression unit tests for S2 editor state transitions and save recovery/determinism behavior
 
 ## 13.3 Acceptance Gates
 
@@ -260,4 +265,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
   - all Phase 1.5 tests green
   - docs synchronized across `project4/` and `project4/lamian/docs/`
   - Phase 2.0-S1 GUI launch succeeds on macOS and preserves deterministic row ordering from core services
-  - Phase 2.0-S2 mutation UX design is documented, including edit states, validation mapping, and save/cancel behavior bound to shared core services
+  - Phase 2.0-S2 figure/source metadata mutation flows are implemented via shared services and covered by regression tests for save success/failure recovery and deterministic post-save list/detail behavior

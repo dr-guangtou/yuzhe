@@ -95,9 +95,33 @@ Purpose:
 
 ## Phase 2: Desktop GUI (Functionality First)
 
-- Add minimal GUI wrapper over core services
-- Implement vault view, figure detail, metadata editor, and search
-- Expose CLI-equivalent operations through GUI actions
+### Phase 2.0 (Completed)
+
+- Added minimal GUI wrapper over shared core services.
+- Delivered vault view, figure detail, metadata editor, and search.
+- Verified deterministic list/detail behavior and save-failure recovery for S2 metadata mutation.
+
+### Phase 2.1 (Next): GUI Mutation Expansion
+
+- Add GUI actions for existing mutation services:
+  - tag add/remove on selected figure
+  - link add/remove between figures
+  - figure delete with explicit confirmation and deterministic post-delete selection behavior
+- Keep GUI as interaction-only layer; reuse existing `tag`, `link`, and `delete` core services.
+- Add regression coverage for mutation success/failure paths and deterministic list/detail refresh semantics.
+
+### Phase 2.2 (After 2.1): GUI Drag-and-Drop Ingest
+
+- Add drag-and-drop file intake with the same ingest core used by CLI `inject`/`import`.
+- Support one-or-many file drop path with strict provenance prompts before commit.
+- Preserve deterministic result summaries and error reporting parity with existing ingest contracts.
+
+### Phase 2.3 (After 2.2): GUI Workflow Parity Polish
+
+- Expose high-use operational workflows in GUI where low risk and high leverage:
+  - open file, list/detail navigation polish, and search/filter ergonomics
+- Keep automation-centric flows (`bundle`, `verify`, bulk import) CLI-first unless GUI value is clear.
+- Close parity gaps required for MVP “GUI can drive core workflows” gate.
 
 ### Gate to Phase 3
 
@@ -127,24 +151,19 @@ Purpose:
   - migration upgrade compatibility tests
   - GUI smoke tests once Phase 2 starts
 
-## 7. Deliverables for Current Phase (Phase 1.5)
+## 7. Deliverables for Current Phase (Phase 2.1 Planning/Execution)
 
-- Updated governance docs:
-  - `README.md`
-  - `PLAN.md`
-  - `SPEC.md`
-  - `TODO.md`
-  - `DECISIONS.md`
-  - `RISK_REGISTER.md`
-- Updated standalone docs:
-  - `project4/lamian/docs/SPEC.md`
+- Updated planning docs for the next GUI stages:
+  - `project4/PLAN.md`
+  - `project4/TODO.md`
+- Mirrored standalone planning trackers for incubator parity:
+  - `project4/lamian/docs/PLAN.md`
   - `project4/lamian/docs/TODO.md`
-  - `project4/lamian/docs/DECISIONS.md`
-  - `project4/lamian/docs/MIGRATION.md`
-- Wave A implementation branches and test evidence
+- Phase 2.1 implementation branches and gate evidence after each slice.
 
 ## 8. Next Execution Step
 
-1. Complete documentation synchronization pass for implemented Phase 1.8 hardening features (`verify`, bundle preflight, bundle conflict controls).
-2. Prioritize post-hardening backlog items (`P4-424` onward) and Phase 2 GUI baseline entry criteria.
-3. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+1. Execute Phase 2.1 design lock for tag/link/delete GUI mutation UX and state transitions.
+2. Implement tag and link mutation controls in GUI with shared-service wiring and deterministic refresh behavior.
+3. Implement GUI delete flow with explicit confirmation and deterministic post-delete selection policy.
+4. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.

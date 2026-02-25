@@ -35,7 +35,7 @@ Build a local-only visual knowledge base for research figures with reliable meta
 4. Second slice (Phase 2.0-S2): metadata mutation flow for figure/source fields using `update` and `source update`.
 5. Later slices: additional mutation flows and drag-and-drop ingest after S2 stabilization.
 
-## Phase 2.0-S2 Mutation UX and State Flow (P4-505)
+## Phase 2.0-S2 Mutation UX and State Flow (P4-505/P4-508, Implemented)
 
 1. Mutation scope is split into two editors to keep service boundaries explicit:
    - figure metadata editor (`name`, `caption`, `clear_caption`)
@@ -53,6 +53,10 @@ Build a local-only visual knowledge base for research figures with reliable meta
 5. Post-save refresh:
    - always reload selected figure via `show`.
    - if display name changed, reload list/search rows so ordering remains service-driven and deterministic.
+6. Regression and determinism coverage:
+   - GUI unit tests verify lifecycle transitions for both editors (`editing_clean`, `editing_dirty`, `saving`, `save_failed`).
+   - Save-failure paths preserve drafts and expose backend errors while allowing retry/cancel recovery.
+   - Post-save behavior is asserted to keep list ordering deterministic and selected detail synchronized.
 
 ## Phase 1.8 Decisions (Finalized)
 
@@ -167,4 +171,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 4. Batch and bundle commands provide deterministic summaries and conflict reporting.
 5. GUI drag-and-drop path stays equivalent to core ingest behavior.
 6. Phase 2.0-S1 GUI preserves service ordering guarantees by rendering rows in exactly the order returned from shared core list/search services.
-7. Phase 2.0-S2 mutation flow design is locked for edit-mode behavior, validation mapping, and save/cancel interaction before implementation.
+7. Phase 2.0-S2 mutation flows are implemented through shared `update`/`source update` services and validated by GUI regression tests for state transitions, failure recovery, and deterministic post-save list/detail behavior.

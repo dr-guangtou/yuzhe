@@ -15,6 +15,7 @@ This file applies to the standalone LaMian repository root.
 - Language: Rust
 - Storage: SQLite canonical store with sidecar export support
 - Ingest policy: strict provenance required
+- Incubator rule: maintain document parity with `project4/` planning/spec trackers so migration from incubator to standalone repository preserves the same architecture and acceptance contracts.
 
 ## Verification Standard
 

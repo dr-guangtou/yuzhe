@@ -2,7 +2,7 @@
 
 ## Active
 
-- Continue Phase 2.0-S2 GUI mutation on feature branch `feat/phase-2-0-s2-ux-state-flow-p4-505`: execute P4-508 regression/determinism checks for the new figure/source edit flows.
+- Execute Phase 2.1 GUI mutation expansion planning baseline on feature branch `feat/p4-508-gui-regression-determinism`: design and implement tag/link/delete GUI mutation flows with deterministic post-mutation behavior.
 
 ## Review
 
@@ -10,6 +10,10 @@
 - 2026-02-25: P4-505 completed by locking the Phase 2.0-S2 GUI mutation UX/state-flow spec (edit lifecycle, validation mapping, and save/cancel semantics) for implementation.
 - 2026-02-25: P4-506 completed by wiring GUI figure metadata editing to shared `update_figure` with draft state, save/cancel controls, and full gate verification.
 - 2026-02-25: P4-507 completed by wiring GUI source metadata editing to shared `update_source_metadata` with draft state, clear-flag controls, and full gate verification.
+- 2026-02-25: P4-508 completed by adding GUI regression tests for editor lifecycle transitions, save-failure recovery, and deterministic list/detail behavior after figure/source saves.
+- 2026-02-25: P4-509 completed by syncing Phase 2 S2 implementation/acceptance docs between `project4/` and `project4/lamian/docs/` and recording incubator parity rules in AGENTS guidance.
+- 2026-02-25: P4-510 completed with a passing full Rust gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+- 2026-02-25: Phase 2 next-stage planning updated by defining Phase 2.1 (tag/link/delete mutation expansion) and Phase 2.2 (drag-and-drop ingest design) in PLAN/TODO trackers across incubator and standalone mirrors.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

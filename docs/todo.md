@@ -2,11 +2,14 @@
 
 ## Active
 
-- Execute Phase 2.0-S1 GUI foundation on feature branch `feat/phase-2-0-gui-foundation-egui`: lock `egui/eframe`, extract CLI/core shared library boundaries, and deliver read-only vault browse/detail with full Rust gate verification.
+- Continue Phase 2.0-S2 GUI mutation on feature branch `feat/phase-2-0-s2-ux-state-flow-p4-505`: execute P4-508 regression/determinism checks for the new figure/source edit flows.
 
 ## Review
 
 - 2026-02-24: Phase 2.0-S1 GUI foundation completed on `feat/phase-2-0-gui-foundation-egui` with `egui/eframe`, shared library extraction, read-only browse/detail UI, and a full Rust gate pass.
+- 2026-02-25: P4-505 completed by locking the Phase 2.0-S2 GUI mutation UX/state-flow spec (edit lifecycle, validation mapping, and save/cancel semantics) for implementation.
+- 2026-02-25: P4-506 completed by wiring GUI figure metadata editing to shared `update_figure` with draft state, save/cancel controls, and full gate verification.
+- 2026-02-25: P4-507 completed by wiring GUI source metadata editing to shared `update_source_metadata` with draft state, clear-flag controls, and full gate verification.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

@@ -49,7 +49,8 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - Stack for Phase 2.0 baseline: `egui/eframe` (Rust-native, no web runtime dependency).
 - Delivery order:
   - Phase 2.0-S1: read-only vault browser + figure detail pane.
-  - Later Phase 2.x: mutation flows (`update`/`tag`/`link`/`delete`) and drag-and-drop ingest.
+  - Phase 2.0-S2: metadata mutation flow (`update` + `source update`) with explicit edit/save/cancel state handling.
+  - Later Phase 2.x: tag/link/delete mutation flows and drag-and-drop ingest.
 
 ## 5. Functional Requirements
 
@@ -71,6 +72,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-108 Bundle conflict controls
 - FR-201 GUI vault browser (read-only) reusing core list/search services
 - FR-202 GUI figure detail panel (read-only) reusing core show service
+- FR-203 GUI metadata mutation flow with separate figure/source edit sessions and shared-core validation semantics
 
 ## 6. Non-Functional Requirements
 
@@ -105,7 +107,33 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - `shared_core`
   - library-exposed service boundary reused by CLI and GUI binaries
 
-## 7.3 Data Store Strategy
+## 7.3 Phase 2.0-S2 GUI Mutation State Model
+
+- Scope is limited to metadata mutation through existing core services:
+  - figure fields via `update`
+  - source fields via `source update`
+- UI splits mutation into two independent edit sessions to avoid cross-service partial transaction ambiguity:
+  - Figure metadata editor (`name`, `caption`, `clear_caption`)
+  - Source metadata editor (`title`, `authors`, `published_at`, corresponding clear flags)
+- Each editor uses the same state lifecycle:
+  - `viewing`: read-only panel
+  - `editing_clean`: draft opened but unchanged
+  - `editing_dirty`: draft changed
+  - `saving`: submit in flight, save/cancel disabled
+  - `save_failed`: backend returned error; draft preserved for retry/cancel
+- Save/cancel behavior:
+  - `Edit` copies current detail into draft snapshot.
+  - `Save` submits only changed fields to the matching shared service.
+  - `Cancel` discards draft and restores `viewing` state without backend calls.
+- Validation mapping rule:
+  - GUI only enforces interaction-level guards (for example, disable save when no changes).
+  - Domain validation remains in shared services; backend error messages are surfaced verbatim in GUI error panel.
+  - Clear/set conflicts are prevented in UI controls and still tolerated as backend-protected invariants.
+- Post-save refresh:
+  - On success, reload selected figure detail via `show`.
+  - If figure display name changed, refresh list rows via existing list/search path to keep deterministic ordering behavior.
+
+## 7.4 Data Store Strategy
 
 - Canonical store: SQLite
 - Portability: export and bundle artifacts
@@ -232,3 +260,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
   - all Phase 1.5 tests green
   - docs synchronized across `project4/` and `project4/lamian/docs/`
   - Phase 2.0-S1 GUI launch succeeds on macOS and preserves deterministic row ordering from core services
+  - Phase 2.0-S2 mutation UX design is documented, including edit states, validation mapping, and save/cancel behavior bound to shared core services

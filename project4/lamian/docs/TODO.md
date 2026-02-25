@@ -41,6 +41,11 @@
 | L-204 | Add `lamian_gui` desktop binary | Done | added `src/bin/lamian_gui.rs` and `src/gui.rs` with read-only vault browse/detail flow |
 | L-205 | Run full verification gate for Phase 2.0-S1 | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` |
 | L-206 | Deliver read-only Phase 2.0-S1 GUI slice | Done | supports vault open, deterministic list/search rows, and `show`-equivalent figure detail rendering |
+| L-207 | Design Phase 2.0-S2 GUI mutation UX/state flow | Done | locked editor state lifecycle, shared-service validation mapping, and save/cancel semantics in spec docs |
+| L-208 | Wire GUI figure metadata editing to shared `update` service | Done | implemented editor draft state, save/cancel actions, and backend error surfacing via `update_figure` |
+| L-209 | Wire GUI source metadata editing to shared `source update` service | Done | implemented source editor draft state, clear-flag controls, and backend error surfacing via `update_source_metadata` |
+| L-210 | Add GUI mutation regression and deterministic behavior checks | In Progress | cover save success/failure paths and preserve core-service-driven row ordering |
+| L-211 | Run full verification gate for Phase 2.0-S2 | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after S2 slice completion |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 

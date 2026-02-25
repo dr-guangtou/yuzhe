@@ -32,7 +32,27 @@ Build a local-only visual knowledge base for research figures with reliable meta
 1. GUI stack: `egui/eframe`.
 2. Architecture boundary: extract shared library exports first, then wire both CLI and GUI binaries to the same service layer.
 3. First slice (Phase 2.0-S1): read-only vault browser and figure detail panel using existing `list`, `search`, and `show` service semantics.
-4. Later slices: mutation flows and drag-and-drop ingest after S1 stabilization.
+4. Second slice (Phase 2.0-S2): metadata mutation flow for figure/source fields using `update` and `source update`.
+5. Later slices: additional mutation flows and drag-and-drop ingest after S2 stabilization.
+
+## Phase 2.0-S2 Mutation UX and State Flow (P4-505)
+
+1. Mutation scope is split into two editors to keep service boundaries explicit:
+   - figure metadata editor (`name`, `caption`, `clear_caption`)
+   - source metadata editor (`title`, `authors`, `published_at`, per-field clear flags)
+2. Each editor follows the same state sequence:
+   - `viewing` -> `editing_clean` -> `editing_dirty` -> `saving` -> (`viewing` on success or `save_failed` on error)
+3. Save/cancel behavior:
+   - `Edit` snapshots currently loaded values into a local draft.
+   - `Save` submits only changed fields to the corresponding shared service.
+   - `Cancel` discards draft and returns to `viewing` without backend mutation.
+4. Validation mapping:
+   - GUI guards interaction invariants only (for example, no-op save disabled).
+   - Domain validation remains centralized in shared services.
+   - Backend error text is surfaced directly in GUI feedback to avoid semantic drift.
+5. Post-save refresh:
+   - always reload selected figure via `show`.
+   - if display name changed, reload list/search rows so ordering remains service-driven and deterministic.
 
 ## Phase 1.8 Decisions (Finalized)
 
@@ -147,3 +167,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 4. Batch and bundle commands provide deterministic summaries and conflict reporting.
 5. GUI drag-and-drop path stays equivalent to core ingest behavior.
 6. Phase 2.0-S1 GUI preserves service ordering guarantees by rendering rows in exactly the order returned from shared core list/search services.
+7. Phase 2.0-S2 mutation flow design is locked for edit-mode behavior, validation mapping, and save/cancel interaction before implementation.

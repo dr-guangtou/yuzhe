@@ -6,6 +6,8 @@ use crate::cli::{ListSortField, ListSortOrder};
 use crate::list::{list_figures, ListFigureRow, ListFiguresRequest};
 use crate::search::{search_figures, SearchFigure, SearchRequest};
 use crate::show::{show_figure, ShowFigureRequest, ShowFigureResult};
+use crate::source::{update_source_metadata, UpdateSourceRequest};
+use crate::update::{update_figure, UpdateRequest};
 
 #[derive(Debug, Clone)]
 struct FigureListRowView {
@@ -13,6 +15,72 @@ struct FigureListRowView {
     display_name: String,
     created_at: Option<String>,
     updated_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FigureEditorLifecycle {
+    EditingClean,
+    EditingDirty,
+    Saving,
+    SaveFailed,
+}
+
+#[derive(Debug, Clone)]
+struct FigureMetadataDraft {
+    figure_id: String,
+    original_display_name: String,
+    original_caption: Option<String>,
+    display_name_input: String,
+    caption_input: String,
+    clear_caption: bool,
+    lifecycle: FigureEditorLifecycle,
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct FigureUpdatePayload {
+    figure_id: String,
+    name: Option<String>,
+    caption: Option<String>,
+    clear_caption: bool,
+    has_changes: bool,
+    display_name_changed: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SourceEditorLifecycle {
+    EditingClean,
+    EditingDirty,
+    Saving,
+    SaveFailed,
+}
+
+#[derive(Debug, Clone)]
+struct SourceMetadataDraft {
+    figure_id: String,
+    original_title: Option<String>,
+    original_authors: Option<String>,
+    original_published_at: Option<String>,
+    title_input: String,
+    authors_input: String,
+    published_at_input: String,
+    clear_title: bool,
+    clear_authors: bool,
+    clear_published_at: bool,
+    lifecycle: SourceEditorLifecycle,
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct SourceUpdatePayload {
+    figure_id: String,
+    title: Option<String>,
+    authors: Option<String>,
+    published_at: Option<String>,
+    clear_title: bool,
+    clear_authors: bool,
+    clear_published_at: bool,
+    has_changes: bool,
 }
 
 #[derive(Default)]
@@ -23,6 +91,8 @@ pub struct LamianGuiApp {
     figure_rows: Vec<FigureListRowView>,
     selected_figure_id: Option<String>,
     selected_figure_detail: Option<ShowFigureResult>,
+    figure_metadata_draft: Option<FigureMetadataDraft>,
+    source_metadata_draft: Option<SourceMetadataDraft>,
     status_message: Option<String>,
     error_message: Option<String>,
 }
@@ -113,9 +183,161 @@ impl LamianGuiApp {
             Ok(detail) => {
                 self.selected_figure_id = Some(figure_id.to_string());
                 self.selected_figure_detail = Some(detail);
+                self.figure_metadata_draft = None;
+                self.source_metadata_draft = None;
                 self.error_message = None;
             }
             Err(error) => {
+                self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn begin_figure_metadata_editing(&mut self) {
+        let Some(detail) = self.selected_figure_detail.as_ref() else {
+            self.error_message = Some("Select a figure to edit metadata.".to_string());
+            return;
+        };
+
+        self.figure_metadata_draft = Some(FigureMetadataDraft {
+            figure_id: detail.figure_id.clone(),
+            original_display_name: detail.display_name.clone(),
+            original_caption: detail.caption.clone(),
+            display_name_input: detail.display_name.clone(),
+            caption_input: detail.caption.clone().unwrap_or_default(),
+            clear_caption: false,
+            lifecycle: FigureEditorLifecycle::EditingClean,
+            last_error: None,
+        });
+    }
+
+    fn cancel_figure_metadata_editing(&mut self) {
+        self.figure_metadata_draft = None;
+        self.status_message = Some("Canceled figure metadata edits.".to_string());
+    }
+
+    fn begin_source_metadata_editing(&mut self) {
+        let Some(detail) = self.selected_figure_detail.as_ref() else {
+            self.error_message = Some("Select a figure to edit source metadata.".to_string());
+            return;
+        };
+
+        let Some(source) = detail.sources.first() else {
+            self.error_message = Some("Selected figure has no source metadata.".to_string());
+            return;
+        };
+
+        self.source_metadata_draft = Some(SourceMetadataDraft {
+            figure_id: detail.figure_id.clone(),
+            original_title: source.source_title.clone(),
+            original_authors: source.source_authors.clone(),
+            original_published_at: source.source_published_at.clone(),
+            title_input: source.source_title.clone().unwrap_or_default(),
+            authors_input: source.source_authors.clone().unwrap_or_default(),
+            published_at_input: source.source_published_at.clone().unwrap_or_default(),
+            clear_title: false,
+            clear_authors: false,
+            clear_published_at: false,
+            lifecycle: SourceEditorLifecycle::EditingClean,
+            last_error: None,
+        });
+    }
+
+    fn cancel_source_metadata_editing(&mut self) {
+        self.source_metadata_draft = None;
+        self.status_message = Some("Canceled source metadata edits.".to_string());
+    }
+
+    fn save_figure_metadata_changes(&mut self, payload: FigureUpdatePayload) {
+        if !payload.has_changes {
+            self.status_message = Some("No figure metadata changes to save.".to_string());
+            return;
+        }
+
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        if let Some(draft) = self.figure_metadata_draft.as_mut() {
+            draft.lifecycle = FigureEditorLifecycle::Saving;
+            draft.last_error = None;
+        }
+
+        match update_figure(UpdateRequest {
+            vault_root: vault_root.clone(),
+            figure_id: payload.figure_id.clone(),
+            name: payload.name,
+            caption: payload.caption,
+            clear_caption: payload.clear_caption,
+            note_file: None,
+        }) {
+            Ok(result) => {
+                self.error_message = None;
+                self.status_message = Some(format!(
+                    "Updated figure metadata: {} ({})",
+                    result.figure_id,
+                    result.updated_fields.join(", ")
+                ));
+                self.figure_metadata_draft = None;
+
+                if payload.display_name_changed {
+                    self.refresh_figure_rows();
+                } else {
+                    self.load_figure_detail(&payload.figure_id);
+                }
+            }
+            Err(error) => {
+                if let Some(draft) = self.figure_metadata_draft.as_mut() {
+                    draft.lifecycle = FigureEditorLifecycle::SaveFailed;
+                    draft.last_error = Some(error.to_string());
+                }
+                self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn save_source_metadata_changes(&mut self, payload: SourceUpdatePayload) {
+        if !payload.has_changes {
+            self.status_message = Some("No source metadata changes to save.".to_string());
+            return;
+        }
+
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        if let Some(draft) = self.source_metadata_draft.as_mut() {
+            draft.lifecycle = SourceEditorLifecycle::Saving;
+            draft.last_error = None;
+        }
+
+        match update_source_metadata(UpdateSourceRequest {
+            vault_root: vault_root.clone(),
+            figure_id: payload.figure_id.clone(),
+            title: payload.title,
+            authors: payload.authors,
+            published_at: payload.published_at,
+            clear_title: payload.clear_title,
+            clear_authors: payload.clear_authors,
+            clear_published_at: payload.clear_published_at,
+        }) {
+            Ok(result) => {
+                self.error_message = None;
+                self.status_message = Some(format!(
+                    "Updated source metadata: {} ({})",
+                    result.figure_id,
+                    result.updated_fields.join(", ")
+                ));
+                self.source_metadata_draft = None;
+                self.load_figure_detail(&payload.figure_id);
+            }
+            Err(error) => {
+                if let Some(draft) = self.source_metadata_draft.as_mut() {
+                    draft.lifecycle = SourceEditorLifecycle::SaveFailed;
+                    draft.last_error = Some(error.to_string());
+                }
                 self.error_message = Some(error.to_string());
             }
         }
@@ -194,17 +416,84 @@ impl LamianGuiApp {
     fn render_figure_detail_panel(&mut self, ui: &mut egui::Ui) {
         ui.heading("Figure Detail");
 
-        let Some(detail) = self.selected_figure_detail.as_ref() else {
+        let Some(detail) = self.selected_figure_detail.clone() else {
             ui.label("Select a figure to view detail.");
             return;
         };
 
+        if self
+            .figure_metadata_draft
+            .as_ref()
+            .is_some_and(|draft| draft.figure_id != detail.figure_id)
+        {
+            self.figure_metadata_draft = None;
+        }
+        if self
+            .source_metadata_draft
+            .as_ref()
+            .is_some_and(|draft| draft.figure_id != detail.figure_id)
+        {
+            self.source_metadata_draft = None;
+        }
+
         ui.label(format!("Figure ID: {}", detail.figure_id));
-        ui.label(format!("Display Name: {}", detail.display_name));
-        ui.label(format!(
-            "Caption: {}",
-            detail.caption.as_deref().unwrap_or("-")
-        ));
+
+        let mut pending_action: Option<EditorAction> = None;
+        if let Some(draft) = self.figure_metadata_draft.as_mut() {
+            let payload = build_figure_update_payload(draft);
+            sync_figure_draft_lifecycle(draft, payload.has_changes);
+
+            ui.separator();
+            ui.label("Figure Metadata Editor");
+            ui.label(format!(
+                "Editor state: {}",
+                lifecycle_label(draft.lifecycle)
+            ));
+
+            let is_saving = draft.lifecycle == FigureEditorLifecycle::Saving;
+            ui.add_enabled_ui(!is_saving, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Display Name:");
+                    ui.text_edit_singleline(&mut draft.display_name_input);
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Caption:");
+                    ui.text_edit_singleline(&mut draft.caption_input);
+                });
+                ui.checkbox(&mut draft.clear_caption, "Clear caption");
+            });
+
+            if let Some(error_message) = draft.last_error.as_ref() {
+                ui.colored_label(egui::Color32::RED, error_message);
+            }
+
+            let can_save = payload.has_changes && !is_saving;
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Save"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::FigureSave(payload.clone()));
+                }
+                if ui
+                    .add_enabled(!is_saving, egui::Button::new("Cancel"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::FigureCancel);
+                }
+            });
+        } else {
+            ui.label(format!("Display Name: {}", detail.display_name));
+            ui.label(format!(
+                "Caption: {}",
+                detail.caption.as_deref().unwrap_or("-")
+            ));
+            if ui.button("Edit Figure Metadata").clicked() {
+                self.begin_figure_metadata_editing();
+            }
+        }
+
+        ui.separator();
         ui.label(format!("File Path: {}", detail.file_path));
         ui.label(format!("Media Type: {}", detail.media_type));
         ui.label(format!("File Size (bytes): {}", detail.file_size_bytes));
@@ -229,6 +518,67 @@ impl LamianGuiApp {
         }
 
         ui.separator();
+        ui.label("Source Metadata Editor");
+        if let Some(draft) = self.source_metadata_draft.as_mut() {
+            let payload = build_source_update_payload(draft);
+            sync_source_draft_lifecycle(draft, payload.has_changes);
+            ui.label(format!(
+                "Editor state: {}",
+                source_lifecycle_label(draft.lifecycle)
+            ));
+
+            let is_saving = draft.lifecycle == SourceEditorLifecycle::Saving;
+            ui.add_enabled_ui(!is_saving, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Title:");
+                    ui.text_edit_singleline(&mut draft.title_input);
+                });
+                ui.checkbox(&mut draft.clear_title, "Clear title");
+                ui.horizontal(|ui| {
+                    ui.label("Authors:");
+                    ui.text_edit_singleline(&mut draft.authors_input);
+                });
+                ui.checkbox(&mut draft.clear_authors, "Clear authors");
+                ui.horizontal(|ui| {
+                    ui.label("Published At:");
+                    ui.text_edit_singleline(&mut draft.published_at_input);
+                });
+                ui.checkbox(&mut draft.clear_published_at, "Clear published at");
+            });
+
+            if let Some(error_message) = draft.last_error.as_ref() {
+                ui.colored_label(egui::Color32::RED, error_message);
+            }
+
+            let can_save = payload.has_changes && !is_saving;
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Save Source Metadata"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::SourceSave(payload.clone()));
+                }
+                if ui
+                    .add_enabled(!is_saving, egui::Button::new("Cancel"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::SourceCancel);
+                }
+            });
+        } else if ui.button("Edit Source Metadata").clicked() {
+            self.begin_source_metadata_editing();
+        }
+
+        if let Some(action) = pending_action {
+            match action {
+                EditorAction::FigureSave(payload) => self.save_figure_metadata_changes(payload),
+                EditorAction::FigureCancel => self.cancel_figure_metadata_editing(),
+                EditorAction::SourceSave(payload) => self.save_source_metadata_changes(payload),
+                EditorAction::SourceCancel => self.cancel_source_metadata_editing(),
+            }
+        }
+
+        ui.separator();
         ui.label("Outbound links:");
         for link in &detail.outbound_links {
             ui.label(format!(
@@ -250,6 +600,14 @@ impl LamianGuiApp {
                 .interactive(false),
         );
     }
+}
+
+#[derive(Debug, Clone)]
+enum EditorAction {
+    FigureSave(FigureUpdatePayload),
+    FigureCancel,
+    SourceSave(SourceUpdatePayload),
+    SourceCancel,
 }
 
 impl eframe::App for LamianGuiApp {
@@ -289,9 +647,166 @@ fn figure_rows_from_search(rows: Vec<SearchFigure>) -> Vec<FigureListRowView> {
         .collect()
 }
 
+fn build_figure_update_payload(draft: &FigureMetadataDraft) -> FigureUpdatePayload {
+    let original_display_name = draft.original_display_name.trim().to_string();
+    let display_name_input_trimmed = draft.display_name_input.trim().to_string();
+    let display_name_changed = if display_name_input_trimmed.is_empty() {
+        draft.display_name_input != draft.original_display_name
+    } else {
+        display_name_input_trimmed != original_display_name
+    };
+
+    let name = if display_name_changed {
+        Some(draft.display_name_input.clone())
+    } else {
+        None
+    };
+
+    let original_caption = draft
+        .original_caption
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    let caption_input_trimmed = draft.caption_input.trim();
+    let caption_changed_without_clear = !draft.clear_caption
+        && if caption_input_trimmed.is_empty() {
+            draft.original_caption.is_some()
+                && draft.caption_input != draft.original_caption.clone().unwrap_or_default()
+        } else {
+            Some(caption_input_trimmed) != original_caption
+        };
+
+    let caption = if caption_changed_without_clear {
+        Some(draft.caption_input.clone())
+    } else {
+        None
+    };
+
+    let clear_caption = draft.clear_caption;
+    let clear_caption_changed = clear_caption && draft.original_caption.is_some();
+    let has_changes =
+        display_name_changed || caption_changed_without_clear || clear_caption_changed;
+
+    FigureUpdatePayload {
+        figure_id: draft.figure_id.clone(),
+        name,
+        caption,
+        clear_caption,
+        has_changes,
+        display_name_changed,
+    }
+}
+
+fn sync_figure_draft_lifecycle(draft: &mut FigureMetadataDraft, has_changes: bool) {
+    if draft.lifecycle == FigureEditorLifecycle::Saving {
+        return;
+    }
+
+    draft.lifecycle = if has_changes {
+        FigureEditorLifecycle::EditingDirty
+    } else {
+        FigureEditorLifecycle::EditingClean
+    };
+}
+
+fn lifecycle_label(lifecycle: FigureEditorLifecycle) -> &'static str {
+    match lifecycle {
+        FigureEditorLifecycle::EditingClean => "editing_clean",
+        FigureEditorLifecycle::EditingDirty => "editing_dirty",
+        FigureEditorLifecycle::Saving => "saving",
+        FigureEditorLifecycle::SaveFailed => "save_failed",
+    }
+}
+
+fn build_source_update_payload(draft: &SourceMetadataDraft) -> SourceUpdatePayload {
+    let title_changed = source_field_changed(
+        draft.original_title.as_deref(),
+        &draft.title_input,
+        draft.clear_title,
+    );
+    let authors_changed = source_field_changed(
+        draft.original_authors.as_deref(),
+        &draft.authors_input,
+        draft.clear_authors,
+    );
+    let published_at_changed = source_field_changed(
+        draft.original_published_at.as_deref(),
+        &draft.published_at_input,
+        draft.clear_published_at,
+    );
+
+    SourceUpdatePayload {
+        figure_id: draft.figure_id.clone(),
+        title: if title_changed && !draft.clear_title {
+            Some(draft.title_input.clone())
+        } else {
+            None
+        },
+        authors: if authors_changed && !draft.clear_authors {
+            Some(draft.authors_input.clone())
+        } else {
+            None
+        },
+        published_at: if published_at_changed && !draft.clear_published_at {
+            Some(draft.published_at_input.clone())
+        } else {
+            None
+        },
+        clear_title: draft.clear_title,
+        clear_authors: draft.clear_authors,
+        clear_published_at: draft.clear_published_at,
+        has_changes: title_changed || authors_changed || published_at_changed,
+    }
+}
+
+fn source_field_changed(
+    original_value: Option<&str>,
+    input_value: &str,
+    clear_value: bool,
+) -> bool {
+    if clear_value {
+        return original_value.is_some();
+    }
+
+    let original_trimmed = original_value
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    let input_trimmed = input_value.trim();
+    if input_trimmed.is_empty() {
+        original_trimmed.is_some()
+    } else {
+        Some(input_trimmed) != original_trimmed
+    }
+}
+
+fn sync_source_draft_lifecycle(draft: &mut SourceMetadataDraft, has_changes: bool) {
+    if draft.lifecycle == SourceEditorLifecycle::Saving {
+        return;
+    }
+
+    draft.lifecycle = if has_changes {
+        SourceEditorLifecycle::EditingDirty
+    } else {
+        SourceEditorLifecycle::EditingClean
+    };
+}
+
+fn source_lifecycle_label(lifecycle: SourceEditorLifecycle) -> &'static str {
+    match lifecycle {
+        SourceEditorLifecycle::EditingClean => "editing_clean",
+        SourceEditorLifecycle::EditingDirty => "editing_dirty",
+        SourceEditorLifecycle::Saving => "saving",
+        SourceEditorLifecycle::SaveFailed => "save_failed",
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{figure_rows_from_list, figure_rows_from_search};
+    use super::{
+        build_figure_update_payload, build_source_update_payload, figure_rows_from_list,
+        figure_rows_from_search, FigureEditorLifecycle, FigureMetadataDraft, SourceEditorLifecycle,
+        SourceMetadataDraft,
+    };
     use crate::list::ListFigureRow;
     use crate::search::SearchFigure;
 
@@ -353,5 +868,150 @@ mod tests {
     fn lamian_error_is_displayable() {
         let error = crate::error::LamianError::MissingSearchField { field: "text" };
         assert!(error.to_string().contains("text"));
+    }
+
+    #[test]
+    fn build_figure_update_payload_reports_name_change() {
+        let draft = FigureMetadataDraft {
+            figure_id: "fig_1".to_string(),
+            original_display_name: "old".to_string(),
+            original_caption: Some("caption".to_string()),
+            display_name_input: "new".to_string(),
+            caption_input: "caption".to_string(),
+            clear_caption: false,
+            lifecycle: FigureEditorLifecycle::EditingDirty,
+            last_error: None,
+        };
+
+        let payload = build_figure_update_payload(&draft);
+
+        assert!(payload.has_changes);
+        assert!(payload.display_name_changed);
+        assert_eq!(payload.name.as_deref(), Some("new"));
+        assert_eq!(payload.caption, None);
+        assert!(!payload.clear_caption);
+    }
+
+    #[test]
+    fn build_figure_update_payload_reports_clear_caption_change() {
+        let draft = FigureMetadataDraft {
+            figure_id: "fig_2".to_string(),
+            original_display_name: "name".to_string(),
+            original_caption: Some("caption".to_string()),
+            display_name_input: "name".to_string(),
+            caption_input: "caption".to_string(),
+            clear_caption: true,
+            lifecycle: FigureEditorLifecycle::EditingDirty,
+            last_error: None,
+        };
+
+        let payload = build_figure_update_payload(&draft);
+
+        assert!(payload.has_changes);
+        assert_eq!(payload.name, None);
+        assert_eq!(payload.caption, None);
+        assert!(payload.clear_caption);
+    }
+
+    #[test]
+    fn build_figure_update_payload_reports_no_change_when_draft_matches_detail() {
+        let draft = FigureMetadataDraft {
+            figure_id: "fig_3".to_string(),
+            original_display_name: "name".to_string(),
+            original_caption: None,
+            display_name_input: "name".to_string(),
+            caption_input: "".to_string(),
+            clear_caption: false,
+            lifecycle: FigureEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        let payload = build_figure_update_payload(&draft);
+
+        assert!(!payload.has_changes);
+        assert_eq!(payload.name, None);
+        assert_eq!(payload.caption, None);
+        assert!(!payload.clear_caption);
+    }
+
+    #[test]
+    fn build_source_update_payload_reports_no_change_for_matching_values() {
+        let draft = SourceMetadataDraft {
+            figure_id: "fig_4".to_string(),
+            original_title: Some("Title".to_string()),
+            original_authors: Some("Authors".to_string()),
+            original_published_at: Some("2026-02-25".to_string()),
+            title_input: "Title".to_string(),
+            authors_input: "Authors".to_string(),
+            published_at_input: "2026-02-25".to_string(),
+            clear_title: false,
+            clear_authors: false,
+            clear_published_at: false,
+            lifecycle: SourceEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        let payload = build_source_update_payload(&draft);
+
+        assert!(!payload.has_changes);
+        assert_eq!(payload.title, None);
+        assert_eq!(payload.authors, None);
+        assert_eq!(payload.published_at, None);
+        assert!(!payload.clear_title);
+        assert!(!payload.clear_authors);
+        assert!(!payload.clear_published_at);
+    }
+
+    #[test]
+    fn build_source_update_payload_reports_changed_title() {
+        let draft = SourceMetadataDraft {
+            figure_id: "fig_5".to_string(),
+            original_title: Some("Old".to_string()),
+            original_authors: None,
+            original_published_at: None,
+            title_input: "New".to_string(),
+            authors_input: "".to_string(),
+            published_at_input: "".to_string(),
+            clear_title: false,
+            clear_authors: false,
+            clear_published_at: false,
+            lifecycle: SourceEditorLifecycle::EditingDirty,
+            last_error: None,
+        };
+
+        let payload = build_source_update_payload(&draft);
+
+        assert!(payload.has_changes);
+        assert_eq!(payload.title.as_deref(), Some("New"));
+        assert_eq!(payload.authors, None);
+        assert_eq!(payload.published_at, None);
+    }
+
+    #[test]
+    fn build_source_update_payload_reports_clear_flags() {
+        let draft = SourceMetadataDraft {
+            figure_id: "fig_6".to_string(),
+            original_title: Some("Old".to_string()),
+            original_authors: Some("A".to_string()),
+            original_published_at: None,
+            title_input: "Old".to_string(),
+            authors_input: "A".to_string(),
+            published_at_input: "".to_string(),
+            clear_title: true,
+            clear_authors: true,
+            clear_published_at: true,
+            lifecycle: SourceEditorLifecycle::EditingDirty,
+            last_error: None,
+        };
+
+        let payload = build_source_update_payload(&draft);
+
+        assert!(payload.has_changes);
+        assert!(payload.clear_title);
+        assert!(payload.clear_authors);
+        assert!(payload.clear_published_at);
+        assert_eq!(payload.title, None);
+        assert_eq!(payload.authors, None);
+        assert_eq!(payload.published_at, None);
     }
 }

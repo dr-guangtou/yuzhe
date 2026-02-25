@@ -85,6 +85,29 @@ Build a local-only visual knowledge base for research figures with reliable meta
    - save/delete failure recovery and retry/cancel behavior
    - deterministic list/detail behavior after mutation success paths
 
+## Phase 2.2 Drag-and-Drop Ingest UX and State Flow (P4-517/L-218, Design Locked)
+
+1. Scope adds drag-and-drop as a GUI input method over existing shared ingest core services:
+   - single-file and multi-file drops are accepted.
+   - GUI does not introduce a separate ingest implementation path.
+2. Drop session state sequence:
+   - `idle` -> `drop_received` -> `metadata_required` -> `ready_to_commit` -> `committing` -> (`committed` or `commit_failed`)
+   - `metadata_required` is entered when any required provenance field is missing in the pending batch.
+   - `ready_to_commit` requires provenance completeness for all pending items.
+3. Provenance prompt contract:
+   - required fields remain `source_type` and `source_key` under shared ingest validation semantics.
+   - GUI supports batch defaults with optional per-item override before commit.
+   - commit remains blocked until all items satisfy provenance requirements.
+4. Deterministic behavior contract:
+   - dropped items commit in deterministic lexicographic normalized-path order.
+   - post-commit list/search ordering stays service-driven; GUI renders rows in returned order only.
+   - per-item success/failure reporting remains stable and deterministic for multi-file batches.
+5. Safety and compatibility contract:
+   - failed items do not alter successful-item result ordering or payload semantics.
+   - Rust crate edition remains 2021 and this flow preserves existing deterministic CLI/domain guarantees.
+6. Acceptance target before implementation:
+   - design lock is documented in both incubator and standalone SPEC mirrors before coding starts.
+
 ## Phase 1.8 Decisions (Finalized)
 
 ### Wave 1-3 (Implemented)
@@ -200,3 +223,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 6. Phase 2.0-S1 GUI preserves service ordering guarantees by rendering rows in exactly the order returned from shared core list/search services.
 7. Phase 2.0-S2 mutation flows are implemented through shared `update`/`source update` services and validated by GUI regression tests for state transitions, failure recovery, and deterministic post-save list/detail behavior.
 8. Phase 2.1 tag/link/delete mutation flows are implemented via shared `tag`/`link`/`delete` services and validated by regression tests for failure recovery and deterministic post-mutation list/detail behavior.
+9. Phase 2.2 drag-and-drop ingest UX/state flow is design-locked to shared ingest-core reuse with explicit provenance prompts and deterministic multi-file commit ordering before implementation.

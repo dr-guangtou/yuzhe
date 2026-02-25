@@ -158,7 +158,7 @@
 | P4-514 | Wire GUI figure delete flow to shared `delete` service | agent | [x] Done | added explicit delete-confirmation GUI flow wired to shared `delete_figure` with deterministic post-delete next/previous/clear selection policy |
 | P4-515 | Add GUI regression coverage for tag/link/delete mutation flows | agent | [x] Done | added GUI regression tests for tag/link/delete lifecycle transitions, success/failure recovery, and deterministic list/detail transitions |
 | P4-516 | Verify Phase 2.1 mutation expansion full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-512..P4-515 |
-| P4-517 | Design Phase 2.2 drag-and-drop ingest UX/state flow | agent | [ ] In Progress | define provenance prompt policy and multi-file behavior using shared ingest core |
+| P4-517 | Design Phase 2.2 drag-and-drop ingest UX/state flow | agent | [x] Done | locked drop-session lifecycle, provenance prompt policy, deterministic multi-file commit ordering, and shared ingest-core reuse across both SPEC mirrors |
 | P4-518 | Update Phase 2 docs/spec trackers for 2.1 implemented closure | agent | [x] Done | synced implemented Phase 2.1 wording across `project4/SPEC.md`, `project4/lamian/docs/SPEC.md`, `project4/TODO.md`, `project4/lamian/docs/TODO.md`, and `docs/todo.md` |
 
 ## Review Notes
@@ -214,3 +214,4 @@
 - 2026-02-25: Completed P4-514 by wiring GUI figure delete confirmation flow to shared delete service with deterministic next/previous/clear post-delete selection behavior.
 - 2026-02-25: Completed P4-515 by extending GUI regression coverage across tag/link/delete mutation flows (state transitions, failure recovery, and deterministic list/detail behavior).
 - 2026-02-25: Completed P4-516 by rerunning and passing the full Rust gate in `project4/lamian` after Phase 2.1 mutation expansion slices.
+- 2026-02-25: Completed P4-517 by design-locking Phase 2.2 drag-and-drop ingest UX/state flow (provenance prompt policy, multi-file deterministic ordering, shared ingest-core reuse, and Rust 2021 compatibility constraints) in both SPEC mirrors.

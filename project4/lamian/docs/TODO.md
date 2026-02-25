@@ -57,7 +57,7 @@
 | L-215 | Wire GUI figure delete flow to shared delete service | Done | added explicit delete-confirmation GUI flow via shared delete service with deterministic next/previous/clear post-delete selection |
 | L-216 | Add GUI regression coverage for tag/link/delete flows | Done | added GUI regression tests for mutation state transitions, failure recovery, and deterministic list/detail behavior across tag/link/delete |
 | L-217 | Run full verification gate for Phase 2.1 mutation expansion | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-213..L-216 |
-| L-218 | Design Phase 2.2 drag-and-drop ingest UX and provenance prompts | In Progress | define one/many file drop behavior while reusing shared ingest core |
+| L-218 | Design Phase 2.2 drag-and-drop ingest UX and provenance prompts | Done | locked drop-session state flow, provenance prompt policy, deterministic multi-file commit ordering, and shared ingest-core reuse in `docs/SPEC.md` |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 

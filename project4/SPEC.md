@@ -74,6 +74,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-202 GUI figure detail panel (read-only) reusing core show service
 - FR-203 GUI metadata mutation flow with separate figure/source edit sessions and shared-core validation semantics
 - FR-204 GUI tag/link/delete mutation flow with deterministic post-mutation list/detail behavior and shared-core validation semantics
+- FR-205 GUI drag-and-drop ingest flow reusing shared ingest core with explicit provenance prompt states and deterministic batch application semantics
 
 ## 6. Non-Functional Requirements
 
@@ -164,7 +165,30 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
   - save/delete failure recovery with retry/cancel behavior
   - deterministic list/detail behavior after tag/link/delete success paths
 
-## 7.5 Data Store Strategy
+## 7.5 Phase 2.2 GUI Drag-and-Drop Ingest State Model (Design Locked)
+
+- Scope adds drag-and-drop as a GUI input method for existing shared ingest core service:
+  - single-file drop and multi-file drop are both accepted.
+  - GUI does not implement a separate ingest path; it calls the same ingest service family used by CLI `inject`/`import`.
+- Drop session state model:
+  - `idle` -> `drop_received` -> `metadata_required` -> `ready_to_commit` -> `committing` -> (`committed` or `commit_failed`)
+  - `metadata_required` is entered when required provenance fields are missing for at least one dropped item.
+  - `ready_to_commit` requires provenance completeness validation for all items in the pending drop batch.
+- Provenance prompt contract:
+  - required fields remain `source_type` and `source_key` (matching shared ingest validation semantics).
+  - GUI provides per-batch metadata defaults with optional per-item override before commit.
+  - commit action is blocked until all items satisfy shared ingest provenance requirements.
+- Deterministic behavior contract:
+  - multi-file drops are committed in deterministic lexicographic path order after path normalization.
+  - post-commit row ordering remains fully service-driven; GUI renders rows exactly as returned by shared list/search services.
+  - partial-success outcomes are reported deterministically with stable per-item result ordering.
+- Safety and compatibility contract:
+  - failed items do not mutate successful-item result ordering or payload semantics.
+  - Rust crate edition remains 2021 and drag-and-drop flow preserves existing deterministic CLI/domain invariants.
+- Acceptance target before implementation:
+  - UX/state flow is design-locked in both incubator and standalone SPEC mirrors before coding starts.
+
+## 7.6 Data Store Strategy
 
 - Canonical store: SQLite
 - Portability: export and bundle artifacts
@@ -295,3 +319,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
   - Phase 2.0-S1 GUI launch succeeds on macOS and preserves deterministic row ordering from core services
   - Phase 2.0-S2 figure/source metadata mutation flows are implemented via shared services and covered by regression tests for save success/failure recovery and deterministic post-save list/detail behavior
   - Phase 2.1 tag/link/delete mutation flows are implemented through shared `tag`/`link`/`delete` services and covered by regression tests for lifecycle failure recovery and deterministic post-mutation selection/refresh behavior
+  - Phase 2.2 drag-and-drop ingest UX/state flow is design-locked to shared ingest-core reuse with explicit provenance prompt states and deterministic multi-file commit semantics before implementation

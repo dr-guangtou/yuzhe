@@ -7,6 +7,7 @@ use crate::delete::{delete_figure, DeleteFigureRequest};
 use crate::inject::{inject_figure, CopyMode, InjectRequest, SourceType};
 use crate::link::{add_link, remove_link, AddLinkRequest, RemoveLinkRequest};
 use crate::list::{list_figures, ListFigureRow, ListFiguresRequest};
+use crate::open::{open_figure, OpenFigureRequest};
 use crate::search::{search_figures, SearchFigure, SearchRequest};
 use crate::show::{show_figure, ShowFigureRequest, ShowFigureResult};
 use crate::source::{update_source_metadata, UpdateSourceRequest};
@@ -168,6 +169,28 @@ struct DeleteFigurePayload {
     figure_id: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum OpenFigureLifecycle {
+    Ready,
+    OpeningFile,
+    OpenFailed,
+}
+
+#[derive(Debug, Clone)]
+struct OpenFigureDraft {
+    lifecycle: OpenFigureLifecycle,
+    last_error: Option<String>,
+}
+
+impl Default for OpenFigureDraft {
+    fn default() -> Self {
+        Self {
+            lifecycle: OpenFigureLifecycle::Ready,
+            last_error: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 enum DropIngestLifecycle {
     #[default]
@@ -232,6 +255,7 @@ pub struct LamianGuiApp {
     tag_mutation_draft: Option<TagMutationDraft>,
     link_mutation_draft: Option<LinkMutationDraft>,
     delete_figure_draft: Option<DeleteFigureDraft>,
+    open_figure_draft: OpenFigureDraft,
     drop_ingest_session: DropIngestSessionDraft,
     status_message: Option<String>,
     error_message: Option<String>,
@@ -293,6 +317,19 @@ impl LamianGuiApp {
         }
     }
 
+    fn apply_search_filter(&mut self) {
+        self.refresh_figure_rows();
+    }
+
+    fn clear_search_filter(&mut self) {
+        if self.search_text.trim().is_empty() {
+            self.status_message = Some("Search filter is already clear.".to_string());
+            return;
+        }
+        self.search_text.clear();
+        self.refresh_figure_rows();
+    }
+
     fn sync_selection_after_row_reload(&mut self) {
         let Some(selected_figure_id) = self.selected_figure_id.clone() else {
             return;
@@ -307,6 +344,65 @@ impl LamianGuiApp {
         } else {
             self.selected_figure_id = None;
             self.selected_figure_detail = None;
+            self.open_figure_draft = OpenFigureDraft::default();
+        }
+    }
+
+    fn selected_row_index(&self) -> Option<usize> {
+        let selected_figure_id = self.selected_figure_id.as_deref()?;
+        self.figure_rows
+            .iter()
+            .position(|row| row.figure_id == selected_figure_id)
+    }
+
+    fn select_row_at_index(&mut self, index: usize) {
+        if let Some(figure_id) = self.figure_rows.get(index).map(|row| row.figure_id.clone()) {
+            self.load_figure_detail(&figure_id);
+        }
+    }
+
+    fn select_next_figure_row(&mut self) {
+        if self.figure_rows.is_empty() {
+            self.selected_figure_id = None;
+            self.selected_figure_detail = None;
+            self.status_message = Some("No figures available to navigate.".to_string());
+            return;
+        }
+        let next_index = match self.selected_row_index() {
+            Some(index) => (index + 1).min(self.figure_rows.len().saturating_sub(1)),
+            None => 0,
+        };
+        self.select_row_at_index(next_index);
+    }
+
+    fn select_previous_figure_row(&mut self) {
+        if self.figure_rows.is_empty() {
+            self.selected_figure_id = None;
+            self.selected_figure_detail = None;
+            self.status_message = Some("No figures available to navigate.".to_string());
+            return;
+        }
+        let previous_index = match self.selected_row_index() {
+            Some(index) => index.saturating_sub(1),
+            None => self.figure_rows.len().saturating_sub(1),
+        };
+        self.select_row_at_index(previous_index);
+    }
+
+    fn handle_navigation_shortcuts(&mut self, context: &egui::Context) {
+        if self.connected_vault_root.is_none() || self.figure_rows.is_empty() {
+            return;
+        }
+        let navigate_next_pressed = context
+            .input(|input| input.key_pressed(egui::Key::ArrowDown) && !input.modifiers.any());
+        if navigate_next_pressed {
+            self.select_next_figure_row();
+        }
+
+        let navigate_previous_pressed =
+            context.input(|input| input.key_pressed(egui::Key::ArrowUp) && !input.modifiers.any());
+        if navigate_previous_pressed {
+            self.select_previous_figure_row();
         }
     }
 
@@ -328,10 +424,43 @@ impl LamianGuiApp {
                 self.tag_mutation_draft = None;
                 self.link_mutation_draft = None;
                 self.delete_figure_draft = None;
+                self.open_figure_draft = OpenFigureDraft::default();
                 self.error_message = None;
             }
             Err(error) => {
                 self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn open_selected_figure_file(&mut self, figure_id: &str) {
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        self.open_figure_draft.lifecycle = OpenFigureLifecycle::OpeningFile;
+        self.open_figure_draft.last_error = None;
+
+        match open_figure(OpenFigureRequest {
+            vault_root: vault_root.clone(),
+            figure_id: figure_id.to_string(),
+        }) {
+            Ok(result) => {
+                self.open_figure_draft.lifecycle = OpenFigureLifecycle::Ready;
+                self.open_figure_draft.last_error = None;
+                self.error_message = None;
+                self.status_message = Some(format!(
+                    "Opened figure file: {} ({})",
+                    result.figure_id,
+                    result.resolved_file_path.display()
+                ));
+            }
+            Err(error) => {
+                self.open_figure_draft.lifecycle = OpenFigureLifecycle::OpenFailed;
+                self.open_figure_draft.last_error = Some(error.to_string());
+                self.error_message = Some(error.to_string());
+                self.status_message = None;
             }
         }
     }
@@ -936,13 +1065,32 @@ impl LamianGuiApp {
 
         ui.horizontal(|ui| {
             ui.label("Search text:");
-            ui.text_edit_singleline(&mut self.search_text);
+            let search_input_response = ui.text_edit_singleline(&mut self.search_text);
             if ui.button("Run Search").clicked() {
-                self.refresh_figure_rows();
+                self.apply_search_filter();
             }
             if ui.button("Clear Search").clicked() {
-                self.search_text.clear();
-                self.refresh_figure_rows();
+                self.clear_search_filter();
+            }
+            if search_input_response.lost_focus()
+                && ui.input(|input| input.key_pressed(egui::Key::Enter))
+            {
+                self.apply_search_filter();
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("Selection:");
+            if ui.button("Previous").clicked() {
+                self.select_previous_figure_row();
+            }
+            if ui.button("Next").clicked() {
+                self.select_next_figure_row();
+            }
+            if ui.button("Clear Selection").clicked() {
+                self.selected_figure_id = None;
+                self.selected_figure_detail = None;
+                self.open_figure_draft = OpenFigureDraft::default();
             }
         });
 
@@ -1140,6 +1288,23 @@ impl LamianGuiApp {
         let mut pending_action: Option<EditorAction> = None;
 
         ui.label(format!("Figure ID: {}", detail.figure_id));
+        ui.label("Open Figure File");
+        let is_opening_file = self.open_figure_draft.lifecycle == OpenFigureLifecycle::OpeningFile;
+        ui.label(format!(
+            "Open state: {}",
+            open_figure_lifecycle_label(self.open_figure_draft.lifecycle)
+        ));
+        if ui
+            .add_enabled(!is_opening_file, egui::Button::new("Open Figure File"))
+            .clicked()
+        {
+            pending_action = Some(EditorAction::OpenFigureFile(detail.figure_id.clone()));
+        }
+        if let Some(error_message) = self.open_figure_draft.last_error.as_ref() {
+            ui.colored_label(egui::Color32::RED, error_message);
+        }
+
+        ui.separator();
         ui.label("Delete Figure");
         if let Some(draft) = self.delete_figure_draft.as_mut() {
             ui.label(format!(
@@ -1423,6 +1588,9 @@ impl LamianGuiApp {
                 EditorAction::LinkCancel => self.cancel_link_mutation_editing(),
                 EditorAction::DeleteConfirm(payload) => self.confirm_delete_figure(payload),
                 EditorAction::DeleteCancel => self.cancel_delete_figure_confirmation(),
+                EditorAction::OpenFigureFile(figure_id) => {
+                    self.open_selected_figure_file(&figure_id)
+                }
             }
         }
 
@@ -1453,10 +1621,12 @@ enum EditorAction {
     LinkCancel,
     DeleteConfirm(DeleteFigurePayload),
     DeleteCancel,
+    OpenFigureFile(String),
 }
 
 impl eframe::App for LamianGuiApp {
     fn update(&mut self, context: &egui::Context, _frame: &mut eframe::Frame) {
+        self.handle_navigation_shortcuts(context);
         self.capture_dropped_files(context);
 
         egui::TopBottomPanel::top("top_controls").show(context, |ui| {
@@ -1724,6 +1894,14 @@ fn delete_lifecycle_label(lifecycle: DeleteEditorLifecycle) -> &'static str {
     }
 }
 
+fn open_figure_lifecycle_label(lifecycle: OpenFigureLifecycle) -> &'static str {
+    match lifecycle {
+        OpenFigureLifecycle::Ready => "ready",
+        OpenFigureLifecycle::OpeningFile => "opening_file",
+        OpenFigureLifecycle::OpenFailed => "open_failed",
+    }
+}
+
 fn normalize_drop_path(path: &Path) -> String {
     path.components()
         .filter_map(|component| {
@@ -1809,15 +1987,16 @@ mod tests {
     use super::{
         build_figure_update_payload, build_link_mutation_payload, build_source_update_payload,
         build_tag_mutation_payload, drop_ingest_lifecycle_label, figure_rows_from_list,
-        figure_rows_from_search, normalize_drop_path, parse_drop_source_type_input,
-        resolve_drop_ingest_metadata, sync_figure_draft_lifecycle, sync_link_draft_lifecycle,
-        sync_source_draft_lifecycle, sync_tag_draft_lifecycle, DeleteEditorLifecycle,
-        DeleteFigurePayload, DropIngestItemCommitResult, DropIngestItemCommitStatus,
-        DropIngestItemDraft, DropIngestLifecycle, FigureEditorLifecycle, FigureMetadataDraft,
-        LamianGuiApp, LinkEditorLifecycle, LinkMutationAction, LinkMutationDraft,
-        SourceEditorLifecycle, SourceMetadataDraft, TagEditorLifecycle, TagMutationAction,
-        TagMutationDraft,
+        figure_rows_from_search, normalize_drop_path, open_figure_lifecycle_label,
+        parse_drop_source_type_input, resolve_drop_ingest_metadata, sync_figure_draft_lifecycle,
+        sync_link_draft_lifecycle, sync_source_draft_lifecycle, sync_tag_draft_lifecycle,
+        DeleteEditorLifecycle, DeleteFigurePayload, DropIngestItemCommitResult,
+        DropIngestItemCommitStatus, DropIngestItemDraft, DropIngestLifecycle,
+        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle,
+        LinkMutationAction, LinkMutationDraft, OpenFigureLifecycle, SourceEditorLifecycle,
+        SourceMetadataDraft, TagEditorLifecycle, TagMutationAction, TagMutationDraft,
     };
+    use std::ffi::OsString;
     use std::fs;
     use std::path::{Path, PathBuf};
 
@@ -1829,6 +2008,9 @@ mod tests {
     use crate::list::ListFigureRow;
     use crate::search::SearchFigure;
     use crate::source::{update_source_metadata, UpdateSourceRequest};
+    use crate::update::{update_figure, UpdateRequest};
+
+    const OPEN_LAUNCHER_ENVIRONMENT_VARIABLE: &str = "LAMIAN_OPEN_LAUNCHER";
 
     #[test]
     fn rows_from_list_keep_input_order() {
@@ -2916,6 +3098,256 @@ mod tests {
     }
 
     #[test]
+    fn open_file_action_preserves_selection_and_deterministic_row_order_on_success() {
+        let (temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        let launcher_path = build_open_success_launcher(temp_dir.path());
+        let _guard = open_launcher_environment_guard(launcher_path.as_os_str());
+
+        app.open_selected_figure_file(&figure_id);
+
+        let list_order_after = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(list_order_after, list_order_before);
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.figure_id.as_str()),
+            Some(figure_id.as_str())
+        );
+        assert_eq!(app.open_figure_draft.lifecycle, OpenFigureLifecycle::Ready);
+        assert_eq!(
+            open_figure_lifecycle_label(app.open_figure_draft.lifecycle),
+            "ready"
+        );
+        assert!(app.open_figure_draft.last_error.is_none());
+        assert!(app.error_message.is_none());
+        assert!(app
+            .status_message
+            .as_deref()
+            .is_some_and(|message| message.contains("Opened figure file")));
+    }
+
+    #[test]
+    fn open_file_failure_preserves_selection_and_allows_retry() {
+        let (temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        app.open_selected_figure_file("fig_missing");
+
+        assert_eq!(
+            app.open_figure_draft.lifecycle,
+            OpenFigureLifecycle::OpenFailed
+        );
+        assert_eq!(
+            open_figure_lifecycle_label(app.open_figure_draft.lifecycle),
+            "open_failed"
+        );
+        assert!(app
+            .open_figure_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("unknown figure id")));
+        assert!(app.error_message.is_some());
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert_eq!(
+            app.figure_rows
+                .iter()
+                .map(|row| row.figure_id.clone())
+                .collect::<Vec<_>>(),
+            list_order_before
+        );
+
+        let success_launcher_path = build_open_success_launcher(temp_dir.path());
+        let _guard_retry = open_launcher_environment_guard(success_launcher_path.as_os_str());
+        app.open_selected_figure_file(&figure_id);
+
+        assert_eq!(app.open_figure_draft.lifecycle, OpenFigureLifecycle::Ready);
+        assert!(app.open_figure_draft.last_error.is_none());
+        assert!(app.error_message.is_none());
+    }
+
+    #[test]
+    fn previous_next_navigation_uses_deterministic_row_order_transitions() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let first_figure_id = figure_ids[0].clone();
+        let second_figure_id = figure_ids[1].clone();
+
+        app.select_next_figure_row();
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(first_figure_id.as_str())
+        );
+
+        app.select_next_figure_row();
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(second_figure_id.as_str())
+        );
+
+        app.select_next_figure_row();
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(second_figure_id.as_str())
+        );
+
+        app.select_previous_figure_row();
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(first_figure_id.as_str())
+        );
+
+        app.select_previous_figure_row();
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(first_figure_id.as_str())
+        );
+    }
+
+    #[test]
+    fn previous_navigation_without_selection_targets_last_row_deterministically() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let last_figure_id = figure_ids
+            .last()
+            .cloned()
+            .expect("seed fixture provides at least one figure");
+
+        assert!(app.selected_figure_id.is_none());
+        app.select_previous_figure_row();
+
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(last_figure_id.as_str())
+        );
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.figure_id.as_str()),
+            Some(last_figure_id.as_str())
+        );
+    }
+
+    #[test]
+    fn navigation_with_empty_rows_clears_selection_and_reports_status() {
+        let mut app = LamianGuiApp {
+            selected_figure_id: Some("fig_stale".to_string()),
+            selected_figure_detail: Some(dummy_detail("fig_stale")),
+            ..LamianGuiApp::default()
+        };
+
+        app.select_next_figure_row();
+        assert!(app.selected_figure_id.is_none());
+        assert!(app.selected_figure_detail.is_none());
+        assert!(app
+            .status_message
+            .as_deref()
+            .is_some_and(|message| message.contains("No figures available")));
+
+        app.select_previous_figure_row();
+        assert!(app.selected_figure_id.is_none());
+        assert!(app.selected_figure_detail.is_none());
+    }
+
+    #[test]
+    fn search_apply_and_clear_preserve_service_order_and_selection_stability() {
+        let (_temp_dir, vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let first_figure_id = figure_ids[0].clone();
+        let second_figure_id = figure_ids[1].clone();
+
+        update_figure(UpdateRequest {
+            vault_root: vault_path.clone(),
+            figure_id: first_figure_id.clone(),
+            name: Some("alpha-search-target".to_string()),
+            caption: None,
+            clear_caption: false,
+            note_file: None,
+        })
+        .expect("rename first figure");
+        update_figure(UpdateRequest {
+            vault_root: vault_path,
+            figure_id: second_figure_id.clone(),
+            name: Some("beta-search-target".to_string()),
+            caption: None,
+            clear_caption: false,
+            note_file: None,
+        })
+        .expect("rename second figure");
+
+        app.refresh_figure_rows();
+        let full_order_before_search = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(full_order_before_search, figure_ids);
+
+        app.load_figure_detail(&first_figure_id);
+        app.search_text = "beta-search-target".to_string();
+        app.apply_search_filter();
+
+        assert_eq!(app.figure_rows.len(), 1);
+        assert_eq!(app.figure_rows[0].figure_id, second_figure_id);
+        assert!(app.selected_figure_id.is_none());
+        assert!(app.selected_figure_detail.is_none());
+
+        app.clear_search_filter();
+        let full_order_after_clear = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(full_order_after_clear, full_order_before_search);
+    }
+
+    #[test]
+    fn clear_search_filter_when_already_empty_keeps_rows_and_selection_stable() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let selected_figure_id = figure_ids[0].clone();
+        let rows_before_clear = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&selected_figure_id);
+        assert!(app.search_text.is_empty());
+
+        app.clear_search_filter();
+
+        let rows_after_clear = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(rows_after_clear, rows_before_clear);
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(selected_figure_id.as_str())
+        );
+        assert!(app
+            .status_message
+            .as_deref()
+            .is_some_and(|message| message.contains("already clear")));
+    }
+
+    #[test]
     fn delete_flow_requires_confirmation_and_uses_deterministic_next_selection() {
         let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
         let first_figure_id = figure_ids[0].clone();
@@ -3055,5 +3487,71 @@ mod tests {
     fn canonicalize_path(path: &Path) -> PathBuf {
         path.canonicalize()
             .unwrap_or_else(|error| panic!("failed to canonicalize {}: {error}", path.display()))
+    }
+
+    fn dummy_detail(figure_id: &str) -> crate::show::ShowFigureResult {
+        crate::show::ShowFigureResult {
+            figure_id: figure_id.to_string(),
+            display_name: "dummy".to_string(),
+            caption: None,
+            file_path: "dummy/path.png".to_string(),
+            file_hash_sha256: "dummyhash".to_string(),
+            media_type: "image/png".to_string(),
+            file_size_bytes: 1,
+            created_at: "2026-02-25T00:00:00Z".to_string(),
+            updated_at: "2026-02-25T00:00:00Z".to_string(),
+            sources: Vec::new(),
+            tags: Vec::new(),
+            outbound_links: Vec::new(),
+            note: None,
+        }
+    }
+
+    #[cfg(unix)]
+    fn build_open_success_launcher(base_directory: &Path) -> PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+
+        let launcher_path = base_directory.join("gui_open_success.sh");
+        fs::write(&launcher_path, "#!/bin/sh\nexit 0\n").expect("write success launcher");
+        let permissions = std::fs::Permissions::from_mode(0o755);
+        std::fs::set_permissions(&launcher_path, permissions).expect("chmod success launcher");
+        launcher_path
+    }
+
+    #[cfg(windows)]
+    fn build_open_success_launcher(base_directory: &Path) -> PathBuf {
+        let launcher_path = base_directory.join("gui_open_success.bat");
+        fs::write(&launcher_path, "@echo off\r\nexit /b 0\r\n").expect("write success launcher");
+        launcher_path
+    }
+
+    fn open_launcher_environment_guard(value: &std::ffi::OsStr) -> EnvironmentGuard {
+        EnvironmentGuard::set(OPEN_LAUNCHER_ENVIRONMENT_VARIABLE, value)
+    }
+
+    struct EnvironmentGuard {
+        key: &'static str,
+        previous_value: Option<OsString>,
+    }
+
+    impl EnvironmentGuard {
+        fn set(key: &'static str, value: &std::ffi::OsStr) -> Self {
+            let previous_value = std::env::var_os(key);
+            std::env::set_var(key, value);
+            Self {
+                key,
+                previous_value,
+            }
+        }
+    }
+
+    impl Drop for EnvironmentGuard {
+        fn drop(&mut self) {
+            if let Some(previous_value) = &self.previous_value {
+                std::env::set_var(self.key, previous_value);
+            } else {
+                std::env::remove_var(self.key);
+            }
+        }
     }
 }

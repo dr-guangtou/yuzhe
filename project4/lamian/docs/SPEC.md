@@ -108,6 +108,30 @@ Build a local-only visual knowledge base for research figures with reliable meta
 6. Acceptance target before implementation:
    - design lock is documented in both incubator and standalone SPEC mirrors before coding starts.
 
+## Phase 2.3 Workflow Parity Polish UX and State Flow (P4-524/L-224, Design Locked)
+
+1. Scope closes GUI workflow parity gaps on top of existing shared services:
+   - open selected figure file from GUI using the same resolved-path semantics as CLI `open`.
+   - list/detail navigation polish for keyboard and pointer interaction without introducing a new domain path.
+   - search/filter ergonomics polish (apply/clear/refine) while preserving service-driven result ordering.
+2. State and interaction contract:
+   - open-file action: `ready` -> `opening_file` -> (`open_succeeded` or `open_failed`) -> `ready`.
+   - navigation/search interaction: `browsing` -> (`filtering` or `navigating`) -> `browsing`.
+   - transient states never reorder rows locally; rendered ordering always comes from shared list/search responses.
+3. Validation and ownership boundary:
+   - GUI enforces only interaction-level guards (for example, disable open when no selection exists).
+   - path resolution, open execution semantics, and domain validation remain in shared services.
+   - backend error text is surfaced directly to avoid semantic drift between CLI and GUI behavior.
+4. Deterministic behavior contract:
+   - selection transitions are deterministic for repeated key/pointer sequences against the same row set.
+   - filter apply/clear cycles produce deterministic list/detail refresh order based on shared service output.
+   - open success/failure does not mutate list ordering or selected detail payload unexpectedly.
+5. Rust/toolchain compatibility contract:
+   - implementation and tests remain Rust 2021-compatible (no Rust 2024-only syntax/features).
+   - parity polish does not relax deterministic ordering guarantees already locked in earlier Phase 2 slices.
+6. Acceptance target before implementation:
+   - this Phase 2.3 design lock is documented in both `project4/SPEC.md` and `project4/lamian/docs/SPEC.md` before `L-225` coding begins.
+
 ## Phase 1.8 Decisions (Finalized)
 
 ### Wave 1-3 (Implemented)
@@ -224,3 +248,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 7. Phase 2.0-S2 mutation flows are implemented through shared `update`/`source update` services and validated by GUI regression tests for state transitions, failure recovery, and deterministic post-save list/detail behavior.
 8. Phase 2.1 tag/link/delete mutation flows are implemented via shared `tag`/`link`/`delete` services and validated by regression tests for failure recovery and deterministic post-mutation list/detail behavior.
 9. Phase 2.2 drag-and-drop ingest UX/state flow is design-locked to shared ingest-core reuse with explicit provenance prompts and deterministic multi-file commit ordering before implementation.
+10. Phase 2.3 workflow parity-polish UX/state flow is design-locked for open-file/navigation/search-filter ergonomics with explicit Rust 2021 and deterministic ordering constraints before implementation.

@@ -161,7 +161,7 @@
 | P4-517 | Design Phase 2.2 drag-and-drop ingest UX/state flow | agent | [x] Done | locked drop-session lifecycle, provenance prompt policy, deterministic multi-file commit ordering, and shared ingest-core reuse across both SPEC mirrors |
 | P4-518 | Update Phase 2 docs/spec trackers for 2.1 implemented closure | agent | [x] Done | synced implemented Phase 2.1 wording across `project4/SPEC.md`, `project4/lamian/docs/SPEC.md`, `project4/TODO.md`, `project4/lamian/docs/TODO.md`, and `docs/todo.md` |
 
-## Phase 2.2 GUI Drag-and-Drop Ingest (Next)
+## Phase 2.2 GUI Drag-and-Drop Ingest (Implemented Closure)
 
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
@@ -170,6 +170,24 @@
 | P4-521 | Implement provenance prompt defaults and per-item overrides | agent | [x] Done | added batch-level provenance defaults with per-item override resolution in `src/gui.rs`; commit remains blocked until each item has complete required metadata |
 | P4-522 | Add GUI regression coverage for deterministic multi-file ingest behavior | agent | [x] Done | added deterministic drop-commit ordering, stable per-item status mapping, and commit-failure recovery retry coverage in `src/gui.rs` tests |
 | P4-523 | Verify Phase 2.2 ingest implementation full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-519..P4-522 |
+
+## Phase 2.3 GUI Workflow Parity Polish (Planning Baseline)
+
+| ID | Task | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| P4-524 | Lock Phase 2.3 parity-polish UX/state flow and acceptance contract | agent | [x] Done | design lock documented in `project4/SPEC.md` and `project4/lamian/docs/SPEC.md` with explicit open-file/navigation/search-filter scope plus Rust 2021 and deterministic ordering constraints before implementation |
+| P4-525 | Implement open-file parity and selection-state stabilization in GUI | agent | [x] Done | added GUI open-file action wired to shared `open_figure` semantics with explicit open lifecycle state and deterministic list/detail selection stability across success/failure/retry paths |
+| P4-526 | Implement list/detail navigation and search/filter polish behaviors | agent | [x] Done | added deterministic previous/next selection controls, keyboard arrow navigation handling, and search apply/clear polish paths in GUI without local row reordering under Rust 2021-compatible code paths |
+| P4-527 | Add regression coverage for Phase 2.3 parity-polish deterministic behavior | agent | [x] Done | added GUI regression tests for open-file success/failure-retry outcomes, deterministic next/previous navigation transitions, empty-state navigation behavior, and stable search apply/clear list-detail refresh behavior |
+| P4-528 | Verify Phase 2.3 parity-polish implementation full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` in `project4/lamian` after P4-525..P4-527 |
+
+### Phase 2.3 Acceptance Criteria
+
+- `P4-524` defines the full Phase 2.3 scope and acceptance contract in both `project4/SPEC.md` and `project4/lamian/docs/SPEC.md` before implementation.
+- Open-file GUI action uses shared core semantics and reports success/failure without nondeterministic state transitions.
+- List/detail and search/filter polish paths keep deterministic ordering guarantees for rows, selection changes, and refresh outputs.
+- All Phase 2.3 GUI state transitions and result mappings remain Rust 2021-compatible (no 2024-only syntax/features).
+- Phase 2.3 closes only after full gate pass: `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`.
 
 ## Review Notes
 
@@ -231,3 +249,8 @@
 - 2026-02-25: Completed P4-521 by implementing drop-session batch provenance defaults and per-item override behavior in `src/gui.rs`, enforcing required-metadata gating across all pending items before commit while preserving deterministic ordering and Rust 2021 constraints; full gate remains pending for P4-523 after P4-522.
 - 2026-02-25: Completed P4-522 by extending GUI drop-ingest regression coverage for deterministic normalized-path commit-result ordering, stable per-item success/failure reporting, and commit-failure recovery retries; full-gate verification remains pending for P4-523.
 - 2026-02-25: Completed P4-523 by passing the full Rust verification gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) after P4-519..P4-522, closing Phase 2.2 implementation.
+- 2026-02-25: Completed P4-524 by locking the Phase 2.3 workflow parity-polish UX/state-flow and acceptance contract in both SPEC mirrors, including explicit Rust 2021 compatibility and deterministic ordering guarantees before implementation.
+- 2026-02-25: Completed P4-525 by wiring GUI open-file action to shared `open_figure` semantics with deterministic selection/list stability guarantees and regression coverage for success and failure/retry paths.
+- 2026-02-25: Completed P4-526 by implementing deterministic list/detail navigation and search/filter polish behavior in `src/gui.rs`, including keyboard/pointer transitions and filter apply/clear regression coverage.
+- 2026-02-25: Completed P4-527 by extending GUI regression coverage for Phase 2.3 parity-polish deterministic behavior, including open-file outcomes, navigation determinism, empty-row navigation guards, and search clear/apply stability.
+- 2026-02-25: Completed P4-528 by passing the full Rust verification gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`) after P4-525..P4-527.

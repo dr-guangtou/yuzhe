@@ -75,6 +75,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-203 GUI metadata mutation flow with separate figure/source edit sessions and shared-core validation semantics
 - FR-204 GUI tag/link/delete mutation flow with deterministic post-mutation list/detail behavior and shared-core validation semantics
 - FR-205 GUI drag-and-drop ingest flow reusing shared ingest core with explicit provenance prompt states and deterministic batch application semantics
+- FR-206 GUI workflow parity polish for open-file, navigation, and search/filter ergonomics with deterministic interaction outcomes
 
 ## 6. Non-Functional Requirements
 
@@ -188,7 +189,31 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - Acceptance target before implementation:
   - UX/state flow is design-locked in both incubator and standalone SPEC mirrors before coding starts.
 
-## 7.6 Data Store Strategy
+## 7.6 Phase 2.3 GUI Workflow Parity Polish State Model (P4-524/L-224, Design Locked)
+
+- Scope closes GUI workflow parity gaps on top of existing shared services:
+  - open selected figure file from GUI using the same resolved-path semantics as CLI `open`.
+  - list/detail navigation polish for keyboard and pointer interaction without introducing a new domain path.
+  - search/filter ergonomics polish (apply/clear/refine) while preserving service-driven result ordering.
+- State and interaction contract:
+  - open-file action: `ready` -> `opening_file` -> (`open_succeeded` or `open_failed`) -> `ready`.
+  - navigation/search interaction: `browsing` -> (`filtering` or `navigating`) -> `browsing`.
+  - transient states never reorder rows locally; rendered ordering always comes from shared list/search responses.
+- Validation and ownership boundary:
+  - GUI enforces only interaction-level guards (for example, disable open when no selection exists).
+  - path resolution, open execution semantics, and domain validation remain in shared services.
+  - backend error text is surfaced directly to avoid semantic drift between CLI and GUI behavior.
+- Deterministic behavior contract:
+  - selection transitions are deterministic for repeated key/pointer sequences against the same row set.
+  - filter apply/clear cycles produce deterministic list/detail refresh order based on shared service output.
+  - open success/failure does not mutate list ordering or selected detail payload unexpectedly.
+- Rust/toolchain compatibility contract:
+  - implementation and tests remain Rust 2021-compatible (no Rust 2024-only syntax/features).
+  - parity polish does not relax deterministic ordering guarantees already locked in earlier Phase 2 slices.
+- Acceptance target before implementation:
+  - this Phase 2.3 design lock is documented in both `project4/SPEC.md` and `project4/lamian/docs/SPEC.md` before `P4-525` coding begins.
+
+## 7.7 Data Store Strategy
 
 - Canonical store: SQLite
 - Portability: export and bundle artifacts
@@ -320,3 +345,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
   - Phase 2.0-S2 figure/source metadata mutation flows are implemented via shared services and covered by regression tests for save success/failure recovery and deterministic post-save list/detail behavior
   - Phase 2.1 tag/link/delete mutation flows are implemented through shared `tag`/`link`/`delete` services and covered by regression tests for lifecycle failure recovery and deterministic post-mutation selection/refresh behavior
   - Phase 2.2 drag-and-drop ingest UX/state flow is design-locked to shared ingest-core reuse with explicit provenance prompt states and deterministic multi-file commit semantics before implementation
+  - Phase 2.3 workflow parity-polish UX/state flow is design-locked for open-file/navigation/search-filter ergonomics with explicit Rust 2021 and deterministic ordering constraints before implementation

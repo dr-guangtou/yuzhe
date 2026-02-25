@@ -110,18 +110,35 @@ Purpose:
 - GUI remained interaction-only and reused shared `tag`, `link`, and `delete` services.
 - Regression coverage and full Rust gate verification were completed for mutation success/failure and deterministic list/detail refresh behavior.
 
-### Phase 2.2 (Current): GUI Drag-and-Drop Ingest
+### Phase 2.2 (Implemented Closure): GUI Drag-and-Drop Ingest
 
-- Add drag-and-drop file intake with the same ingest core used by CLI `inject`/`import`.
-- Support one-or-many file drop path with strict provenance prompts before commit.
-- Preserve deterministic result summaries and error reporting parity with existing ingest contracts.
+- Delivered drag-and-drop file intake with the same ingest core used by CLI `inject`/`import`.
+- Delivered one-or-many file drop path with strict provenance prompts before commit.
+- Closed with deterministic result summaries and error reporting parity with existing ingest contracts.
 
-### Phase 2.3 (After 2.2): GUI Workflow Parity Polish
+### Phase 2.3 (Current Planning Baseline): GUI Workflow Parity Polish
 
 - Expose high-use operational workflows in GUI where low risk and high leverage:
   - open file, list/detail navigation polish, and search/filter ergonomics
 - Keep automation-centric flows (`bundle`, `verify`, bulk import) CLI-first unless GUI value is clear.
 - Close parity gaps required for MVP “GUI can drive core workflows” gate.
+- Keep Rust 2021 compatibility and deterministic ordering guarantees explicit in each planning slice and acceptance check.
+
+Phase 2.3 planning slices:
+
+- `P4-524`: lock parity-polish UX/state-flow scope and acceptance contract in both SPEC mirrors before implementation.
+- `P4-525`: implement open-file parity and deterministic selection/focus-state stabilization.
+- `P4-526`: implement list/detail navigation and search/filter ergonomics while preserving deterministic ordering behavior.
+- `P4-527`: add regression coverage for deterministic parity-polish behaviors.
+- `P4-528`: pass full Rust gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+
+Phase 2.3 acceptance criteria:
+
+- Scope and acceptance contract are documented in both SPEC mirrors before implementation starts.
+- Open-file action behavior matches shared core semantics with deterministic state transitions.
+- Navigation and search/filter polish paths preserve deterministic ordering for list rows, selection transitions, and refresh results.
+- Implementation remains Rust 2021-compatible across GUI and tests.
+- Full gate passes after implementation slices complete.
 
 ### Gate to Phase 3
 
@@ -151,7 +168,7 @@ Purpose:
   - migration upgrade compatibility tests
   - GUI smoke tests once Phase 2 starts
 
-## 7. Deliverables for Current Phase (Phase 2.2 Implementation)
+## 7. Deliverables for Current Phase (Phase 2.3 Planning Baseline)
 
 - Updated planning docs for the current GUI stage:
   - `project4/PLAN.md`
@@ -159,10 +176,11 @@ Purpose:
 - Mirrored standalone planning trackers for incubator parity:
   - `project4/lamian/docs/PLAN.md`
   - `project4/lamian/docs/TODO.md`
-- Phase 2.2 implementation branches and gate evidence after each slice.
+- Phase 2.3 planning-baseline tracker updates with mirrored acceptance criteria and slice IDs.
+- Phase 2.3 implementation branches and gate evidence after each slice.
 
 ## 8. Next Execution Step
 
 1. Phase 2.2 implementation is closed after passing P4-523 full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
-2. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit as baseline constraints for the next GUI phase.
-3. Start Phase 2.3 parity-polish planning and tracker definition on the active feature branch before implementation.
+2. Complete Phase 2.3 planning and acceptance lock (`P4-524`) across both tracker mirrors before implementation.
+3. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit in every Phase 2.3 implementation and test slice (`P4-525`..`P4-528`).

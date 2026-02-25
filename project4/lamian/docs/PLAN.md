@@ -29,16 +29,35 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - Locked and implemented UX/state behavior for destructive actions (delete confirmation and deterministic post-delete selection).
 - Added regression coverage for success/failure and deterministic list/detail refresh behavior and passed full gate verification.
 
-### Phase 2.2 GUI Drag-and-Drop Ingest (Current)
+### Phase 2.2 GUI Drag-and-Drop Ingest (Implemented Closure)
 
-- Add one-or-many file drop flow.
-- Reuse shared ingest core and provenance validation semantics.
-- Define provenance prompt behavior before ingest commit.
+- Delivered one-or-many file drop flow.
+- Reused shared ingest core and provenance validation semantics.
+- Closed with defined provenance prompt behavior before ingest commit.
 
-### Phase 2.3 GUI Workflow Parity Polish (Planned)
+### Phase 2.3 GUI Workflow Parity Polish (Current Planning Baseline)
 
-- Prioritize low-risk, high-value GUI workflow parity improvements.
-- Keep automation-heavy workflows CLI-first unless GUI value is explicit.
+- Expose high-use operational workflows in GUI where low risk and high leverage:
+  - open file, list/detail navigation polish, and search/filter ergonomics
+- Keep automation-centric flows (`bundle`, `verify`, bulk import) CLI-first unless GUI value is clear.
+- Close parity gaps required for MVP “GUI can drive core workflows” gate.
+- Keep Rust 2021 compatibility and deterministic ordering guarantees explicit in each planning slice and acceptance check.
+
+Phase 2.3 planning slices:
+
+- `L-224`: lock parity-polish UX/state-flow scope and acceptance contract in both SPEC mirrors before implementation.
+- `L-225`: implement open-file parity and deterministic selection/focus-state stabilization.
+- `L-226`: implement list/detail navigation and search/filter ergonomics while preserving deterministic ordering behavior.
+- `L-227`: add regression coverage for deterministic parity-polish behaviors.
+- `L-228`: pass full Rust gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+
+Phase 2.3 acceptance criteria:
+
+- Scope and acceptance contract are documented in both SPEC mirrors before implementation starts.
+- Open-file action behavior matches shared core semantics with deterministic state transitions.
+- Navigation and search/filter polish paths preserve deterministic ordering for list rows, selection transitions, and refresh results.
+- Implementation remains Rust 2021-compatible across GUI and tests.
+- Full gate passes after implementation slices complete.
 
 ## 4. Verification Strategy
 
@@ -51,5 +70,5 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 ## 5. Next Execution Steps
 
 1. Phase 2.2 implementation is closed after passing L-223 full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
-2. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit as baseline constraints for the next GUI phase.
-3. Start Phase 2.3 parity-polish planning and tracker definition before implementation.
+2. Complete Phase 2.3 planning and acceptance lock (`L-224`) across both tracker mirrors before implementation.
+3. Keep Rust 2021 compatibility and deterministic ordering guarantees explicit in every Phase 2.3 implementation and test slice (`L-225`..`L-228`).

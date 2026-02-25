@@ -2,7 +2,7 @@
 
 ## Active
 
-- Execute Phase 2.2 GUI drag-and-drop ingest implementation on feature branch `feat/phase-2-2-gui-drop-ingest-planning`: complete P4-520..P4-523 (shared ingest wiring, provenance prompts, regression coverage, full gate) after P4-519 state-machine completion.
+- Execute Phase 2.2 GUI drag-and-drop ingest implementation on feature branch `feat/phase-2-2-gui-drop-ingest-planning`: complete P4-521..P4-523 (provenance prompts, regression coverage, full gate) after P4-520 shared-ingest wiring.
 
 ## Review
 
@@ -21,6 +21,7 @@
 - 2026-02-25: P4-518 completed by synchronizing Phase 2.1 tracker/spec wording from planning baseline to implemented closure across incubator and standalone mirrors.
 - 2026-02-25: P4-517 completed by locking the Phase 2.2 GUI drag-and-drop ingest UX/state model (provenance prompt policy, deterministic multi-file ordering, shared ingest-core reuse, and Rust 2021 compatibility constraints) across SPEC/TODO mirrors.
 - 2026-02-25: P4-519 completed by implementing the Phase 2.2 GUI drop-session state machine scaffold in `project4/lamian/src/gui.rs` with deterministic dropped-path ordering and lifecycle transition tests.
+- 2026-02-25: P4-520 completed by wiring drop-session commits in `project4/lamian/src/gui.rs` to shared `inject_figure` ingest services with deterministic one-or-many ordering, duplicate-aware outcomes, and partial-failure reporting.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

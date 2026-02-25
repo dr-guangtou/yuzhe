@@ -163,7 +163,6 @@ Purpose:
 
 ## 8. Next Execution Step
 
-1. Implement Phase 2.2 drag-and-drop session state machine in GUI (`idle`, `drop_received`, `metadata_required`, `ready_to_commit`, `committing`, result states).
-2. Wire one-or-many dropped files to shared ingest core with batch defaults and per-item provenance overrides.
-3. Add regression coverage for deterministic multi-file ordering, partial-failure reporting stability, and commit-failure recovery behavior.
-4. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+1. Implement provenance prompt defaults and per-item override behavior for Phase 2.2 dropped-file sessions.
+2. Add regression coverage for deterministic multi-file ordering, partial-failure reporting stability, and commit-failure recovery behavior.
+3. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.

@@ -50,7 +50,6 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 
 ## 5. Next Execution Steps
 
-1. Implement Phase 2.2 drag-and-drop session state machine in `src/gui.rs`.
-2. Wire one-or-many dropped files to shared ingest core with provenance defaults and per-item override prompts.
-3. Add regression tests for deterministic multi-file ordering, stable per-item result reporting, and commit-failure recovery.
-4. Run full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
+1. Implement provenance prompt defaults and per-item override behavior for dropped-file sessions in `src/gui.rs`.
+2. Add regression tests for deterministic multi-file ordering, stable per-item result reporting, and commit-failure recovery.
+3. Run full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).

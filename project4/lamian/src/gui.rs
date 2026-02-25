@@ -4,6 +4,7 @@ use eframe::egui;
 
 use crate::cli::{ListSortField, ListSortOrder};
 use crate::delete::{delete_figure, DeleteFigureRequest};
+use crate::inject::{inject_figure, CopyMode, InjectRequest, SourceType};
 use crate::link::{add_link, remove_link, AddLinkRequest, RemoveLinkRequest};
 use crate::list::{list_figures, ListFigureRow, ListFiguresRequest};
 use crate::search::{search_figures, SearchFigure, SearchRequest};
@@ -187,10 +188,26 @@ struct DropIngestItemDraft {
     source_key_input: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DropIngestItemCommitStatus {
+    Imported,
+    SkippedDuplicate,
+    Failed,
+}
+
+#[derive(Debug, Clone)]
+struct DropIngestItemCommitResult {
+    normalized_path: String,
+    status: DropIngestItemCommitStatus,
+    figure_id: Option<String>,
+    error: Option<String>,
+}
+
 #[derive(Debug, Clone, Default)]
 struct DropIngestSessionDraft {
     lifecycle: DropIngestLifecycle,
     dropped_items: Vec<DropIngestItemDraft>,
+    last_commit_results: Vec<DropIngestItemCommitResult>,
     last_error: Option<String>,
 }
 
@@ -459,6 +476,7 @@ impl LamianGuiApp {
         self.drop_ingest_session = DropIngestSessionDraft {
             lifecycle: DropIngestLifecycle::DropReceived,
             dropped_items,
+            last_commit_results: Vec::new(),
             last_error: None,
         };
         self.error_message = None;
@@ -496,22 +514,98 @@ impl LamianGuiApp {
     }
 
     fn begin_drop_ingest_commit(&mut self) {
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
         if self.drop_ingest_session.lifecycle != DropIngestLifecycle::ReadyToCommit {
             self.error_message = Some("Drop session is not ready to commit.".to_string());
             return;
         }
 
         self.drop_ingest_session.lifecycle = DropIngestLifecycle::Committing;
+        self.drop_ingest_session.last_commit_results.clear();
         self.drop_ingest_session.last_error = None;
-        self.mark_drop_ingest_commit_failed(
-            "Drag-and-drop commit wiring is pending in P4-520.".to_string(),
-        );
-    }
 
-    fn mark_drop_ingest_commit_failed(&mut self, error_message: String) {
-        self.drop_ingest_session.lifecycle = DropIngestLifecycle::CommitFailed;
-        self.drop_ingest_session.last_error = Some(error_message.clone());
-        self.error_message = Some(error_message);
+        let mut commit_results = Vec::new();
+        let mut imported_count = 0_usize;
+        let mut skipped_count = 0_usize;
+        let mut failed_count = 0_usize;
+
+        for item in self.drop_ingest_session.dropped_items.clone() {
+            let source_type = match parse_drop_source_type_input(&item.source_type_input) {
+                Ok(value) => value,
+                Err(error) => {
+                    failed_count += 1;
+                    commit_results.push(DropIngestItemCommitResult {
+                        normalized_path: item.normalized_path,
+                        status: DropIngestItemCommitStatus::Failed,
+                        figure_id: None,
+                        error: Some(error),
+                    });
+                    continue;
+                }
+            };
+
+            match inject_figure(InjectRequest {
+                vault_root: vault_root.clone(),
+                file_path: item.input_path.clone(),
+                source_type,
+                source_key: item.source_key_input.trim().to_string(),
+                copy_mode: CopyMode::Copy,
+            }) {
+                Ok(result) => {
+                    if result.created_new {
+                        imported_count += 1;
+                        commit_results.push(DropIngestItemCommitResult {
+                            normalized_path: item.normalized_path,
+                            status: DropIngestItemCommitStatus::Imported,
+                            figure_id: Some(result.figure_id),
+                            error: None,
+                        });
+                    } else {
+                        skipped_count += 1;
+                        commit_results.push(DropIngestItemCommitResult {
+                            normalized_path: item.normalized_path,
+                            status: DropIngestItemCommitStatus::SkippedDuplicate,
+                            figure_id: Some(result.figure_id),
+                            error: None,
+                        });
+                    }
+                }
+                Err(error) => {
+                    failed_count += 1;
+                    commit_results.push(DropIngestItemCommitResult {
+                        normalized_path: item.normalized_path,
+                        status: DropIngestItemCommitStatus::Failed,
+                        figure_id: None,
+                        error: Some(error.to_string()),
+                    });
+                }
+            }
+        }
+
+        self.drop_ingest_session.last_commit_results = commit_results;
+        self.refresh_figure_rows();
+
+        if failed_count > 0 {
+            self.drop_ingest_session.lifecycle = DropIngestLifecycle::CommitFailed;
+            let summary = format!(
+                "Drop ingest completed with failures (imported={}, skipped={}, failed={}).",
+                imported_count, skipped_count, failed_count
+            );
+            self.drop_ingest_session.last_error = Some(summary.clone());
+            self.error_message = Some(summary);
+            self.status_message = None;
+        } else {
+            self.drop_ingest_session.lifecycle = DropIngestLifecycle::Committed;
+            self.drop_ingest_session.last_error = None;
+            self.error_message = None;
+            self.status_message = Some(format!(
+                "Drop ingest committed (imported={}, skipped={}, failed=0).",
+                imported_count, skipped_count
+            ));
+        }
     }
 
     fn clear_drop_ingest_session(&mut self) {
@@ -897,6 +991,26 @@ impl LamianGuiApp {
                 egui::Color32::YELLOW,
                 "All dropped items require non-empty source type and source key before commit.",
             );
+        }
+
+        if !self.drop_ingest_session.last_commit_results.is_empty() {
+            ui.separator();
+            ui.label("Last commit results:");
+            for item_result in &self.drop_ingest_session.last_commit_results {
+                let status_label = match item_result.status {
+                    DropIngestItemCommitStatus::Imported => "imported",
+                    DropIngestItemCommitStatus::SkippedDuplicate => "skipped_duplicate",
+                    DropIngestItemCommitStatus::Failed => "failed",
+                };
+                let mut line = format!("{} | {}", item_result.normalized_path, status_label);
+                if let Some(figure_id) = item_result.figure_id.as_deref() {
+                    line.push_str(&format!(" | figure_id={figure_id}"));
+                }
+                if let Some(error_message) = item_result.error.as_deref() {
+                    line.push_str(&format!(" | error={error_message}"));
+                }
+                ui.label(line);
+            }
         }
     }
 
@@ -1579,6 +1693,19 @@ fn normalize_drop_path(path: &Path) -> String {
         .join("/")
 }
 
+fn parse_drop_source_type_input(value: &str) -> Result<SourceType, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "doi" => Ok(SourceType::Doi),
+        "url" => Ok(SourceType::Url),
+        "local" => Ok(SourceType::Local),
+        "manual" => Ok(SourceType::Manual),
+        _ => Err(format!(
+            "invalid source type `{}`; expected doi|url|local|manual",
+            value.trim()
+        )),
+    }
+}
+
 fn drop_ingest_metadata_is_complete(item: &DropIngestItemDraft) -> bool {
     !item.source_type_input.trim().is_empty() && !item.source_key_input.trim().is_empty()
 }
@@ -1600,13 +1727,14 @@ mod tests {
     use super::{
         build_figure_update_payload, build_link_mutation_payload, build_source_update_payload,
         build_tag_mutation_payload, drop_ingest_lifecycle_label, figure_rows_from_list,
-        figure_rows_from_search, normalize_drop_path, sync_figure_draft_lifecycle,
-        sync_link_draft_lifecycle, sync_source_draft_lifecycle, sync_tag_draft_lifecycle,
-        DeleteEditorLifecycle, DeleteFigurePayload, DropIngestLifecycle, FigureEditorLifecycle,
-        FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle, LinkMutationAction,
-        LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft, TagEditorLifecycle,
-        TagMutationAction, TagMutationDraft,
+        figure_rows_from_search, normalize_drop_path, parse_drop_source_type_input,
+        sync_figure_draft_lifecycle, sync_link_draft_lifecycle, sync_source_draft_lifecycle,
+        sync_tag_draft_lifecycle, DeleteEditorLifecycle, DeleteFigurePayload, DropIngestLifecycle,
+        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle,
+        LinkMutationAction, LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft,
+        TagEditorLifecycle, TagMutationAction, TagMutationDraft,
     };
+    use std::fs;
     use std::path::{Path, PathBuf};
 
     use tempfile::TempDir;
@@ -1924,6 +2052,27 @@ mod tests {
     }
 
     #[test]
+    fn parse_drop_source_type_input_accepts_supported_values() {
+        assert!(matches!(
+            parse_drop_source_type_input("doi"),
+            Ok(SourceType::Doi)
+        ));
+        assert!(matches!(
+            parse_drop_source_type_input("URL"),
+            Ok(SourceType::Url)
+        ));
+        assert!(matches!(
+            parse_drop_source_type_input("local"),
+            Ok(SourceType::Local)
+        ));
+        assert!(matches!(
+            parse_drop_source_type_input("manual"),
+            Ok(SourceType::Manual)
+        ));
+        assert!(parse_drop_source_type_input("unsupported").is_err());
+    }
+
+    #[test]
     fn drop_ingest_session_transitions_from_drop_received_to_metadata_required() {
         let mut app = LamianGuiApp::default();
         app.begin_drop_ingest_session(vec![
@@ -1970,17 +2119,75 @@ mod tests {
     }
 
     #[test]
-    fn drop_ingest_commit_without_wiring_moves_to_commit_failed() {
-        let mut app = LamianGuiApp::default();
-        app.begin_drop_ingest_session(vec![PathBuf::from("alpha/file_a.png")]);
-        {
-            let item = app
-                .drop_ingest_session
-                .dropped_items
-                .first_mut()
-                .expect("drop item present");
+    fn drop_ingest_commit_imports_one_or_many_files_via_shared_inject_core() {
+        let temp_dir = TempDir::new().expect("temp directory");
+        let vault_path = temp_dir.path().join("vault");
+        db::initialize_vault(&vault_path).expect("initialize vault");
+
+        let fixture_path = repository_fixture_path("2602.17205_1.png");
+        let file_a_path = temp_dir.path().join("drop_a.png");
+        let file_b_path = temp_dir.path().join("drop_b.png");
+        fs::copy(&fixture_path, &file_a_path).expect("copy fixture a");
+        fs::copy(&fixture_path, &file_b_path).expect("copy fixture b");
+
+        let mut app = LamianGuiApp {
+            connected_vault_root: Some(vault_path),
+            ..LamianGuiApp::default()
+        };
+        app.refresh_figure_rows();
+        assert!(app.figure_rows.is_empty());
+
+        app.begin_drop_ingest_session(vec![file_b_path, file_a_path]);
+        for (index, item) in app.drop_ingest_session.dropped_items.iter_mut().enumerate() {
             item.source_type_input = "doi".to_string();
-            item.source_key_input = "10.1000/test".to_string();
+            item.source_key_input = format!("10.1000/drop-{index}");
+        }
+        app.sync_drop_ingest_lifecycle();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::ReadyToCommit
+        );
+
+        app.begin_drop_ingest_commit();
+
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::Committed
+        );
+        assert_eq!(app.drop_ingest_session.last_commit_results.len(), 2);
+        assert!(app
+            .drop_ingest_session
+            .last_commit_results
+            .iter()
+            .all(|item| item.error.is_none()));
+        assert_eq!(app.figure_rows.len(), 2);
+    }
+
+    #[test]
+    fn drop_ingest_commit_supports_partial_failure_without_reordering_successes() {
+        let temp_dir = TempDir::new().expect("temp directory");
+        let vault_path = temp_dir.path().join("vault");
+        db::initialize_vault(&vault_path).expect("initialize vault");
+
+        let fixture_path = repository_fixture_path("2602.17205_1.png");
+        let file_a_path = temp_dir.path().join("drop_a.png");
+        let file_b_path = temp_dir.path().join("drop_b.png");
+        fs::copy(&fixture_path, &file_a_path).expect("copy fixture a");
+        fs::copy(&fixture_path, &file_b_path).expect("copy fixture b");
+
+        let mut app = LamianGuiApp {
+            connected_vault_root: Some(vault_path),
+            ..LamianGuiApp::default()
+        };
+        app.begin_drop_ingest_session(vec![file_b_path, file_a_path]);
+        for item in &mut app.drop_ingest_session.dropped_items {
+            if item.normalized_path.ends_with("drop_a.png") {
+                item.source_type_input = "doi".to_string();
+                item.source_key_input = "10.1000/good".to_string();
+            } else {
+                item.source_type_input = "invalid".to_string();
+                item.source_key_input = "10.1000/bad".to_string();
+            }
         }
         app.sync_drop_ingest_lifecycle();
         assert_eq!(
@@ -1994,11 +2201,15 @@ mod tests {
             app.drop_ingest_session.lifecycle,
             DropIngestLifecycle::CommitFailed
         );
-        assert!(app
+        assert_eq!(app.drop_ingest_session.last_commit_results.len(), 2);
+        let failed_count = app
             .drop_ingest_session
-            .last_error
-            .as_deref()
-            .is_some_and(|message| message.contains("P4-520")));
+            .last_commit_results
+            .iter()
+            .filter(|item| item.error.is_some())
+            .count();
+        assert_eq!(failed_count, 1);
+        assert_eq!(app.figure_rows.len(), 1);
     }
 
     #[test]

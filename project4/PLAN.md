@@ -101,16 +101,16 @@ Purpose:
 - Delivered vault view, figure detail, metadata editor, and search.
 - Verified deterministic list/detail behavior and save-failure recovery for S2 metadata mutation.
 
-### Phase 2.1 (Next): GUI Mutation Expansion
+### Phase 2.1 (Completed): GUI Mutation Expansion
 
-- Add GUI actions for existing mutation services:
+- GUI actions for existing mutation services were completed:
   - tag add/remove on selected figure
   - link add/remove between figures
   - figure delete with explicit confirmation and deterministic post-delete selection behavior
-- Keep GUI as interaction-only layer; reuse existing `tag`, `link`, and `delete` core services.
-- Add regression coverage for mutation success/failure paths and deterministic list/detail refresh semantics.
+- GUI remained interaction-only and reused shared `tag`, `link`, and `delete` services.
+- Regression coverage and full Rust gate verification were completed for mutation success/failure and deterministic list/detail refresh behavior.
 
-### Phase 2.2 (After 2.1): GUI Drag-and-Drop Ingest
+### Phase 2.2 (Current): GUI Drag-and-Drop Ingest
 
 - Add drag-and-drop file intake with the same ingest core used by CLI `inject`/`import`.
 - Support one-or-many file drop path with strict provenance prompts before commit.
@@ -151,19 +151,19 @@ Purpose:
   - migration upgrade compatibility tests
   - GUI smoke tests once Phase 2 starts
 
-## 7. Deliverables for Current Phase (Phase 2.1 Planning/Execution)
+## 7. Deliverables for Current Phase (Phase 2.2 Implementation)
 
-- Updated planning docs for the next GUI stages:
+- Updated planning docs for the current GUI stage:
   - `project4/PLAN.md`
   - `project4/TODO.md`
 - Mirrored standalone planning trackers for incubator parity:
   - `project4/lamian/docs/PLAN.md`
   - `project4/lamian/docs/TODO.md`
-- Phase 2.1 implementation branches and gate evidence after each slice.
+- Phase 2.2 implementation branches and gate evidence after each slice.
 
 ## 8. Next Execution Step
 
-1. Execute Phase 2.1 design lock for tag/link/delete GUI mutation UX and state transitions.
-2. Implement tag and link mutation controls in GUI with shared-service wiring and deterministic refresh behavior.
-3. Implement GUI delete flow with explicit confirmation and deterministic post-delete selection policy.
+1. Implement Phase 2.2 drag-and-drop session state machine in GUI (`idle`, `drop_received`, `metadata_required`, `ready_to_commit`, `committing`, result states).
+2. Wire one-or-many dropped files to shared ingest core with batch defaults and per-item provenance overrides.
+3. Add regression coverage for deterministic multi-file ordering, partial-failure reporting stability, and commit-failure recovery behavior.
 4. Re-run full gate after each slice: `cargo fmt --all`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.

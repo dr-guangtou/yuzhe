@@ -23,13 +23,13 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 - Figure/source metadata mutation editors delivered with deterministic refresh behavior.
 - Regression coverage and full gate verification completed.
 
-### Phase 2.1 GUI Mutation Expansion (Next)
+### Phase 2.1 GUI Mutation Expansion (Completed)
 
-- Add GUI mutation actions for shared `tag`, `link`, and `delete` services.
-- Lock UX/state behavior for destructive actions (especially delete confirmation and post-delete selection).
-- Add regression coverage for success/failure and deterministic list/detail refresh behavior.
+- Added GUI mutation actions for shared `tag`, `link`, and `delete` services.
+- Locked and implemented UX/state behavior for destructive actions (delete confirmation and deterministic post-delete selection).
+- Added regression coverage for success/failure and deterministic list/detail refresh behavior and passed full gate verification.
 
-### Phase 2.2 GUI Drag-and-Drop Ingest (Planned)
+### Phase 2.2 GUI Drag-and-Drop Ingest (Current)
 
 - Add one-or-many file drop flow.
 - Reuse shared ingest core and provenance validation semantics.
@@ -50,7 +50,7 @@ Build LaMian as a local-only, metadata-rich visual knowledge base for research f
 
 ## 5. Next Execution Steps
 
-1. Execute Phase 2.1 design lock for tag/link/delete GUI mutation state flows.
-2. Implement tag/link mutation controls with shared-service wiring.
-3. Implement figure delete confirmation and deterministic post-delete selection handling.
-4. Add regression tests and rerun full gate.
+1. Implement Phase 2.2 drag-and-drop session state machine in `src/gui.rs`.
+2. Wire one-or-many dropped files to shared ingest core with provenance defaults and per-item override prompts.
+3. Add regression tests for deterministic multi-file ordering, stable per-item result reporting, and commit-failure recovery.
+4. Run full gate (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).

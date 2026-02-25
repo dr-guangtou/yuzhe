@@ -59,6 +59,16 @@
 | L-217 | Run full verification gate for Phase 2.1 mutation expansion | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-213..L-216 |
 | L-218 | Design Phase 2.2 drag-and-drop ingest UX and provenance prompts | Done | locked drop-session state flow, provenance prompt policy, deterministic multi-file commit ordering, and shared ingest-core reuse in `docs/SPEC.md` |
 
+## Phase 2.2 GUI Drag-and-Drop Ingest (Next)
+
+| ID | Task | Status | Notes |
+| --- | --- | --- | --- |
+| L-219 | Implement drop-session state machine in GUI | Done | added drag-and-drop session state model in `src/gui.rs`, captured dropped file paths from `egui` input, and covered deterministic transition behavior with GUI unit tests |
+| L-220 | Wire dropped files to shared ingest core services | In Progress | support one-or-many file paths while preserving shared ingest validation semantics |
+| L-221 | Implement provenance prompt defaults and per-item overrides | In Progress | keep commit blocked until required provenance fields are complete for all pending items |
+| L-222 | Add GUI regression coverage for deterministic multi-file ingest behavior | In Progress | cover deterministic normalized-path ordering, stable per-item result reporting, and commit-failure recovery |
+| L-223 | Run full verification gate for Phase 2.2 ingest implementation | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-219..L-222 |
+
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)
 
 | ID | Task | Status | Notes |

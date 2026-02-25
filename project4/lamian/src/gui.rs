@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use eframe::egui;
 
@@ -167,6 +167,33 @@ struct DeleteFigurePayload {
     figure_id: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+enum DropIngestLifecycle {
+    #[default]
+    Idle,
+    DropReceived,
+    MetadataRequired,
+    ReadyToCommit,
+    Committing,
+    Committed,
+    CommitFailed,
+}
+
+#[derive(Debug, Clone, Default)]
+struct DropIngestItemDraft {
+    input_path: PathBuf,
+    normalized_path: String,
+    source_type_input: String,
+    source_key_input: String,
+}
+
+#[derive(Debug, Clone, Default)]
+struct DropIngestSessionDraft {
+    lifecycle: DropIngestLifecycle,
+    dropped_items: Vec<DropIngestItemDraft>,
+    last_error: Option<String>,
+}
+
 #[derive(Default)]
 pub struct LamianGuiApp {
     vault_root_input: String,
@@ -180,6 +207,7 @@ pub struct LamianGuiApp {
     tag_mutation_draft: Option<TagMutationDraft>,
     link_mutation_draft: Option<LinkMutationDraft>,
     delete_figure_draft: Option<DeleteFigureDraft>,
+    drop_ingest_session: DropIngestSessionDraft,
     status_message: Option<String>,
     error_message: Option<String>,
 }
@@ -393,6 +421,102 @@ impl LamianGuiApp {
     fn cancel_delete_figure_confirmation(&mut self) {
         self.delete_figure_draft = None;
         self.status_message = Some("Canceled delete action.".to_string());
+    }
+
+    fn capture_dropped_files(&mut self, context: &egui::Context) {
+        let dropped_paths = context.input(|input| {
+            input
+                .raw
+                .dropped_files
+                .iter()
+                .filter_map(|file| file.path.clone())
+                .collect::<Vec<_>>()
+        });
+
+        if dropped_paths.is_empty() {
+            return;
+        }
+
+        self.begin_drop_ingest_session(dropped_paths);
+    }
+
+    fn begin_drop_ingest_session(&mut self, input_paths: Vec<PathBuf>) {
+        if input_paths.is_empty() {
+            return;
+        }
+
+        let mut dropped_items = input_paths
+            .into_iter()
+            .map(|input_path| DropIngestItemDraft {
+                normalized_path: normalize_drop_path(&input_path),
+                input_path,
+                source_type_input: String::new(),
+                source_key_input: String::new(),
+            })
+            .collect::<Vec<_>>();
+        dropped_items.sort_by(|left, right| left.normalized_path.cmp(&right.normalized_path));
+
+        self.drop_ingest_session = DropIngestSessionDraft {
+            lifecycle: DropIngestLifecycle::DropReceived,
+            dropped_items,
+            last_error: None,
+        };
+        self.error_message = None;
+        self.sync_drop_ingest_lifecycle();
+        self.status_message = Some(format!(
+            "Drop session received {} file(s).",
+            self.drop_ingest_session.dropped_items.len()
+        ));
+    }
+
+    fn sync_drop_ingest_lifecycle(&mut self) {
+        if self.drop_ingest_session.lifecycle == DropIngestLifecycle::Committing {
+            return;
+        }
+        if self.drop_ingest_session.lifecycle == DropIngestLifecycle::Committed {
+            return;
+        }
+
+        if self.drop_ingest_session.dropped_items.is_empty() {
+            self.drop_ingest_session.lifecycle = DropIngestLifecycle::Idle;
+            return;
+        }
+
+        let metadata_complete = self
+            .drop_ingest_session
+            .dropped_items
+            .iter()
+            .all(drop_ingest_metadata_is_complete);
+
+        self.drop_ingest_session.lifecycle = if metadata_complete {
+            DropIngestLifecycle::ReadyToCommit
+        } else {
+            DropIngestLifecycle::MetadataRequired
+        };
+    }
+
+    fn begin_drop_ingest_commit(&mut self) {
+        if self.drop_ingest_session.lifecycle != DropIngestLifecycle::ReadyToCommit {
+            self.error_message = Some("Drop session is not ready to commit.".to_string());
+            return;
+        }
+
+        self.drop_ingest_session.lifecycle = DropIngestLifecycle::Committing;
+        self.drop_ingest_session.last_error = None;
+        self.mark_drop_ingest_commit_failed(
+            "Drag-and-drop commit wiring is pending in P4-520.".to_string(),
+        );
+    }
+
+    fn mark_drop_ingest_commit_failed(&mut self, error_message: String) {
+        self.drop_ingest_session.lifecycle = DropIngestLifecycle::CommitFailed;
+        self.drop_ingest_session.last_error = Some(error_message.clone());
+        self.error_message = Some(error_message);
+    }
+
+    fn clear_drop_ingest_session(&mut self) {
+        self.drop_ingest_session = DropIngestSessionDraft::default();
+        self.status_message = Some("Cleared drop session.".to_string());
     }
 
     fn save_figure_metadata_changes(&mut self, payload: FigureUpdatePayload) {
@@ -706,6 +830,9 @@ impl LamianGuiApp {
             }
         });
 
+        ui.separator();
+        self.render_drop_ingest_panel(ui);
+
         if let Some(vault_root) = self.connected_vault_root.as_ref() {
             ui.label(format!("Connected vault: {}", vault_root.display()));
         }
@@ -715,6 +842,61 @@ impl LamianGuiApp {
         }
         if let Some(error_message) = self.error_message.as_ref() {
             ui.colored_label(egui::Color32::RED, error_message);
+        }
+    }
+
+    fn render_drop_ingest_panel(&mut self, ui: &mut egui::Ui) {
+        ui.label("Drag-and-Drop Ingest Session");
+        ui.label(format!(
+            "Session state: {}",
+            drop_ingest_lifecycle_label(self.drop_ingest_session.lifecycle)
+        ));
+
+        if let Some(error_message) = self.drop_ingest_session.last_error.as_ref() {
+            ui.colored_label(egui::Color32::RED, error_message);
+        }
+
+        if self.drop_ingest_session.dropped_items.is_empty() {
+            ui.label("Drop file(s) onto the window to start a session.");
+            return;
+        }
+
+        for item in &mut self.drop_ingest_session.dropped_items {
+            ui.separator();
+            ui.label(format!("Path: {}", item.input_path.display()));
+            ui.horizontal(|ui| {
+                ui.label("Source type:");
+                ui.text_edit_singleline(&mut item.source_type_input);
+            });
+            ui.horizontal(|ui| {
+                ui.label("Source key:");
+                ui.text_edit_singleline(&mut item.source_key_input);
+            });
+        }
+
+        self.sync_drop_ingest_lifecycle();
+        let can_commit = self.drop_ingest_session.lifecycle == DropIngestLifecycle::ReadyToCommit;
+        let is_committing = self.drop_ingest_session.lifecycle == DropIngestLifecycle::Committing;
+        ui.horizontal(|ui| {
+            if ui
+                .add_enabled(!is_committing, egui::Button::new("Commit Drop Session"))
+                .clicked()
+            {
+                self.begin_drop_ingest_commit();
+            }
+            if ui
+                .add_enabled(!is_committing, egui::Button::new("Clear Drop Session"))
+                .clicked()
+            {
+                self.clear_drop_ingest_session();
+            }
+        });
+
+        if !can_commit {
+            ui.colored_label(
+                egui::Color32::YELLOW,
+                "All dropped items require non-empty source type and source key before commit.",
+            );
         }
     }
 
@@ -1116,6 +1298,8 @@ enum EditorAction {
 
 impl eframe::App for LamianGuiApp {
     fn update(&mut self, context: &egui::Context, _frame: &mut eframe::Frame) {
+        self.capture_dropped_files(context);
+
         egui::TopBottomPanel::top("top_controls").show(context, |ui| {
             self.render_top_controls(ui);
         });
@@ -1381,16 +1565,47 @@ fn delete_lifecycle_label(lifecycle: DeleteEditorLifecycle) -> &'static str {
     }
 }
 
+fn normalize_drop_path(path: &Path) -> String {
+    path.components()
+        .filter_map(|component| {
+            let segment = component.as_os_str().to_string_lossy().replace('\\', "/");
+            if segment.is_empty() {
+                None
+            } else {
+                Some(segment)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+fn drop_ingest_metadata_is_complete(item: &DropIngestItemDraft) -> bool {
+    !item.source_type_input.trim().is_empty() && !item.source_key_input.trim().is_empty()
+}
+
+fn drop_ingest_lifecycle_label(lifecycle: DropIngestLifecycle) -> &'static str {
+    match lifecycle {
+        DropIngestLifecycle::Idle => "idle",
+        DropIngestLifecycle::DropReceived => "drop_received",
+        DropIngestLifecycle::MetadataRequired => "metadata_required",
+        DropIngestLifecycle::ReadyToCommit => "ready_to_commit",
+        DropIngestLifecycle::Committing => "committing",
+        DropIngestLifecycle::Committed => "committed",
+        DropIngestLifecycle::CommitFailed => "commit_failed",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
         build_figure_update_payload, build_link_mutation_payload, build_source_update_payload,
-        build_tag_mutation_payload, figure_rows_from_list, figure_rows_from_search,
-        sync_figure_draft_lifecycle, sync_link_draft_lifecycle, sync_source_draft_lifecycle,
-        sync_tag_draft_lifecycle, DeleteEditorLifecycle, DeleteFigurePayload,
-        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle,
-        LinkMutationAction, LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft,
-        TagEditorLifecycle, TagMutationAction, TagMutationDraft,
+        build_tag_mutation_payload, drop_ingest_lifecycle_label, figure_rows_from_list,
+        figure_rows_from_search, normalize_drop_path, sync_figure_draft_lifecycle,
+        sync_link_draft_lifecycle, sync_source_draft_lifecycle, sync_tag_draft_lifecycle,
+        DeleteEditorLifecycle, DeleteFigurePayload, DropIngestLifecycle, FigureEditorLifecycle,
+        FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle, LinkMutationAction,
+        LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft, TagEditorLifecycle,
+        TagMutationAction, TagMutationDraft,
     };
     use std::path::{Path, PathBuf};
 
@@ -1699,6 +1914,91 @@ mod tests {
         draft.lifecycle = LinkEditorLifecycle::Saving;
         sync_link_draft_lifecycle(&mut draft, false);
         assert_eq!(draft.lifecycle, LinkEditorLifecycle::Saving);
+    }
+
+    #[test]
+    fn normalize_drop_path_is_stable_for_equivalent_paths() {
+        let first = normalize_drop_path(Path::new("alpha/./beta/file.png"));
+        let second = normalize_drop_path(Path::new("alpha/beta/file.png"));
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn drop_ingest_session_transitions_from_drop_received_to_metadata_required() {
+        let mut app = LamianGuiApp::default();
+        app.begin_drop_ingest_session(vec![
+            PathBuf::from("zeta/file_b.png"),
+            PathBuf::from("alpha/file_a.png"),
+        ]);
+
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::MetadataRequired
+        );
+        assert_eq!(
+            app.drop_ingest_session
+                .dropped_items
+                .iter()
+                .map(|item| item.normalized_path.as_str())
+                .collect::<Vec<_>>(),
+            vec!["alpha/file_a.png", "zeta/file_b.png"]
+        );
+        assert_eq!(
+            drop_ingest_lifecycle_label(app.drop_ingest_session.lifecycle),
+            "metadata_required"
+        );
+    }
+
+    #[test]
+    fn drop_ingest_session_reaches_ready_to_commit_after_metadata_completion() {
+        let mut app = LamianGuiApp::default();
+        app.begin_drop_ingest_session(vec![
+            PathBuf::from("alpha/file_a.png"),
+            PathBuf::from("beta/file_b.png"),
+        ]);
+
+        for item in &mut app.drop_ingest_session.dropped_items {
+            item.source_type_input = "doi".to_string();
+            item.source_key_input = format!("10.1000/{}", item.normalized_path);
+        }
+        app.sync_drop_ingest_lifecycle();
+
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::ReadyToCommit
+        );
+    }
+
+    #[test]
+    fn drop_ingest_commit_without_wiring_moves_to_commit_failed() {
+        let mut app = LamianGuiApp::default();
+        app.begin_drop_ingest_session(vec![PathBuf::from("alpha/file_a.png")]);
+        {
+            let item = app
+                .drop_ingest_session
+                .dropped_items
+                .first_mut()
+                .expect("drop item present");
+            item.source_type_input = "doi".to_string();
+            item.source_key_input = "10.1000/test".to_string();
+        }
+        app.sync_drop_ingest_lifecycle();
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::ReadyToCommit
+        );
+
+        app.begin_drop_ingest_commit();
+
+        assert_eq!(
+            app.drop_ingest_session.lifecycle,
+            DropIngestLifecycle::CommitFailed
+        );
+        assert!(app
+            .drop_ingest_session
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("P4-520")));
     }
 
     #[test]

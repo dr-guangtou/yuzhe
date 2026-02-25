@@ -161,6 +161,16 @@
 | P4-517 | Design Phase 2.2 drag-and-drop ingest UX/state flow | agent | [x] Done | locked drop-session lifecycle, provenance prompt policy, deterministic multi-file commit ordering, and shared ingest-core reuse across both SPEC mirrors |
 | P4-518 | Update Phase 2 docs/spec trackers for 2.1 implemented closure | agent | [x] Done | synced implemented Phase 2.1 wording across `project4/SPEC.md`, `project4/lamian/docs/SPEC.md`, `project4/TODO.md`, `project4/lamian/docs/TODO.md`, and `docs/todo.md` |
 
+## Phase 2.2 GUI Drag-and-Drop Ingest (Next)
+
+| ID | Task | Owner | Status | Notes |
+| --- | --- | --- | --- | --- |
+| P4-519 | Implement drop-session state machine in GUI | agent | [x] Done | added drag-and-drop session state model in `src/gui.rs`, captured dropped file paths from `egui` input, and covered deterministic transition behavior with GUI unit tests |
+| P4-520 | Wire dropped files to shared ingest core services | agent | [ ] In Progress | support one-or-many file paths and preserve shared validation semantics used by CLI `inject`/`import` |
+| P4-521 | Implement provenance prompt defaults and per-item overrides | agent | [ ] In Progress | block commit until required provenance fields are complete for all pending items |
+| P4-522 | Add GUI regression coverage for deterministic multi-file ingest behavior | agent | [ ] In Progress | cover deterministic normalized-path ordering, stable per-item result reporting, and commit-failure recovery |
+| P4-523 | Verify Phase 2.2 ingest implementation full gate | agent | [ ] In Progress | run `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-519..P4-522 |
+
 ## Review Notes
 
 - 2026-02-19: Documentation bootstrap completed.
@@ -215,3 +225,5 @@
 - 2026-02-25: Completed P4-515 by extending GUI regression coverage across tag/link/delete mutation flows (state transitions, failure recovery, and deterministic list/detail behavior).
 - 2026-02-25: Completed P4-516 by rerunning and passing the full Rust gate in `project4/lamian` after Phase 2.1 mutation expansion slices.
 - 2026-02-25: Completed P4-517 by design-locking Phase 2.2 drag-and-drop ingest UX/state flow (provenance prompt policy, multi-file deterministic ordering, shared ingest-core reuse, and Rust 2021 compatibility constraints) in both SPEC mirrors.
+- 2026-02-25: Opened Phase 2.2 implementation backlog (`P4-519`..`P4-523`) for GUI drag-and-drop ingest based on the locked design.
+- 2026-02-25: Completed P4-519 by implementing the Phase 2.2 drop-session GUI state machine with captured dropped-file sessions, metadata-required/ready/commit-failed lifecycle transitions, deterministic path ordering, and focused GUI tests.

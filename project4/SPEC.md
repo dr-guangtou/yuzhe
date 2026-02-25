@@ -73,6 +73,7 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
 - FR-201 GUI vault browser (read-only) reusing core list/search services
 - FR-202 GUI figure detail panel (read-only) reusing core show service
 - FR-203 GUI metadata mutation flow with separate figure/source edit sessions and shared-core validation semantics
+- FR-204 GUI tag/link/delete mutation flow with deterministic post-mutation list/detail behavior and shared-core validation semantics
 
 ## 6. Non-Functional Requirements
 
@@ -137,7 +138,33 @@ LaMian is a local-only visual knowledge base for research figures and screenshot
   - Save-failure paths preserve drafts and allow retry/cancel recovery for both figure and source editors.
   - Post-save behavior is validated for deterministic list ordering and selected-detail continuity.
 
-## 7.4 Data Store Strategy
+## 7.4 Phase 2.1 GUI Mutation Expansion State Model (Implemented Closure)
+
+- Scope adds three GUI mutation flows on top of existing shared services:
+  - tag mutation on selected figure via `tag add/remove`
+  - link mutation on selected figure via `link add/remove`
+  - figure deletion via `delete`
+- State and interaction model:
+  - tag/link flows: `viewing` -> `editing_clean` -> `editing_dirty` -> `saving` -> (`viewing` on success or `save_failed` on backend error)
+  - delete flow: `viewing` -> `confirming_delete` -> `deleting` -> (`viewing` with next selection or `delete_failed`)
+- Confirmation and safety rules:
+  - delete requires explicit confirmation interaction before calling backend service.
+  - while `saving`/`deleting`, mutation controls are disabled to prevent duplicate submits.
+- Validation mapping rule:
+  - GUI enforces interaction guards only (for example, disable no-op actions or invalid local transitions).
+  - Domain validation and invariants remain in shared services; backend error text is surfaced directly in GUI.
+- Deterministic post-mutation refresh policy:
+  - Tag/link success reloads selected figure detail via `show`; list row ordering remains service-driven.
+  - Delete success reloads list/search rows and applies deterministic next selection policy:
+    - select the next row at the deleted row index when available;
+    - otherwise select the previous row;
+    - if no rows remain, clear selection/detail state.
+- Regression coverage implemented for Phase 2.1:
+  - state transitions for tag/link/delete flows
+  - save/delete failure recovery with retry/cancel behavior
+  - deterministic list/detail behavior after tag/link/delete success paths
+
+## 7.5 Data Store Strategy
 
 - Canonical store: SQLite
 - Portability: export and bundle artifacts
@@ -254,6 +281,7 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 - bundle export/import roundtrip and conflict handling
 - migration compatibility from v2 to v3/v4
 - GUI mutation regression unit tests for S2 editor state transitions and save recovery/determinism behavior
+- GUI mutation regression unit tests for Phase 2.1 tag/link/delete state transitions and deterministic post-mutation behavior
 
 ## 13.3 Acceptance Gates
 
@@ -266,3 +294,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
   - docs synchronized across `project4/` and `project4/lamian/docs/`
   - Phase 2.0-S1 GUI launch succeeds on macOS and preserves deterministic row ordering from core services
   - Phase 2.0-S2 figure/source metadata mutation flows are implemented via shared services and covered by regression tests for save success/failure recovery and deterministic post-save list/detail behavior
+  - Phase 2.1 tag/link/delete mutation flows are implemented through shared `tag`/`link`/`delete` services and covered by regression tests for lifecycle failure recovery and deterministic post-mutation selection/refresh behavior

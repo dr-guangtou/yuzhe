@@ -2,7 +2,7 @@
 
 ## Active
 
-- Execute Phase 2.1 GUI mutation expansion planning baseline on feature branch `feat/p4-508-gui-regression-determinism`: design and implement tag/link/delete GUI mutation flows with deterministic post-mutation behavior.
+- Execute Phase 2.1 closure on feature branch `feat/phase-2-1-gui-mutation-expansion`: design Phase 2.2 drag-and-drop ingest UX/state flow (`P4-517`) now that tag/link/delete mutation expansion is complete.
 
 ## Review
 
@@ -14,6 +14,11 @@
 - 2026-02-25: P4-509 completed by syncing Phase 2 S2 implementation/acceptance docs between `project4/` and `project4/lamian/docs/` and recording incubator parity rules in AGENTS guidance.
 - 2026-02-25: P4-510 completed with a passing full Rust gate in `project4/lamian` (`cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test`).
 - 2026-02-25: Phase 2 next-stage planning updated by defining Phase 2.1 (tag/link/delete mutation expansion) and Phase 2.2 (drag-and-drop ingest design) in PLAN/TODO trackers across incubator and standalone mirrors.
+- 2026-02-25: P4-511 completed by locking the Phase 2.1 GUI mutation UX/state model for tag/link/delete flows, including deterministic post-delete selection behavior and shared-service validation mapping.
+- 2026-02-25: P4-512 completed by wiring GUI tag add/remove actions to shared tag services with lifecycle/error handling, regression tests, and a passing full gate.
+- 2026-02-25: P4-513 completed by wiring GUI link add/remove actions to shared link services with lifecycle/error handling, regression tests, and a passing full gate.
+- 2026-02-25: P4-514/P4-515/P4-516 completed by implementing GUI delete confirmation flow, adding full tag/link/delete regression coverage, and passing the full Rust gate in `project4/lamian`.
+- 2026-02-25: P4-518 completed by synchronizing Phase 2.1 tracker/spec wording from planning baseline to implemented closure across incubator and standalone mirrors.
 - 2026-02-24: Phase 1.8 Wave 4 doctor file-path integrity checks completed with full gate pass.
 - 2026-02-24: Bundle import portability validation (P4-401) completed with reference-path checks and CLI coverage.
 - 2026-02-24: Bundle import domain validation parity (P4-402) completed with source/tag/link checks and CLI coverage.

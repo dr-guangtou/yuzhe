@@ -148,18 +148,18 @@
 | P4-509 | Update Phase 2 docs/spec trackers for S2 scope and acceptance | agent | [x] Done | synced Phase 2 S2 implementation/acceptance language across `project4/SPEC.md`, `project4/lamian/docs/SPEC.md`, and TODO trackers with incubator parity rule |
 | P4-510 | Verify Phase 2.0-S2 full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-508 regression coverage updates |
 
-## Phase 2.1 GUI Mutation Expansion (Next)
+## Phase 2.1 GUI Mutation Expansion (Implemented Closure)
 
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
-| P4-511 | Design Phase 2.1 tag/link/delete GUI mutation UX/state flow | agent | [ ] In Progress | lock confirmation, state transitions, and error mapping for destructive/non-destructive mutation flows |
-| P4-512 | Wire GUI tag add/remove actions to shared `tag` services | agent | [ ] In Progress | keep GUI interaction-only and reuse existing CLI/domain validation semantics |
-| P4-513 | Wire GUI link add/remove actions to shared `link` services | agent | [ ] In Progress | preserve deterministic detail refresh and backend error surfacing |
-| P4-514 | Wire GUI figure delete flow to shared `delete` service | agent | [ ] In Progress | add explicit confirmation and deterministic post-delete list/detail selection behavior |
-| P4-515 | Add GUI regression coverage for tag/link/delete mutation flows | agent | [ ] In Progress | cover success/failure paths and deterministic state/list/detail transitions |
-| P4-516 | Verify Phase 2.1 mutation expansion full gate | agent | [ ] In Progress | run `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-512..P4-515 |
+| P4-511 | Design Phase 2.1 tag/link/delete GUI mutation UX/state flow | agent | [x] Done | locked state transitions, delete confirmation policy, validation mapping, and deterministic post-mutation refresh/selection behavior in both SPEC mirrors |
+| P4-512 | Wire GUI tag add/remove actions to shared `tag` services | agent | [x] Done | added GUI tag editor add/remove actions in `src/gui.rs` via shared `add_tag_to_figure`/`remove_tag_from_figure` with save-failure recovery and deterministic detail refresh |
+| P4-513 | Wire GUI link add/remove actions to shared `link` services | agent | [x] Done | added GUI link editor add/remove actions in `src/gui.rs` via shared `add_link`/`remove_link` with save-failure recovery and deterministic detail refresh |
+| P4-514 | Wire GUI figure delete flow to shared `delete` service | agent | [x] Done | added explicit delete-confirmation GUI flow wired to shared `delete_figure` with deterministic post-delete next/previous/clear selection policy |
+| P4-515 | Add GUI regression coverage for tag/link/delete mutation flows | agent | [x] Done | added GUI regression tests for tag/link/delete lifecycle transitions, success/failure recovery, and deterministic list/detail transitions |
+| P4-516 | Verify Phase 2.1 mutation expansion full gate | agent | [x] Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after P4-512..P4-515 |
 | P4-517 | Design Phase 2.2 drag-and-drop ingest UX/state flow | agent | [ ] In Progress | define provenance prompt policy and multi-file behavior using shared ingest core |
-| P4-518 | Update Phase 2 docs/spec trackers for 2.1 planning baseline | agent | [ ] In Progress | sync `project4/*`, `project4/lamian/docs/*`, and repo-level TODO notes for next execution wave |
+| P4-518 | Update Phase 2 docs/spec trackers for 2.1 implemented closure | agent | [x] Done | synced implemented Phase 2.1 wording across `project4/SPEC.md`, `project4/lamian/docs/SPEC.md`, `project4/TODO.md`, `project4/lamian/docs/TODO.md`, and `docs/todo.md` |
 
 ## Review Notes
 
@@ -207,3 +207,10 @@
 - 2026-02-25: Completed P4-506 by wiring GUI figure metadata edits (`name`/`caption`/`clear_caption`) to shared `update_figure` with draft-state save/cancel flow and full gate pass.
 - 2026-02-25: Completed P4-507 by wiring GUI source metadata edits (`title`/`authors`/`published_at` + clear flags) to shared `update_source_metadata` with full gate pass.
 - 2026-02-25: Opened Phase 2.1 planning baseline (`P4-511`..`P4-518`) for GUI tag/link/delete mutation expansion and drag-and-drop ingest design.
+- 2026-02-25: Completed P4-511 by design-locking Phase 2.1 GUI tag/link/delete mutation state flow and deterministic post-delete selection policy in both incubator and standalone SPEC mirrors.
+- 2026-02-25: Completed P4-518 by synchronizing Phase 2.1 implemented-closure docs after P4-512..P4-516 implementation and full-gate verification.
+- 2026-02-25: Completed P4-512 by wiring GUI tag add/remove flows to shared tag services with lifecycle/error handling and passing full gate verification.
+- 2026-02-25: Completed P4-513 by wiring GUI link add/remove flows to shared link services with lifecycle/error handling, regression coverage, and passing full gate verification.
+- 2026-02-25: Completed P4-514 by wiring GUI figure delete confirmation flow to shared delete service with deterministic next/previous/clear post-delete selection behavior.
+- 2026-02-25: Completed P4-515 by extending GUI regression coverage across tag/link/delete mutation flows (state transitions, failure recovery, and deterministic list/detail behavior).
+- 2026-02-25: Completed P4-516 by rerunning and passing the full Rust gate in `project4/lamian` after Phase 2.1 mutation expansion slices.

@@ -58,6 +58,33 @@ Build a local-only visual knowledge base for research figures with reliable meta
    - Save-failure paths preserve drafts and expose backend errors while allowing retry/cancel recovery.
    - Post-save behavior is asserted to keep list ordering deterministic and selected detail synchronized.
 
+## Phase 2.1 Mutation Expansion UX and State Flow (P4-511..P4-516, Implemented Closure)
+
+1. Scope extends GUI mutation flows to existing shared services:
+   - tag add/remove on selected figure
+   - link add/remove on selected figure
+   - figure delete
+2. State sequence by flow:
+   - tag/link: `viewing` -> `editing_clean` -> `editing_dirty` -> `saving` -> (`viewing` on success or `save_failed` on error)
+   - delete: `viewing` -> `confirming_delete` -> `deleting` -> (`viewing` on success or `delete_failed` on error)
+3. Delete safety contract:
+   - delete requires explicit confirmation before backend mutation call.
+   - controls are disabled during `deleting` to prevent duplicate submissions.
+4. Validation mapping:
+   - GUI enforces interaction-level guards only.
+   - domain validation remains centralized in shared services.
+   - backend error messages are surfaced directly in GUI feedback.
+5. Deterministic refresh contract:
+   - tag/link success reloads selected detail via `show`; list ordering remains service-driven.
+   - delete success reloads list/search rows and applies deterministic selection policy:
+     - select next row at deleted index when available;
+     - else select previous row;
+     - clear selection/detail when list is empty.
+6. Regression coverage implemented for Phase 2.1:
+   - state transitions for tag/link/delete mutation flows
+   - save/delete failure recovery and retry/cancel behavior
+   - deterministic list/detail behavior after mutation success paths
+
 ## Phase 1.8 Decisions (Finalized)
 
 ### Wave 1-3 (Implemented)
@@ -172,3 +199,4 @@ lamian bundle import <path.tar.gz> [--fail-on-link-loss] [--dry-run] [--on-confl
 5. GUI drag-and-drop path stays equivalent to core ingest behavior.
 6. Phase 2.0-S1 GUI preserves service ordering guarantees by rendering rows in exactly the order returned from shared core list/search services.
 7. Phase 2.0-S2 mutation flows are implemented through shared `update`/`source update` services and validated by GUI regression tests for state transitions, failure recovery, and deterministic post-save list/detail behavior.
+8. Phase 2.1 tag/link/delete mutation flows are implemented via shared `tag`/`link`/`delete` services and validated by regression tests for failure recovery and deterministic post-mutation list/detail behavior.

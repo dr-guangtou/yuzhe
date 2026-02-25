@@ -47,16 +47,16 @@
 | L-210 | Add GUI mutation regression and deterministic behavior checks | Done | added `src/gui.rs` regression tests for editor lifecycle transitions, save failure recovery, and deterministic list/detail behavior after figure/source saves |
 | L-211 | Run full verification gate for Phase 2.0-S2 | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-210 |
 
-## Phase 2.1 GUI Mutation Expansion (Next)
+## Phase 2.1 GUI Mutation Expansion (Implemented Closure)
 
 | ID | Task | Status | Notes |
 | --- | --- | --- | --- |
-| L-212 | Design Phase 2.1 tag/link/delete mutation UX and state flow | In Progress | lock confirmation/state/error mapping for destructive and non-destructive mutation actions |
-| L-213 | Wire GUI tag add/remove actions to shared tag services | In Progress | reuse existing tag validation + mutation core services without GUI-side domain duplication |
-| L-214 | Wire GUI link add/remove actions to shared link services | In Progress | preserve deterministic detail refresh and backend error surfacing |
-| L-215 | Wire GUI figure delete flow to shared delete service | In Progress | add explicit confirmation and deterministic post-delete selection behavior |
-| L-216 | Add GUI regression coverage for tag/link/delete flows | In Progress | cover success/failure paths and deterministic list/detail state transitions |
-| L-217 | Run full verification gate for Phase 2.1 mutation expansion | In Progress | `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-213..L-216 |
+| L-212 | Design Phase 2.1 tag/link/delete mutation UX and state flow | Done | locked state transitions, delete confirmation policy, validation mapping, and deterministic post-delete selection behavior in `docs/SPEC.md` |
+| L-213 | Wire GUI tag add/remove actions to shared tag services | Done | added GUI tag editor add/remove actions in `src/gui.rs` via shared tag services with save-failure recovery and deterministic detail refresh |
+| L-214 | Wire GUI link add/remove actions to shared link services | Done | added GUI link editor add/remove actions in `src/gui.rs` via shared link services with save-failure recovery and deterministic detail refresh |
+| L-215 | Wire GUI figure delete flow to shared delete service | Done | added explicit delete-confirmation GUI flow via shared delete service with deterministic next/previous/clear post-delete selection |
+| L-216 | Add GUI regression coverage for tag/link/delete flows | Done | added GUI regression tests for mutation state transitions, failure recovery, and deterministic list/detail behavior across tag/link/delete |
+| L-217 | Run full verification gate for Phase 2.1 mutation expansion | Done | passed `cargo fmt --all && cargo clippy --all-targets -- -D warnings && cargo test` after L-213..L-216 |
 | L-218 | Design Phase 2.2 drag-and-drop ingest UX and provenance prompts | In Progress | define one/many file drop behavior while reusing shared ingest core |
 
 ## Phase 1.x Hardening (Post-Phase 1.5 Review)

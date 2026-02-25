@@ -3,10 +3,13 @@ use std::path::PathBuf;
 use eframe::egui;
 
 use crate::cli::{ListSortField, ListSortOrder};
+use crate::delete::{delete_figure, DeleteFigureRequest};
+use crate::link::{add_link, remove_link, AddLinkRequest, RemoveLinkRequest};
 use crate::list::{list_figures, ListFigureRow, ListFiguresRequest};
 use crate::search::{search_figures, SearchFigure, SearchRequest};
 use crate::show::{show_figure, ShowFigureRequest, ShowFigureResult};
 use crate::source::{update_source_metadata, UpdateSourceRequest};
+use crate::tag::{add_tag_to_figure, remove_tag_from_figure, AddTagRequest, RemoveTagRequest};
 use crate::update::{update_figure, UpdateRequest};
 
 #[derive(Debug, Clone)]
@@ -83,6 +86,87 @@ struct SourceUpdatePayload {
     has_changes: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TagEditorLifecycle {
+    EditingClean,
+    EditingDirty,
+    Saving,
+    SaveFailed,
+}
+
+#[derive(Debug, Clone)]
+struct TagMutationDraft {
+    figure_id: String,
+    tag_input: String,
+    lifecycle: TagEditorLifecycle,
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TagMutationAction {
+    Add,
+    Remove,
+}
+
+#[derive(Debug, Clone)]
+struct TagMutationPayload {
+    figure_id: String,
+    tag: String,
+    action: TagMutationAction,
+    has_changes: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LinkEditorLifecycle {
+    EditingClean,
+    EditingDirty,
+    Saving,
+    SaveFailed,
+}
+
+#[derive(Debug, Clone)]
+struct LinkMutationDraft {
+    figure_id: String,
+    to_figure_id_input: String,
+    relation_input: String,
+    lifecycle: LinkEditorLifecycle,
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LinkMutationAction {
+    Add,
+    Remove,
+}
+
+#[derive(Debug, Clone)]
+struct LinkMutationPayload {
+    figure_id: String,
+    to_figure_id: String,
+    relation: String,
+    action: LinkMutationAction,
+    has_changes: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DeleteEditorLifecycle {
+    ConfirmingDelete,
+    Deleting,
+    DeleteFailed,
+}
+
+#[derive(Debug, Clone)]
+struct DeleteFigureDraft {
+    figure_id: String,
+    lifecycle: DeleteEditorLifecycle,
+    last_error: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct DeleteFigurePayload {
+    figure_id: String,
+}
+
 #[derive(Default)]
 pub struct LamianGuiApp {
     vault_root_input: String,
@@ -93,6 +177,9 @@ pub struct LamianGuiApp {
     selected_figure_detail: Option<ShowFigureResult>,
     figure_metadata_draft: Option<FigureMetadataDraft>,
     source_metadata_draft: Option<SourceMetadataDraft>,
+    tag_mutation_draft: Option<TagMutationDraft>,
+    link_mutation_draft: Option<LinkMutationDraft>,
+    delete_figure_draft: Option<DeleteFigureDraft>,
     status_message: Option<String>,
     error_message: Option<String>,
 }
@@ -185,6 +272,9 @@ impl LamianGuiApp {
                 self.selected_figure_detail = Some(detail);
                 self.figure_metadata_draft = None;
                 self.source_metadata_draft = None;
+                self.tag_mutation_draft = None;
+                self.link_mutation_draft = None;
+                self.delete_figure_draft = None;
                 self.error_message = None;
             }
             Err(error) => {
@@ -248,6 +338,63 @@ impl LamianGuiApp {
         self.status_message = Some("Canceled source metadata edits.".to_string());
     }
 
+    fn begin_tag_mutation_editing(&mut self) {
+        let Some(detail) = self.selected_figure_detail.as_ref() else {
+            self.error_message = Some("Select a figure to edit tags.".to_string());
+            return;
+        };
+
+        self.tag_mutation_draft = Some(TagMutationDraft {
+            figure_id: detail.figure_id.clone(),
+            tag_input: String::new(),
+            lifecycle: TagEditorLifecycle::EditingClean,
+            last_error: None,
+        });
+    }
+
+    fn cancel_tag_mutation_editing(&mut self) {
+        self.tag_mutation_draft = None;
+        self.status_message = Some("Canceled tag edits.".to_string());
+    }
+
+    fn begin_link_mutation_editing(&mut self) {
+        let Some(detail) = self.selected_figure_detail.as_ref() else {
+            self.error_message = Some("Select a figure to edit links.".to_string());
+            return;
+        };
+
+        self.link_mutation_draft = Some(LinkMutationDraft {
+            figure_id: detail.figure_id.clone(),
+            to_figure_id_input: String::new(),
+            relation_input: "related".to_string(),
+            lifecycle: LinkEditorLifecycle::EditingClean,
+            last_error: None,
+        });
+    }
+
+    fn cancel_link_mutation_editing(&mut self) {
+        self.link_mutation_draft = None;
+        self.status_message = Some("Canceled link edits.".to_string());
+    }
+
+    fn begin_delete_figure_confirmation(&mut self) {
+        let Some(detail) = self.selected_figure_detail.as_ref() else {
+            self.error_message = Some("Select a figure to delete.".to_string());
+            return;
+        };
+
+        self.delete_figure_draft = Some(DeleteFigureDraft {
+            figure_id: detail.figure_id.clone(),
+            lifecycle: DeleteEditorLifecycle::ConfirmingDelete,
+            last_error: None,
+        });
+    }
+
+    fn cancel_delete_figure_confirmation(&mut self) {
+        self.delete_figure_draft = None;
+        self.status_message = Some("Canceled delete action.".to_string());
+    }
+
     fn save_figure_metadata_changes(&mut self, payload: FigureUpdatePayload) {
         if !payload.has_changes {
             self.status_message = Some("No figure metadata changes to save.".to_string());
@@ -295,6 +442,198 @@ impl LamianGuiApp {
                 self.error_message = Some(error.to_string());
             }
         }
+    }
+
+    fn save_tag_mutation_changes(&mut self, payload: TagMutationPayload) {
+        if !payload.has_changes {
+            self.status_message = Some("No tag changes to save.".to_string());
+            return;
+        }
+
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        if let Some(draft) = self.tag_mutation_draft.as_mut() {
+            draft.lifecycle = TagEditorLifecycle::Saving;
+            draft.last_error = None;
+        }
+
+        let result = match payload.action {
+            TagMutationAction::Add => add_tag_to_figure(AddTagRequest {
+                vault_root: vault_root.clone(),
+                figure_id: payload.figure_id.clone(),
+                tag: payload.tag.clone(),
+            })
+            .map(|response| {
+                if response.created_relation {
+                    format!("Added tag: {}", response.normalized_tag)
+                } else {
+                    format!("Tag already assigned: {}", response.normalized_tag)
+                }
+            }),
+            TagMutationAction::Remove => remove_tag_from_figure(RemoveTagRequest {
+                vault_root: vault_root.clone(),
+                figure_id: payload.figure_id.clone(),
+                tag: payload.tag.clone(),
+            })
+            .map(|response| {
+                if response.removed_relation {
+                    format!("Removed tag: {}", response.normalized_tag)
+                } else {
+                    format!("Tag not assigned: {}", response.normalized_tag)
+                }
+            }),
+        };
+
+        match result {
+            Ok(status_message) => {
+                self.error_message = None;
+                self.status_message = Some(status_message);
+                self.tag_mutation_draft = None;
+                self.load_figure_detail(&payload.figure_id);
+            }
+            Err(error) => {
+                if let Some(draft) = self.tag_mutation_draft.as_mut() {
+                    draft.lifecycle = TagEditorLifecycle::SaveFailed;
+                    draft.last_error = Some(error.to_string());
+                }
+                self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn save_link_mutation_changes(&mut self, payload: LinkMutationPayload) {
+        if !payload.has_changes {
+            self.status_message = Some("No link changes to save.".to_string());
+            return;
+        }
+
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        if let Some(draft) = self.link_mutation_draft.as_mut() {
+            draft.lifecycle = LinkEditorLifecycle::Saving;
+            draft.last_error = None;
+        }
+
+        let result = match payload.action {
+            LinkMutationAction::Add => add_link(AddLinkRequest {
+                vault_root: vault_root.clone(),
+                from_figure_id: payload.figure_id.clone(),
+                to_figure_id: payload.to_figure_id.clone(),
+                relation: payload.relation.clone(),
+            })
+            .map(|response| {
+                if response.created_link {
+                    format!(
+                        "Added link: {} -> {} [{}]",
+                        response.from_figure_id,
+                        response.to_figure_id,
+                        response.normalized_relation
+                    )
+                } else {
+                    format!(
+                        "Link already exists: {} -> {} [{}]",
+                        response.from_figure_id,
+                        response.to_figure_id,
+                        response.normalized_relation
+                    )
+                }
+            }),
+            LinkMutationAction::Remove => remove_link(RemoveLinkRequest {
+                vault_root: vault_root.clone(),
+                from_figure_id: payload.figure_id.clone(),
+                to_figure_id: payload.to_figure_id.clone(),
+            })
+            .map(|response| {
+                format!(
+                    "Removed links: {} -> {} (count: {})",
+                    response.from_figure_id, response.to_figure_id, response.removed_count
+                )
+            }),
+        };
+
+        match result {
+            Ok(status_message) => {
+                self.error_message = None;
+                self.status_message = Some(status_message);
+                self.link_mutation_draft = None;
+                self.load_figure_detail(&payload.figure_id);
+            }
+            Err(error) => {
+                if let Some(draft) = self.link_mutation_draft.as_mut() {
+                    draft.lifecycle = LinkEditorLifecycle::SaveFailed;
+                    draft.last_error = Some(error.to_string());
+                }
+                self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn confirm_delete_figure(&mut self, payload: DeleteFigurePayload) {
+        let Some(vault_root) = self.connected_vault_root.as_ref() else {
+            self.error_message = Some("Open a vault first.".to_string());
+            return;
+        };
+
+        if let Some(draft) = self.delete_figure_draft.as_mut() {
+            draft.lifecycle = DeleteEditorLifecycle::Deleting;
+            draft.last_error = None;
+        }
+
+        let deleted_row_index = self
+            .figure_rows
+            .iter()
+            .position(|row| row.figure_id == payload.figure_id);
+
+        match delete_figure(DeleteFigureRequest {
+            vault_root: vault_root.clone(),
+            figure_id: payload.figure_id.clone(),
+        }) {
+            Ok(result) => {
+                self.error_message = None;
+                self.figure_metadata_draft = None;
+                self.source_metadata_draft = None;
+                self.tag_mutation_draft = None;
+                self.link_mutation_draft = None;
+                self.delete_figure_draft = None;
+                self.selected_figure_id = None;
+                self.selected_figure_detail = None;
+                self.refresh_figure_rows();
+                self.apply_post_delete_selection(deleted_row_index);
+                self.status_message = Some(format!(
+                    "Deleted figure: {} (removed_orphan_tags={}, removed_managed_file={})",
+                    result.figure_id, result.removed_orphan_tag_count, result.removed_managed_file
+                ));
+            }
+            Err(error) => {
+                if let Some(draft) = self.delete_figure_draft.as_mut() {
+                    draft.lifecycle = DeleteEditorLifecycle::DeleteFailed;
+                    draft.last_error = Some(error.to_string());
+                }
+                self.error_message = Some(error.to_string());
+            }
+        }
+    }
+
+    fn apply_post_delete_selection(&mut self, deleted_row_index: Option<usize>) {
+        if self.figure_rows.is_empty() {
+            self.selected_figure_id = None;
+            self.selected_figure_detail = None;
+            return;
+        }
+
+        let next_index = match deleted_row_index {
+            Some(index) if index < self.figure_rows.len() => index,
+            Some(_) => self.figure_rows.len().saturating_sub(1),
+            None => 0,
+        };
+        let next_figure_id = self.figure_rows[next_index].figure_id.clone();
+        self.load_figure_detail(&next_figure_id);
     }
 
     fn save_source_metadata_changes(&mut self, payload: SourceUpdatePayload) {
@@ -435,10 +774,67 @@ impl LamianGuiApp {
         {
             self.source_metadata_draft = None;
         }
-
-        ui.label(format!("Figure ID: {}", detail.figure_id));
+        if self
+            .tag_mutation_draft
+            .as_ref()
+            .is_some_and(|draft| draft.figure_id != detail.figure_id)
+        {
+            self.tag_mutation_draft = None;
+        }
+        if self
+            .link_mutation_draft
+            .as_ref()
+            .is_some_and(|draft| draft.figure_id != detail.figure_id)
+        {
+            self.link_mutation_draft = None;
+        }
+        if self
+            .delete_figure_draft
+            .as_ref()
+            .is_some_and(|draft| draft.figure_id != detail.figure_id)
+        {
+            self.delete_figure_draft = None;
+        }
 
         let mut pending_action: Option<EditorAction> = None;
+
+        ui.label(format!("Figure ID: {}", detail.figure_id));
+        ui.label("Delete Figure");
+        if let Some(draft) = self.delete_figure_draft.as_mut() {
+            ui.label(format!(
+                "Delete state: {}",
+                delete_lifecycle_label(draft.lifecycle)
+            ));
+            ui.colored_label(
+                egui::Color32::YELLOW,
+                "Confirm delete to remove this figure and related references.",
+            );
+
+            if let Some(error_message) = draft.last_error.as_ref() {
+                ui.colored_label(egui::Color32::RED, error_message);
+            }
+
+            let is_deleting = draft.lifecycle == DeleteEditorLifecycle::Deleting;
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(!is_deleting, egui::Button::new("Confirm Delete"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::DeleteConfirm(DeleteFigurePayload {
+                        figure_id: draft.figure_id.clone(),
+                    }));
+                }
+                if ui
+                    .add_enabled(!is_deleting, egui::Button::new("Cancel Delete"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::DeleteCancel);
+                }
+            });
+        } else if ui.button("Delete Figure").clicked() {
+            self.begin_delete_figure_confirmation();
+        }
+
         if let Some(draft) = self.figure_metadata_draft.as_mut() {
             let payload = build_figure_update_payload(draft);
             sync_figure_draft_lifecycle(draft, payload.has_changes);
@@ -503,6 +899,52 @@ impl LamianGuiApp {
 
         ui.separator();
         ui.label(format!("Tags: {}", detail.tags.join(", ")));
+        ui.label("Tag Editor");
+        if let Some(draft) = self.tag_mutation_draft.as_mut() {
+            let add_payload = build_tag_mutation_payload(draft, TagMutationAction::Add);
+            let remove_payload = build_tag_mutation_payload(draft, TagMutationAction::Remove);
+            sync_tag_draft_lifecycle(draft, add_payload.has_changes);
+            ui.label(format!(
+                "Editor state: {}",
+                tag_lifecycle_label(draft.lifecycle)
+            ));
+
+            let is_saving = draft.lifecycle == TagEditorLifecycle::Saving;
+            ui.add_enabled_ui(!is_saving, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Tag:");
+                    ui.text_edit_singleline(&mut draft.tag_input);
+                });
+            });
+
+            if let Some(error_message) = draft.last_error.as_ref() {
+                ui.colored_label(egui::Color32::RED, error_message);
+            }
+
+            let can_save = add_payload.has_changes && !is_saving;
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Add Tag"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::TagSave(add_payload.clone()));
+                }
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Remove Tag"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::TagSave(remove_payload.clone()));
+                }
+                if ui
+                    .add_enabled(!is_saving, egui::Button::new("Cancel"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::TagCancel);
+                }
+            });
+        } else if ui.button("Edit Tags").clicked() {
+            self.begin_tag_mutation_editing();
+        }
 
         ui.separator();
         ui.label("Sources:");
@@ -569,15 +1011,6 @@ impl LamianGuiApp {
             self.begin_source_metadata_editing();
         }
 
-        if let Some(action) = pending_action {
-            match action {
-                EditorAction::FigureSave(payload) => self.save_figure_metadata_changes(payload),
-                EditorAction::FigureCancel => self.cancel_figure_metadata_editing(),
-                EditorAction::SourceSave(payload) => self.save_source_metadata_changes(payload),
-                EditorAction::SourceCancel => self.cancel_source_metadata_editing(),
-            }
-        }
-
         ui.separator();
         ui.label("Outbound links:");
         for link in &detail.outbound_links {
@@ -585,6 +1018,71 @@ impl LamianGuiApp {
                 "- {} [{}] at {}",
                 link.to_figure_id, link.relation_type, link.created_at
             ));
+        }
+        ui.label("Link Editor");
+        if let Some(draft) = self.link_mutation_draft.as_mut() {
+            let add_payload = build_link_mutation_payload(draft, LinkMutationAction::Add);
+            let remove_payload = build_link_mutation_payload(draft, LinkMutationAction::Remove);
+            sync_link_draft_lifecycle(draft, add_payload.has_changes);
+            ui.label(format!(
+                "Editor state: {}",
+                link_lifecycle_label(draft.lifecycle)
+            ));
+
+            let is_saving = draft.lifecycle == LinkEditorLifecycle::Saving;
+            ui.add_enabled_ui(!is_saving, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("To Figure ID:");
+                    ui.text_edit_singleline(&mut draft.to_figure_id_input);
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Relation:");
+                    ui.text_edit_singleline(&mut draft.relation_input);
+                });
+            });
+
+            if let Some(error_message) = draft.last_error.as_ref() {
+                ui.colored_label(egui::Color32::RED, error_message);
+            }
+
+            let can_save = add_payload.has_changes && !is_saving;
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Add Link"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::LinkSave(add_payload.clone()));
+                }
+                if ui
+                    .add_enabled(can_save, egui::Button::new("Remove Link"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::LinkSave(remove_payload.clone()));
+                }
+                if ui
+                    .add_enabled(!is_saving, egui::Button::new("Cancel"))
+                    .clicked()
+                {
+                    pending_action = Some(EditorAction::LinkCancel);
+                }
+            });
+        } else if ui.button("Edit Links").clicked() {
+            self.begin_link_mutation_editing();
+        }
+
+        if let Some(action) = pending_action {
+            match action {
+                EditorAction::FigureSave(payload) => self.save_figure_metadata_changes(payload),
+                EditorAction::FigureCancel => self.cancel_figure_metadata_editing(),
+                EditorAction::SourceSave(payload) => self.save_source_metadata_changes(payload),
+                EditorAction::SourceCancel => self.cancel_source_metadata_editing(),
+                EditorAction::TagSave(payload) => self.save_tag_mutation_changes(payload),
+                EditorAction::TagCancel => self.cancel_tag_mutation_editing(),
+                EditorAction::LinkSave(payload) => self.save_link_mutation_changes(payload),
+                EditorAction::LinkCancel => self.cancel_link_mutation_editing(),
+                EditorAction::DeleteConfirm(payload) => self.confirm_delete_figure(payload),
+                EditorAction::DeleteCancel => self.cancel_delete_figure_confirmation(),
+            }
         }
 
         ui.separator();
@@ -608,6 +1106,12 @@ enum EditorAction {
     FigureCancel,
     SourceSave(SourceUpdatePayload),
     SourceCancel,
+    TagSave(TagMutationPayload),
+    TagCancel,
+    LinkSave(LinkMutationPayload),
+    LinkCancel,
+    DeleteConfirm(DeleteFigurePayload),
+    DeleteCancel,
 }
 
 impl eframe::App for LamianGuiApp {
@@ -800,19 +1304,100 @@ fn source_lifecycle_label(lifecycle: SourceEditorLifecycle) -> &'static str {
     }
 }
 
+fn build_tag_mutation_payload(
+    draft: &TagMutationDraft,
+    action: TagMutationAction,
+) -> TagMutationPayload {
+    let tag = draft.tag_input.trim().to_string();
+    TagMutationPayload {
+        figure_id: draft.figure_id.clone(),
+        tag,
+        action,
+        has_changes: !draft.tag_input.trim().is_empty(),
+    }
+}
+
+fn sync_tag_draft_lifecycle(draft: &mut TagMutationDraft, has_changes: bool) {
+    if draft.lifecycle == TagEditorLifecycle::Saving {
+        return;
+    }
+
+    draft.lifecycle = if has_changes {
+        TagEditorLifecycle::EditingDirty
+    } else {
+        TagEditorLifecycle::EditingClean
+    };
+}
+
+fn tag_lifecycle_label(lifecycle: TagEditorLifecycle) -> &'static str {
+    match lifecycle {
+        TagEditorLifecycle::EditingClean => "editing_clean",
+        TagEditorLifecycle::EditingDirty => "editing_dirty",
+        TagEditorLifecycle::Saving => "saving",
+        TagEditorLifecycle::SaveFailed => "save_failed",
+    }
+}
+
+fn build_link_mutation_payload(
+    draft: &LinkMutationDraft,
+    action: LinkMutationAction,
+) -> LinkMutationPayload {
+    let to_figure_id = draft.to_figure_id_input.trim().to_string();
+    LinkMutationPayload {
+        figure_id: draft.figure_id.clone(),
+        to_figure_id: to_figure_id.clone(),
+        relation: draft.relation_input.trim().to_string(),
+        action,
+        has_changes: !to_figure_id.is_empty(),
+    }
+}
+
+fn sync_link_draft_lifecycle(draft: &mut LinkMutationDraft, has_changes: bool) {
+    if draft.lifecycle == LinkEditorLifecycle::Saving {
+        return;
+    }
+
+    draft.lifecycle = if has_changes {
+        LinkEditorLifecycle::EditingDirty
+    } else {
+        LinkEditorLifecycle::EditingClean
+    };
+}
+
+fn link_lifecycle_label(lifecycle: LinkEditorLifecycle) -> &'static str {
+    match lifecycle {
+        LinkEditorLifecycle::EditingClean => "editing_clean",
+        LinkEditorLifecycle::EditingDirty => "editing_dirty",
+        LinkEditorLifecycle::Saving => "saving",
+        LinkEditorLifecycle::SaveFailed => "save_failed",
+    }
+}
+
+fn delete_lifecycle_label(lifecycle: DeleteEditorLifecycle) -> &'static str {
+    match lifecycle {
+        DeleteEditorLifecycle::ConfirmingDelete => "confirming_delete",
+        DeleteEditorLifecycle::Deleting => "deleting",
+        DeleteEditorLifecycle::DeleteFailed => "delete_failed",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        build_figure_update_payload, build_source_update_payload, figure_rows_from_list,
-        figure_rows_from_search, sync_figure_draft_lifecycle, sync_source_draft_lifecycle,
-        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, SourceEditorLifecycle,
-        SourceMetadataDraft,
+        build_figure_update_payload, build_link_mutation_payload, build_source_update_payload,
+        build_tag_mutation_payload, figure_rows_from_list, figure_rows_from_search,
+        sync_figure_draft_lifecycle, sync_link_draft_lifecycle, sync_source_draft_lifecycle,
+        sync_tag_draft_lifecycle, DeleteEditorLifecycle, DeleteFigurePayload,
+        FigureEditorLifecycle, FigureMetadataDraft, LamianGuiApp, LinkEditorLifecycle,
+        LinkMutationAction, LinkMutationDraft, SourceEditorLifecycle, SourceMetadataDraft,
+        TagEditorLifecycle, TagMutationAction, TagMutationDraft,
     };
     use std::path::{Path, PathBuf};
 
     use tempfile::TempDir;
 
     use crate::db;
+    use crate::delete::{delete_figure, DeleteFigureRequest};
     use crate::inject::{inject_figure, CopyMode, InjectRequest, SourceType};
     use crate::list::ListFigureRow;
     use crate::search::SearchFigure;
@@ -1076,6 +1661,47 @@ mod tests {
     }
 
     #[test]
+    fn sync_tag_lifecycle_transitions_clean_dirty_and_preserves_saving() {
+        let mut draft = TagMutationDraft {
+            figure_id: "fig_9".to_string(),
+            tag_input: String::new(),
+            lifecycle: TagEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        sync_tag_draft_lifecycle(&mut draft, true);
+        assert_eq!(draft.lifecycle, TagEditorLifecycle::EditingDirty);
+
+        sync_tag_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, TagEditorLifecycle::EditingClean);
+
+        draft.lifecycle = TagEditorLifecycle::Saving;
+        sync_tag_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, TagEditorLifecycle::Saving);
+    }
+
+    #[test]
+    fn sync_link_lifecycle_transitions_clean_dirty_and_preserves_saving() {
+        let mut draft = LinkMutationDraft {
+            figure_id: "fig_10".to_string(),
+            to_figure_id_input: String::new(),
+            relation_input: "related".to_string(),
+            lifecycle: LinkEditorLifecycle::EditingClean,
+            last_error: None,
+        };
+
+        sync_link_draft_lifecycle(&mut draft, true);
+        assert_eq!(draft.lifecycle, LinkEditorLifecycle::EditingDirty);
+
+        sync_link_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, LinkEditorLifecycle::EditingClean);
+
+        draft.lifecycle = LinkEditorLifecycle::Saving;
+        sync_link_draft_lifecycle(&mut draft, false);
+        assert_eq!(draft.lifecycle, LinkEditorLifecycle::Saving);
+    }
+
+    #[test]
     fn figure_save_failure_keeps_draft_and_allows_retry() {
         let (_temp_dir, vault_path, mut app, figure_ids) = seed_app_with_two_figures();
         let figure_id = figure_ids[0].clone();
@@ -1310,6 +1936,341 @@ mod tests {
                 .and_then(|source| source.source_title.as_deref()),
             Some("Updated Source Title")
         );
+    }
+
+    #[test]
+    fn tag_add_and_remove_preserve_deterministic_list_and_detail_selection() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_tag_mutation_editing();
+        {
+            let draft = app
+                .tag_mutation_draft
+                .as_mut()
+                .expect("tag draft initialized");
+            draft.tag_input = "topic:nebula".to_string();
+        }
+        let add_payload = build_tag_mutation_payload(
+            app.tag_mutation_draft.as_ref().expect("tag draft present"),
+            TagMutationAction::Add,
+        );
+        assert!(add_payload.has_changes);
+
+        app.save_tag_mutation_changes(add_payload);
+        assert!(app.tag_mutation_draft.is_none());
+        assert_eq!(
+            app.selected_figure_detail
+                .as_ref()
+                .map(|detail| detail.figure_id.as_str()),
+            Some(figure_id.as_str())
+        );
+        assert!(app
+            .selected_figure_detail
+            .as_ref()
+            .is_some_and(|detail| detail.tags.iter().any(|tag| tag == "topic:nebula")));
+
+        app.begin_tag_mutation_editing();
+        {
+            let draft = app
+                .tag_mutation_draft
+                .as_mut()
+                .expect("tag draft initialized for removal");
+            draft.tag_input = "topic:nebula".to_string();
+        }
+        let remove_payload = build_tag_mutation_payload(
+            app.tag_mutation_draft
+                .as_ref()
+                .expect("tag draft present for removal"),
+            TagMutationAction::Remove,
+        );
+        assert!(remove_payload.has_changes);
+
+        app.save_tag_mutation_changes(remove_payload);
+        let list_order_after = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(list_order_after, list_order_before);
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert!(app
+            .selected_figure_detail
+            .as_ref()
+            .is_some_and(|detail| !detail.tags.iter().any(|tag| tag == "topic:nebula")));
+    }
+
+    #[test]
+    fn tag_save_failure_keeps_draft_and_allows_retry() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_tag_mutation_editing();
+        {
+            let draft = app
+                .tag_mutation_draft
+                .as_mut()
+                .expect("tag draft initialized");
+            draft.tag_input = "bad tag".to_string();
+        }
+        let failure_payload = build_tag_mutation_payload(
+            app.tag_mutation_draft.as_ref().expect("tag draft present"),
+            TagMutationAction::Add,
+        );
+        assert!(failure_payload.has_changes);
+
+        app.save_tag_mutation_changes(failure_payload);
+
+        let failed_draft = app
+            .tag_mutation_draft
+            .as_ref()
+            .expect("draft persists after failed save");
+        assert_eq!(failed_draft.lifecycle, TagEditorLifecycle::SaveFailed);
+        assert!(failed_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("invalid tag")));
+
+        {
+            let draft = app
+                .tag_mutation_draft
+                .as_mut()
+                .expect("tag draft still present");
+            draft.tag_input = "topic:retry".to_string();
+        }
+        let retry_payload = build_tag_mutation_payload(
+            app.tag_mutation_draft
+                .as_ref()
+                .expect("tag draft present for retry"),
+            TagMutationAction::Add,
+        );
+        assert!(retry_payload.has_changes);
+
+        app.save_tag_mutation_changes(retry_payload);
+
+        assert!(app.tag_mutation_draft.is_none());
+        assert!(app.error_message.is_none());
+        assert!(app
+            .selected_figure_detail
+            .as_ref()
+            .is_some_and(|detail| detail.tags.iter().any(|tag| tag == "topic:retry")));
+    }
+
+    #[test]
+    fn link_add_and_remove_preserve_deterministic_list_and_detail_selection() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let target_id = figure_ids[1].clone();
+        let list_order_before = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_link_mutation_editing();
+        {
+            let draft = app
+                .link_mutation_draft
+                .as_mut()
+                .expect("link draft initialized");
+            draft.to_figure_id_input = target_id.clone();
+            draft.relation_input = "cites".to_string();
+        }
+        let add_payload = build_link_mutation_payload(
+            app.link_mutation_draft
+                .as_ref()
+                .expect("link draft present"),
+            LinkMutationAction::Add,
+        );
+        assert!(add_payload.has_changes);
+
+        app.save_link_mutation_changes(add_payload);
+        assert!(app.link_mutation_draft.is_none());
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert!(app.selected_figure_detail.as_ref().is_some_and(|detail| {
+            detail
+                .outbound_links
+                .iter()
+                .any(|link| link.to_figure_id == target_id && link.relation_type == "cites")
+        }));
+
+        app.begin_link_mutation_editing();
+        {
+            let draft = app
+                .link_mutation_draft
+                .as_mut()
+                .expect("link draft initialized for removal");
+            draft.to_figure_id_input = target_id.clone();
+            draft.relation_input = "related".to_string();
+        }
+        let remove_payload = build_link_mutation_payload(
+            app.link_mutation_draft
+                .as_ref()
+                .expect("link draft present for removal"),
+            LinkMutationAction::Remove,
+        );
+        assert!(remove_payload.has_changes);
+
+        app.save_link_mutation_changes(remove_payload);
+        let list_order_after = app
+            .figure_rows
+            .iter()
+            .map(|row| row.figure_id.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(list_order_after, list_order_before);
+        assert_eq!(app.selected_figure_id.as_deref(), Some(figure_id.as_str()));
+        assert!(app.selected_figure_detail.as_ref().is_some_and(|detail| {
+            detail
+                .outbound_links
+                .iter()
+                .all(|link| link.to_figure_id != target_id)
+        }));
+    }
+
+    #[test]
+    fn link_save_failure_keeps_draft_and_allows_retry() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+        let target_id = figure_ids[1].clone();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_link_mutation_editing();
+        {
+            let draft = app
+                .link_mutation_draft
+                .as_mut()
+                .expect("link draft initialized");
+            draft.to_figure_id_input = figure_id.clone();
+            draft.relation_input = "related".to_string();
+        }
+        let failure_payload = build_link_mutation_payload(
+            app.link_mutation_draft
+                .as_ref()
+                .expect("link draft present"),
+            LinkMutationAction::Add,
+        );
+        assert!(failure_payload.has_changes);
+
+        app.save_link_mutation_changes(failure_payload);
+
+        let failed_draft = app
+            .link_mutation_draft
+            .as_ref()
+            .expect("draft persists after failed save");
+        assert_eq!(failed_draft.lifecycle, LinkEditorLifecycle::SaveFailed);
+        assert!(failed_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("self-link")));
+
+        {
+            let draft = app
+                .link_mutation_draft
+                .as_mut()
+                .expect("link draft still present");
+            draft.to_figure_id_input = target_id.clone();
+            draft.relation_input = "supports".to_string();
+        }
+        let retry_payload = build_link_mutation_payload(
+            app.link_mutation_draft
+                .as_ref()
+                .expect("link draft present for retry"),
+            LinkMutationAction::Add,
+        );
+        assert!(retry_payload.has_changes);
+
+        app.save_link_mutation_changes(retry_payload);
+
+        assert!(app.link_mutation_draft.is_none());
+        assert!(app.error_message.is_none());
+        assert!(app.selected_figure_detail.as_ref().is_some_and(|detail| {
+            detail
+                .outbound_links
+                .iter()
+                .any(|link| link.to_figure_id == target_id && link.relation_type == "supports")
+        }));
+    }
+
+    #[test]
+    fn delete_flow_requires_confirmation_and_uses_deterministic_next_selection() {
+        let (_temp_dir, _vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let first_figure_id = figure_ids[0].clone();
+        let second_figure_id = figure_ids[1].clone();
+
+        app.load_figure_detail(&first_figure_id);
+        app.begin_delete_figure_confirmation();
+
+        let delete_draft = app
+            .delete_figure_draft
+            .as_ref()
+            .expect("delete draft initialized");
+        assert_eq!(
+            delete_draft.lifecycle,
+            DeleteEditorLifecycle::ConfirmingDelete
+        );
+        assert_eq!(delete_draft.figure_id, first_figure_id);
+
+        app.confirm_delete_figure(DeleteFigurePayload {
+            figure_id: first_figure_id.clone(),
+        });
+
+        assert!(app.delete_figure_draft.is_none());
+        assert_eq!(
+            app.selected_figure_id.as_deref(),
+            Some(second_figure_id.as_str())
+        );
+        assert_eq!(app.figure_rows.len(), 1);
+
+        app.begin_delete_figure_confirmation();
+        app.confirm_delete_figure(DeleteFigurePayload {
+            figure_id: second_figure_id.clone(),
+        });
+
+        assert!(app.delete_figure_draft.is_none());
+        assert!(app.selected_figure_id.is_none());
+        assert!(app.selected_figure_detail.is_none());
+        assert!(app.figure_rows.is_empty());
+    }
+
+    #[test]
+    fn delete_failure_keeps_confirmation_state_and_allows_cancel() {
+        let (_temp_dir, vault_path, mut app, figure_ids) = seed_app_with_two_figures();
+        let figure_id = figure_ids[0].clone();
+
+        app.load_figure_detail(&figure_id);
+        app.begin_delete_figure_confirmation();
+
+        delete_figure(DeleteFigureRequest {
+            vault_root: vault_path,
+            figure_id: figure_id.clone(),
+        })
+        .expect("external delete to induce GUI failure path");
+
+        app.confirm_delete_figure(DeleteFigurePayload {
+            figure_id: figure_id.clone(),
+        });
+
+        let failed_draft = app
+            .delete_figure_draft
+            .as_ref()
+            .expect("delete draft persists after failed delete");
+        assert_eq!(failed_draft.lifecycle, DeleteEditorLifecycle::DeleteFailed);
+        assert!(failed_draft
+            .last_error
+            .as_deref()
+            .is_some_and(|message| message.contains("unknown figure id")));
+        assert!(app.error_message.is_some());
+
+        app.cancel_delete_figure_confirmation();
+        assert!(app.delete_figure_draft.is_none());
     }
 
     fn seed_app_with_two_figures() -> (TempDir, PathBuf, LamianGuiApp, Vec<String>) {

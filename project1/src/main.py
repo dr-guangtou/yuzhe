@@ -39,19 +39,42 @@ def parse_digest_date_from_path(path: Path) -> datetime | None:
     return None
 
 
-def get_dated_digest_files(config) -> list[tuple[datetime, float, Path]]:
-    """Collect digest files with parsed dates across all archive years."""
+def get_default_digest_history_root(config) -> Path:
+    """Return the default digest history root from config."""
     if config.config_path:
         base_dir = config.config_path.parent
     else:
         base_dir = Path(".")
 
-    archive_root = base_dir / config.output.digest_dir / config.output.archive_subdir
-    if not archive_root.exists():
+    return base_dir / config.output.digest_dir / config.output.archive_subdir
+
+
+def resolve_digest_history_root(
+    config,
+    output_path: Path | None = None,
+    output_dir: Path | None = None,
+) -> Path:
+    """Resolve which directory should be scanned for previous digest files."""
+    if output_dir is not None:
+        return output_dir
+
+    if output_path is not None:
+        return output_path.parent
+
+    return get_default_digest_history_root(config)
+
+
+def get_dated_digest_files(
+    config,
+    history_root: Path | None = None,
+) -> list[tuple[datetime, float, Path]]:
+    """Collect digest files with parsed dates from the selected history root."""
+    scan_root = history_root if history_root is not None else get_default_digest_history_root(config)
+    if not scan_root.exists():
         return []
 
     dated_files: list[tuple[datetime, float, Path]] = []
-    for digest_file in archive_root.rglob("*.md"):
+    for digest_file in scan_root.rglob("*.md"):
         parsed_date = parse_digest_date_from_path(digest_file)
         if parsed_date is None:
             continue
@@ -60,13 +83,16 @@ def get_dated_digest_files(config) -> list[tuple[datetime, float, Path]]:
     return dated_files
 
 
-def get_latest_digest_date(config) -> datetime | None:
+def get_latest_digest_date(
+    config,
+    history_root: Path | None = None,
+) -> datetime | None:
     """Get the date of the most recent digest file.
 
     Returns:
         datetime of latest digest, or None if no digests exist
     """
-    dated_files = get_dated_digest_files(config)
+    dated_files = get_dated_digest_files(config, history_root=history_root)
     if not dated_files:
         return None
 
@@ -77,6 +103,7 @@ def get_latest_digest_date(config) -> datetime | None:
 def get_previous_digest_ids(
     config,
     since_date: datetime | None = None,
+    history_root: Path | None = None,
 ) -> tuple[set[str], int]:
     """Extract arXiv IDs from existing digest files.
 
@@ -86,7 +113,7 @@ def get_previous_digest_ids(
     Returns:
         Tuple of (set_of_ids, number_of_files_scanned).
     """
-    dated_files = get_dated_digest_files(config)
+    dated_files = get_dated_digest_files(config, history_root=history_root)
     if since_date is not None:
         dated_files = [item for item in dated_files if item[0] >= since_date]
 
@@ -328,9 +355,16 @@ Modes:
     logger.debug(f"Primary categories: {config.category.primary}")
     logger.debug(f"Secondary categories: {config.category.secondary}")
 
+    digest_history_root = resolve_digest_history_root(
+        config,
+        output_path=args.output,
+        output_dir=args.output_dir,
+    )
+    logger.info(f"Digest history root: {digest_history_root}")
+
     # Determine cutoff date from latest digest (all modes)
     since_date = None
-    latest_digest_date = get_latest_digest_date(config)
+    latest_digest_date = get_latest_digest_date(config, history_root=digest_history_root)
 
     if latest_digest_date:
         days_since_latest = (datetime.now() - latest_digest_date).days
@@ -392,7 +426,10 @@ Modes:
     logger.info(f"Total papers fetched: {len(papers)}")
 
     # Deduplicate against previous digest
-    previous_ids, digest_file_count = get_previous_digest_ids(config)
+    previous_ids, digest_file_count = get_previous_digest_ids(
+        config,
+        history_root=digest_history_root,
+    )
     if previous_ids:
         before = len(papers)
         papers = [p for p in papers if p.arxiv_id not in previous_ids]

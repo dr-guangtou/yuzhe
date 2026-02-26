@@ -99,6 +99,45 @@ def test_get_previous_digest_ids_reads_multiple_files_in_window(tmp_path):
     assert ids == {"2602.00002"}
 
 
+def test_get_latest_digest_date_uses_custom_output_directory(tmp_path):
+    """Latest digest lookup should use custom output directory when provided."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    config = load_config(Path("config.yaml"))
+    config.config_path = tmp_path / "config.yaml"
+
+    custom_output_dir = tmp_path / "obsidian" / "arxiv-digests"
+    digest_old = custom_output_dir / "arxiv-2026-02-18.md"
+    digest_new = custom_output_dir / "arxiv-2026-02-19.md"
+    digest_old.parent.mkdir(parents=True, exist_ok=True)
+    digest_old.write_text("# old", encoding="utf-8")
+    digest_new.write_text("# new", encoding="utf-8")
+
+    latest = module.get_latest_digest_date(config, history_root=custom_output_dir)
+
+    assert latest is not None
+    assert latest.strftime("%Y-%m-%d") == "2026-02-19"
+
+
+def test_resolve_digest_history_root_uses_output_path_parent(tmp_path):
+    """When explicit output path is set, dedup should scan that parent directory."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    config = load_config(Path("config.yaml"))
+    config.config_path = tmp_path / "config.yaml"
+
+    explicit_output_path = tmp_path / "vault" / "digests" / "arxiv-2026-02-19.md"
+    history_root = module.resolve_digest_history_root(config, output_path=explicit_output_path)
+
+    assert history_root == explicit_output_path.parent
+
+
 def test_build_dated_output_path_uses_default_filename_in_custom_directory():
     """Custom output directory should keep the standard dated filename format."""
     spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))

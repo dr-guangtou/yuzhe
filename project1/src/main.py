@@ -125,6 +125,46 @@ def get_previous_digest_ids(
     return ids, len(dated_files)
 
 
+def get_dedup_since_date(dedup_days: int, now: datetime | None = None) -> datetime:
+    """Build an inclusive dedup cutoff at midnight local time."""
+    if dedup_days < 0:
+        raise ValueError("--dedup-days must be >= 0")
+
+    reference = now if now is not None else datetime.now()
+    midnight_today = datetime(reference.year, reference.month, reference.day)
+    return midnight_today - timedelta(days=dedup_days)
+
+
+def count_papers_by_primary_category(
+    papers: list,
+    categories: list[str],
+) -> dict[str, int]:
+    """Count papers by primary category, preserving configured category order."""
+    counts = {category: 0 for category in categories}
+    for paper in papers:
+        primary_category = paper.primary_category
+        if primary_category in counts:
+            counts[primary_category] += 1
+        else:
+            counts[primary_category] = counts.get(primary_category, 0) + 1
+    return counts
+
+
+def split_duplicate_papers(
+    papers: list,
+    previous_ids: set[str],
+) -> tuple[list, list]:
+    """Split fetched papers into fresh and duplicate partitions."""
+    fresh_papers = []
+    duplicate_papers = []
+    for paper in papers:
+        if paper.arxiv_id in previous_ids:
+            duplicate_papers.append(paper)
+        else:
+            fresh_papers.append(paper)
+    return fresh_papers, duplicate_papers
+
+
 def build_dated_output_path(output_dir: Path, date: datetime) -> Path:
     """Build default digest filename in a user-specified directory."""
     return output_dir / f"arxiv-{date.strftime('%Y-%m-%d')}.md"
@@ -190,6 +230,17 @@ Modes:
         help="Number of days to look back (default: 1, overrides digest-based cutoff)"
     )
     parser.add_argument(
+        "--dedup-days",
+        type=int,
+        default=2,
+        help="Scan only the last N days of digest files for dedup (default: 2)"
+    )
+    parser.add_argument(
+        "--no-dedup",
+        action="store_true",
+        help="Disable digest-history deduplication"
+    )
+    parser.add_argument(
         "--max-papers",
         type=int,
         default=None,
@@ -227,6 +278,12 @@ Modes:
         type=int,
         default=5,
         help="Number of papers per LLM scoring call (default: 5, only with --use-llm-scoring)"
+    )
+    parser.add_argument(
+        "--llm-call-gap-seconds",
+        type=float,
+        default=5.0,
+        help="Delay between consecutive LLM API calls in scoring/summary stages (default: 5.0)"
     )
     parser.add_argument(
         "--mock-llm",
@@ -387,6 +444,12 @@ Modes:
 
     # Default to 1 day when neither digest nor --days is available
     days = args.days if args.days is not None else 1
+    if args.dedup_days < 0:
+        logger.error("--dedup-days must be >= 0")
+        sys.exit(1)
+    if args.llm_call_gap_seconds < 0:
+        logger.error("--llm-call-gap-seconds must be >= 0")
+        sys.exit(1)
 
     # Determine categories to fetch
     if args.category:
@@ -424,19 +487,48 @@ Modes:
         )
 
     logger.info(f"Total papers fetched: {len(papers)}")
+    if args.debug:
+        counts_before_dedup = count_papers_by_primary_category(papers, categories)
+        print("\nDebug: fetched papers by primary category (before digest-history dedup)")
+        for category in counts_before_dedup:
+            print(f"  {category}: {counts_before_dedup[category]}")
+        print(f"  TOTAL: {len(papers)}")
 
-    # Deduplicate against previous digest
-    previous_ids, digest_file_count = get_previous_digest_ids(
-        config,
-        history_root=digest_history_root,
-    )
-    if previous_ids:
-        before = len(papers)
-        papers = [p for p in papers if p.arxiv_id not in previous_ids]
-        logger.info(
-            f"Dedup against {digest_file_count} previous digest file(s): "
-            f"{before} -> {len(papers)} ({before - len(papers)} already processed)"
+    # Deduplicate against recent digest files
+    if args.no_dedup:
+        logger.info("Digest-history dedup disabled (--no-dedup)")
+        if args.debug:
+            print("\nDebug: digest-history dedup skipped (--no-dedup)")
+    else:
+        dedup_since_date = get_dedup_since_date(args.dedup_days)
+        previous_ids, digest_file_count = get_previous_digest_ids(
+            config,
+            since_date=dedup_since_date,
+            history_root=digest_history_root,
         )
+        papers, duplicate_papers = split_duplicate_papers(papers, previous_ids)
+        if args.debug:
+            print(
+                "\nDebug: duplicates matched in digest-history dedup "
+                f"(since {dedup_since_date.strftime('%Y-%m-%d')}, files={digest_file_count})"
+            )
+            if duplicate_papers:
+                for paper in sorted(duplicate_papers, key=lambda p: p.arxiv_id):
+                    print(f"  {paper.arxiv_id} [{paper.primary_category}] {paper.title}")
+            else:
+                print("  none")
+        if previous_ids:
+            logger.info(
+                f"Dedup against {digest_file_count} digest file(s) since "
+                f"{dedup_since_date.strftime('%Y-%m-%d')}: "
+                f"{len(papers) + len(duplicate_papers)} -> {len(papers)} "
+                f"({len(duplicate_papers)} already processed)"
+            )
+        else:
+            logger.info(
+                f"No prior IDs found in dedup window (since {dedup_since_date.strftime('%Y-%m-%d')}, "
+                f"{digest_file_count} digest file(s) scanned)"
+            )
 
     if not papers:
         logger.warning("No papers found.")
@@ -483,14 +575,24 @@ Modes:
 
         # Filter papers by local threshold
         papers_stage1 = []
+        papers_stage1_rejected = []
         for paper, local_score in zip(papers, local_scores):
             if local_score.score_total >= threshold:
                 papers_stage1.append(paper)
+            else:
+                papers_stage1_rejected.append(paper)
 
         logger.info("Local filter results:")
         logger.info(f"  Input: {len(papers)} papers")
         logger.info(f"  Passed threshold: {len(papers_stage1)} papers")
         logger.info(f"  Filtered out: {len(papers) - len(papers_stage1)} papers")
+        if args.debug:
+            print("\nDebug: rejected after local filter")
+            if papers_stage1_rejected:
+                for paper in papers_stage1_rejected:
+                    print(f"  {paper.arxiv_id} [{paper.primary_category}] {paper.title}")
+            else:
+                print("  none")
 
         if not papers_stage1:
             logger.warning("No papers passed local filter threshold")
@@ -541,22 +643,40 @@ Modes:
             llm_client=llm_client,
             skip_llm=False,
             batch_size=batch_sz,
+            llm_call_gap_seconds=args.llm_call_gap_seconds,
         )
 
-        # Filter by tier (keep only configured tiers)
-        keep_tiers_str = config.llm_scoring.keep_tiers
-        keep_tiers = [Tier(t) for t in keep_tiers_str]
+        # Keep summary tiers plus "Could Be Interesting" in the final digest.
+        summary_tiers_str = config.llm_scoring.summary_tiers
+        summary_tiers = [Tier(t) for t in summary_tiers_str]
+        digest_keep_tiers = set(summary_tiers)
+        digest_keep_tiers.add(Tier.COULD_BE_INTERESTING)
 
         papers_stage2 = []
+        papers_stage2_rejected = []
         for sp in scored_papers:
-            if sp.tier in keep_tiers:
+            if sp.tier in digest_keep_tiers:
                 papers_stage2.append(sp)
+            else:
+                papers_stage2_rejected.append(sp)
 
         logger.info("LLM scoring results:")
         logger.info(f"  Input: {len(scored_papers)} papers")
-        logger.info(f"  Keep tiers: {', '.join(keep_tiers_str)}")
+        logger.info(
+            "  Digest tiers kept: "
+            + ", ".join(t.value for t in sorted(digest_keep_tiers, key=lambda tier: tier.value))
+        )
+        logger.info(f"  Summary tiers: {', '.join(summary_tiers_str)}")
         logger.info(f"  Kept: {len(papers_stage2)} papers")
         logger.info(f"  Filtered out: {len(scored_papers) - len(papers_stage2)} papers")
+        if args.debug:
+            print("\nDebug: rejected after LLM digest filter")
+            if papers_stage2_rejected:
+                for sp in papers_stage2_rejected:
+                    paper = sp.paper
+                    print(f"  {paper.arxiv_id} [{paper.primary_category}] {paper.title}")
+            else:
+                print("  none")
 
         # Detailed tier breakdown
         groups = group_by_tier(scored_papers)
@@ -643,7 +763,8 @@ Modes:
                 scored_papers=scored_papers,
                 llm_client=llm_client,
                 config=config,
-                skip_llm=summary_skip_llm
+                skip_llm=summary_skip_llm,
+                llm_call_gap_seconds=args.llm_call_gap_seconds,
             )
             logger.info(f"Generated {len(summaries)} summaries")
         except Exception as e:

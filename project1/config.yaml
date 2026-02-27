@@ -130,14 +130,14 @@ providers:
 # LLM Configuration
 # Primary provider (must exist in providers above)
 llm:
-  provider: "glm"
-  model: "glm-5" # empty = use provider default_model
+  provider: "moonshot"
+  model: "kimi-latest" # empty = use provider default_model
   temperature: 0.2
-  max_tokens: 20000
+  max_tokens: 10000
 
 # Fallback chain: tried in order if primary fails
 llm_fallback:
-  - moonshot
+  - glm
   - qwen
   - nvidia
 
@@ -181,13 +181,14 @@ topic_scorer:
 # Enable with --use-llm-scoring flag
 llm_scoring:
   enabled: false # Default: disabled (override with --use-llm-scoring)
-  keep_tiers: # Papers in these tiers proceed to summary generation
+  summary_tiers: # Papers in these tiers proceed to summary generation
+    # "could_be_interesting" is still kept in the digest as title+link only
     - most_relevant
     - somewhat_relevant
   # Tier thresholds (0-10 scale) - used when LLM scoring is enabled
   tier_thresholds:
     most_relevant: 8.0
-    somewhat_relevant: 5.0
+    somewhat_relevant: 6.0 # Score must be > 6.0 to be "Somewhat Relevant"
     could_be_interesting: 3.0
 
 # Stage 3: Summary Generation (OPTIONAL - default ON)

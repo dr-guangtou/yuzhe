@@ -30,3 +30,37 @@ Close the remaining governance/documentation gap by adding a current technical s
   - Runtime summary: 3 papers fetched after Stage 1 filter; 2 papers retained after LLM scoring.
   - Lint check passed: `uv run ruff check .` -> `All checks passed!`
   - Test check passed: `uv run pytest -q` -> `30 passed in 0.29s`.
+
+---
+
+# Dedup Window and Toggle (2026-02-27)
+
+## Scope
+
+Add runtime controls to bound digest-history dedup to a short date window and allow explicit opt-out when dedup is unnecessary.
+
+## Plan Checklist
+
+| Status | Item | Verification |
+| --- | --- | --- |
+| [x] | Add CLI flags for dedup window and dedup disable | `--dedup-days`, `--no-dedup` present in `src/main.py` |
+| [x] | Apply dedup only within configurable date window | Dedup uses `get_previous_digest_ids(..., since_date=...)` |
+| [x] | Add tests for dedup cutoff behavior | New tests in `tests/test_digest_filename.py` |
+| [x] | Update user-facing docs | `README.md`, `docs/SPEC.md` updated |
+| [x] | Run quality gates | `ruff` and `pytest` passed |
+
+## Verification Checklist
+
+- Lint: `uv run ruff check src/main.py tests/test_digest_filename.py README.md docs/SPEC.md`
+- Tests: `uv run pytest -q tests/test_digest_filename.py`
+- Full tests: `uv run pytest -q`
+
+## Review
+
+- Date: 2026-02-27
+- Branch: `feature/dedup-window-no-dedup`
+- Result: complete
+- Notes:
+  - Dedup now defaults to scanning only the last 2 days of digest files.
+  - `--no-dedup` bypasses digest-history dedup entirely.
+  - All tests passed after changes (`35 passed`).

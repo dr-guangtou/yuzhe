@@ -11,7 +11,7 @@ Automated pipeline that monitors arXiv daily, filters and scores papers locally,
   3. **Summary Generation** (OPTIONAL) - LLM summaries with graceful fallback to abstracts
 - **Three-Tier System**:
   - **Most Relevant**: Detailed summaries with methodology, key findings, and references
-  - **Somewhat Relevant**: 3-5 sentence summaries
+- **Somewhat Relevant**: 3-5 sentence summaries
   - **Could Be Interesting**: Title and link only
 - **Update Mode**: Only processes papers newer than latest digest
 - **Multi-LLM**: Config-driven provider system (Moonshot, NVidia, Gemini, OpenAI, etc.)
@@ -172,6 +172,9 @@ Skip Stage 3 (summary generation), output abstracts only. Useful for checking ti
 | `--no-summary` | Disable Stage 3 (summaries, default: ON) |
 | `--limit N` | Process only the first N papers (testing) |
 | `--days N` | Look back N days instead of 1 (auto-switches to API source) |
+| `--dedup-days N` | Dedup only against digest files from the last N days (default: 2) |
+| `--no-dedup` | Disable digest-history dedup |
+| `--llm-call-gap-seconds S` | Delay between consecutive LLM calls in scoring/summary (default: 5.0) |
 | `--category CAT` | Fetch from a single category (e.g., `astro-ph.GA`) |
 | `--local-filter-threshold T` | Override local filter threshold (0-1, default: 0.5) |
 | `--mock-llm` | Use mock LLM for testing (no API calls) |
@@ -220,14 +223,14 @@ Output location overrides:
 Each digest contains:
 - **Summary** with paper counts per tier and categories monitored
 - **Most Relevant** (score >= 8): title (linked to abs page + HTML rendering), authors, score, summary/abstract
-- **Somewhat Relevant** (score >= 5): same format as Most Relevant
+- **Somewhat Relevant** (score > 6.0): same format as Most Relevant
 - **Could Be Interesting** (score >= 3): title and link only
 
 ## How the Pipeline Works
 
 ```
 Fetch (RSS or API)
-    → Dedup against previous digest
+    → Dedup against recent digest window (default: last 2 days, configurable/optional)
     → Stage 1: Corpus Filter (local embeddings, pass/fail gate)
     → Stage 2: Scoring (one of two mutually exclusive paths)
         ├── Default: Topic-Embedding Scorer (local, no LLM tokens)
@@ -258,6 +261,8 @@ Embeds the ~40 topic descriptions from `config.yaml` using the same sentence-tra
 **LLM path (`--use-llm-scoring`):**
 Sends each paper's title+abstract to an LLM along with the topic descriptions. The LLM returns a JSON with score, matched_topics, and reasoning. More precise but costs ~1 LLM call per paper. Enable with `--use-llm-scoring`.
 
+In LLM mode, `Could Be Interesting` papers are still written to the digest as title+link entries. Only `Most Relevant` and `Somewhat Relevant` proceed to summary generation.
+
 ### Stage 3: Summary Generation (optional)
 
 Generates LLM-written summaries for scored papers. Uses LLM tokens regardless of which Stage 2 path ran. Disable with `--no-summary` (outputs abstracts instead).
@@ -278,7 +283,7 @@ Topics are semantic descriptions, not keywords — a paper about "stellar mass f
 | Score | Tier | Action |
 |-------|------|--------|
 | >= 8 | Most Relevant | Detailed structured summary |
-| >= 5 | Somewhat Relevant | 3-5 sentence summary |
+| > 6.0 | Somewhat Relevant | 3-5 sentence summary |
 | >= 3 | Could Be Interesting | Title and link only |
 | < 3 | Not Relevant | Excluded from digest |
 
@@ -390,6 +395,11 @@ uv run pytest tests/ -v
 ### "Already processed papers"
 - Use `--debug` to force re-run regardless of state
 - Or delete `.state.json` to reset
+
+### Dedup behavior
+- Default digest-history dedup scans only the last 2 days of digest files.
+- Change the window with `--dedup-days N`.
+- Disable digest-history dedup entirely with `--no-dedup`.
 
 ## License
 

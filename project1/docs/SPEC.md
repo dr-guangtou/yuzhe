@@ -15,7 +15,9 @@ The runtime is a three-stage pipeline with explicit optional paths:
 
 1. Fetch + dedup:
 - Fetch new papers from arXiv RSS by default (`--source rss`) or Atom API (`--source api`).
-- Deduplicate by scanning existing digest archives across all years and extracting processed arXiv IDs.
+- Deduplicate by scanning recent digest files and extracting processed arXiv IDs.
+  - Default dedup window: last 2 days (`--dedup-days`).
+  - Dedup can be disabled with `--no-dedup`.
 - Apply update cutoff using latest digest date unless `--debug` is set.
 
 2. Stage 1 local filter (mandatory):
@@ -63,6 +65,8 @@ Primary configuration file: `config.yaml`
 - `llm`: primary provider/model defaults.
 - `llm_fallback`: ordered fallback providers.
 - `local_filter`, `topic_scorer`, `llm_scoring`, `summary`: stage behavior.
+  - `llm_scoring.summary_tiers` controls which LLM-scored tiers proceed to summary generation.
+  - `could_be_interesting` remains in the digest as title+link only.
 - `output`, `api`: paths and transport/runtime controls.
 
 ## Design Decisions
@@ -82,8 +86,9 @@ Primary configuration file: `config.yaml`
 4. Fail-safe summary behavior:
 - Summary generation is optional; digest quality degrades gracefully to abstract output.
 
-5. Historical dedup across archive years:
-- Dedup scans all archived digests, not only the latest file, to prevent replay.
+5. Bounded digest-history dedup:
+- Dedup scans only a recent date window by default (2 days) for runtime efficiency.
+- Operators can expand the window (`--dedup-days`) or disable dedup (`--no-dedup`) when safe.
 
 6. CI quality gates:
 - `.github/workflows/ci.yml` enforces `uv run ruff check .` and `uv run pytest -q`.

@@ -1,6 +1,7 @@
 """Generate summaries for papers at different detail levels."""
 
 from pathlib import Path
+import time
 
 from arxiv_fetcher import ArxivPaper
 from config import Config
@@ -164,7 +165,8 @@ def generate_summaries(
     scored_papers: list[ScoredPaper],
     llm_client: LLMClient,
     config: Config,
-    skip_llm: bool = False
+    skip_llm: bool = False,
+    llm_call_gap_seconds: float = 0.0,
 ) -> dict[str, str]:
     """Generate summaries for all papers based on their tier.
 
@@ -173,6 +175,7 @@ def generate_summaries(
         llm_client: LLM client instance
         config: Configuration
         skip_llm: If True, use fallback summaries only
+        llm_call_gap_seconds: Delay between LLM calls to reduce rate limiting
 
     Returns:
         Dictionary mapping arxiv_id to summary
@@ -190,6 +193,8 @@ def generate_summaries(
                 summaries[paper.arxiv_id] = generate_detailed_summary(
                     paper, llm_client, config
                 )
+                if llm_call_gap_seconds > 0:
+                    time.sleep(llm_call_gap_seconds)
 
         elif sp.tier == Tier.SOMEWHAT_RELEVANT:
             if skip_llm:
@@ -198,6 +203,8 @@ def generate_summaries(
                 summaries[paper.arxiv_id] = generate_brief_summary(
                     paper, llm_client, config
                 )
+                if llm_call_gap_seconds > 0:
+                    time.sleep(llm_call_gap_seconds)
 
         # COULD_BE_INTERESTING tier doesn't need a summary (title only)
 

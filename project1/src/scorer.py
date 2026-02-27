@@ -10,6 +10,7 @@ Flow: Fetch by category → LLM scores against TOPICS → Project boosts floor �
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -364,8 +365,8 @@ def assign_tier(
     if score >= thresholds.most_relevant:
         return Tier.MOST_RELEVANT
 
-    # Somewhat Relevant: moderate topic relevance
-    if score >= thresholds.somewhat_relevant:
+    # Somewhat Relevant: moderate topic relevance, strictly above the boundary
+    if score > thresholds.somewhat_relevant:
         return Tier.SOMEWHAT_RELEVANT
 
     # Could Be Interesting: low topic relevance OR project boost
@@ -387,6 +388,7 @@ def score_papers(
     local_ranker=None,
     local_threshold: float = 0.0,
     batch_size: int = 1,
+    llm_call_gap_seconds: float = 0.0,
 ) -> list[ScoredPaper]:
     """Score papers against configured topics.
 
@@ -410,6 +412,7 @@ def score_papers(
         local_ranker: Optional local ranker for embedding-based scoring
         local_threshold: If > 0, skip LLM for papers below this local score
         batch_size: Number of papers per LLM call (default 1 = single-paper mode)
+        llm_call_gap_seconds: Delay between LLM calls to reduce rate limiting
 
     Returns:
         List of ScoredPaper objects, sorted by tier then score
@@ -437,13 +440,13 @@ def score_papers(
         # Two-pass batch scoring
         scored_papers = _score_papers_batch(
             papers, config, llm_client, prompt_template,
-            local_scores_map, local_threshold, batch_size
+            local_scores_map, local_threshold, batch_size, llm_call_gap_seconds
         )
     else:
         # Original single-paper scoring loop
         scored_papers = _score_papers_single(
             papers, config, llm_client, prompt_template,
-            local_scores_map, local_threshold, skip_llm
+            local_scores_map, local_threshold, skip_llm, llm_call_gap_seconds
         )
 
     # Sort by tier (most relevant first) then by score (highest first)
@@ -466,6 +469,7 @@ def _score_papers_single(
     local_scores_map: dict[str, float],
     local_threshold: float,
     skip_llm: bool,
+    llm_call_gap_seconds: float,
 ) -> list[ScoredPaper]:
     """Original single-paper scoring loop (extracted for clarity)."""
     scored_papers: list[ScoredPaper] = []
@@ -515,6 +519,8 @@ def _score_papers_single(
             score, matched_topics, reasoning = score_paper_with_llm(
                 paper, config, llm_client, prompt_template
             )
+            if llm_call_gap_seconds > 0:
+                time.sleep(llm_call_gap_seconds)
 
             if project_match and score < 10.0:
                 score = min(10.0, score + 0.5)
@@ -551,6 +557,7 @@ def _score_papers_batch(
     local_scores_map: dict[str, float],
     local_threshold: float,
     batch_size: int,
+    llm_call_gap_seconds: float,
 ) -> list[ScoredPaper]:
     """Two-pass batch scoring: prefilter, batch LLM, assemble results."""
     batch_prompt_template = load_batch_scoring_prompt()
@@ -604,9 +611,13 @@ def _score_papers_batch(
                 )
                 llm_scores.update(batch_results)
                 batch_scored = True
+                if llm_call_gap_seconds > 0:
+                    time.sleep(llm_call_gap_seconds)
                 break
             except Exception as e:
                 print(f"  Provider '{provider_name}' failed batch ({e})")
+                if llm_call_gap_seconds > 0:
+                    time.sleep(llm_call_gap_seconds)
                 continue
 
         if batch_scored:
@@ -618,6 +629,8 @@ def _score_papers_batch(
             score, matched_topics, reasoning = score_paper_with_llm(
                 paper, config, llm_client, single_prompt_template
             )
+            if llm_call_gap_seconds > 0:
+                time.sleep(llm_call_gap_seconds)
 
             # Step 3: If individual scoring also failed, use local scorer
             if "failed" in reasoning.lower() and paper.arxiv_id in local_scores_map:

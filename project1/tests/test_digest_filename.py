@@ -3,6 +3,8 @@
 from datetime import datetime
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
+import pytest
 
 from config import load_config
 from formatter import save_digest
@@ -151,3 +153,71 @@ def test_build_dated_output_path_uses_default_filename_in_custom_directory():
     )
 
     assert output_path == Path("custom/digests/arxiv-2026-02-19.md")
+
+
+def test_get_dedup_since_date_uses_midnight_boundary():
+    """Dedup window should start at local midnight, inclusive."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    now = datetime(2026, 2, 19, 15, 30, 10)
+    cutoff = module.get_dedup_since_date(2, now=now)
+
+    assert cutoff == datetime(2026, 2, 17, 0, 0, 0)
+
+
+def test_get_dedup_since_date_rejects_negative_days():
+    """Negative dedup window values should fail fast."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    with pytest.raises(ValueError, match="--dedup-days must be >= 0"):
+        module.get_dedup_since_date(-1)
+
+
+def test_count_papers_by_primary_category_preserves_requested_order():
+    """Category count output should follow configured category ordering."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    papers = [
+        SimpleNamespace(arxiv_id="2602.00001", primary_category="astro-ph.GA"),
+        SimpleNamespace(arxiv_id="2602.00002", primary_category="astro-ph.CO"),
+        SimpleNamespace(arxiv_id="2602.00003", primary_category="astro-ph.GA"),
+    ]
+
+    counts = module.count_papers_by_primary_category(
+        papers,
+        categories=["astro-ph.CO", "astro-ph.GA", "astro-ph.IM"],
+    )
+
+    assert list(counts.keys())[:3] == ["astro-ph.CO", "astro-ph.GA", "astro-ph.IM"]
+    assert counts["astro-ph.CO"] == 1
+    assert counts["astro-ph.GA"] == 2
+    assert counts["astro-ph.IM"] == 0
+
+
+def test_split_duplicate_papers_returns_fresh_and_duplicate_lists():
+    """Dedup partitioning should keep order and split by arxiv_id membership."""
+    spec = importlib.util.spec_from_file_location("pipeline_main", Path("src/main.py"))
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    paper_one = SimpleNamespace(arxiv_id="2602.00001", title="paper one")
+    paper_two = SimpleNamespace(arxiv_id="2602.00002", title="paper two")
+    paper_three = SimpleNamespace(arxiv_id="2602.00003", title="paper three")
+
+    fresh, duplicates = module.split_duplicate_papers(
+        [paper_one, paper_two, paper_three],
+        previous_ids={"2602.00002"},
+    )
+
+    assert [paper.arxiv_id for paper in fresh] == ["2602.00001", "2602.00003"]
+    assert [paper.arxiv_id for paper in duplicates] == ["2602.00002"]

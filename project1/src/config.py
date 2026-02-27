@@ -59,7 +59,7 @@ class LLMConfig:
 class TierThresholdsConfig:
     """Thresholds for tier assignment (0-10 scale)."""
     most_relevant: float = 8.0
-    somewhat_relevant: float = 5.0
+    somewhat_relevant: float = 6.0
     could_be_interesting: float = 3.0
 
 
@@ -110,7 +110,7 @@ class TopicScorerConfig:
 class LLMScoringConfig:
     """Stage 2: LLM-based scoring (OPTIONAL)."""
     enabled: bool = False  # Enable via --use-llm-scoring
-    keep_tiers: list[str] = field(default_factory=lambda: ["most_relevant", "somewhat_relevant"])
+    summary_tiers: list[str] = field(default_factory=lambda: ["most_relevant", "somewhat_relevant"])
     tier_thresholds: TierThresholdsConfig = field(default_factory=TierThresholdsConfig)
 
 
@@ -248,7 +248,7 @@ def load_config(config_path: Path) -> Config:
     tier_raw = raw.get("llm_scoring", {}).get("tier_thresholds", {})
     tier_thresholds = TierThresholdsConfig(
         most_relevant=tier_raw.get("most_relevant", 8.0),
-        somewhat_relevant=tier_raw.get("somewhat_relevant", 5.0),
+        somewhat_relevant=tier_raw.get("somewhat_relevant", 6.0),
         could_be_interesting=tier_raw.get("could_be_interesting", 3.0)
     )
 
@@ -289,9 +289,12 @@ def load_config(config_path: Path) -> Config:
 
     # Parse LLM scoring config (Stage 2 - OPTIONAL)
     llm_scoring_raw = raw.get("llm_scoring", {})
+    summary_tiers = llm_scoring_raw.get("summary_tiers")
+    if summary_tiers is None:
+        summary_tiers = llm_scoring_raw.get("keep_tiers", ["most_relevant", "somewhat_relevant"])
     llm_scoring = LLMScoringConfig(
         enabled=llm_scoring_raw.get("enabled", False),
-        keep_tiers=llm_scoring_raw.get("keep_tiers", ["most_relevant", "somewhat_relevant"]),
+        summary_tiers=summary_tiers,
         tier_thresholds=tier_thresholds,
     )
 
